@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Catálogo | GAONA</title>
+
+    <link rel="stylesheet" href="catalogo.css">
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+</head>
+
+
+<body>
+
+
+<!-- ================= HEADER ================= -->
+
+<header class="header">
+
+    <div class="container nav">
+
+        <a href="index.html" class="logo">
+
+            <span class="logo-icon">G</span>
+
+            <span>GAONA</span>
+
+        </a>
+
+
+        <nav class="menu">
+
+            <a href="Inicio.html">
+                Inicio
+            </a>
+
+            <a href="catalogo.html" class="active">
+                Catálogo
+            </a>
+
+            <a href="index.html#nosotros">
+                Nosotros
+            </a>
+
+            <a href="index.html#contacto">
+                Contacto
+            </a>
+
+        </nav>
+
+
+        <a href="index.html#contacto"
+           class="btn btn-primary">
+
+            Cotizar
+
+        </a>
+
+    </div>
+
+</header>
+
+
+
+<!-- ================= CATÁLOGO ================= -->
+
+<main class="catalog">
+
+    <div class="container">
+
+
+        <!-- ENCABEZADO -->
+
+        <div class="catalog-header">
+
+            <span class="small-title orange">
+                NUESTROS PRODUCTOS
+            </span>
+
+            <h1>
+                Catálogo
+            </h1>
+
+            <p>
+                Encuentra puertas, ventanas, chapas, canceles
+                y accesorios para tu proyecto.
+            </p>
+
+        </div>
+
+
+
+        <!-- BUSCADOR -->
+
+        <div class="search-container">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar un producto..."
+            >
+
+            <button>
+                🔍
+            </button>
+
+        </div>
+
+
+
+        <!-- CONTENIDO -->
+
+        <div class="catalog-layout">
+
+
+            <!-- ================= SIDEBAR ================= -->
+
+            <aside class="sidebar">
+
+                <h3>
+                    Categorías
+                </h3>
+
+
+                <label class="category-option">
+
+                    <input
+                        type="radio"
+                        name="category"
+                        value="todos"
+                        checked
+                    >
+
+                    Todos los productos
+
+                </label>
+
+
+                <label class="category-option">
+
+                    <input
+                        type="radio"
+                        name="category"
+                        value="puertas"
+                    >
+
+                    Puertas
+
+                </label>
+
+
+                <label class="category-option">
+
+                    <input
+                        type="radio"
+                        name="category"
+                        value="marcos"
+                    >
+
+                    Marcos
+
+                </label>
+
+
+                <label class="category-option">
+
+                    <input
+                        type="radio"
+                        name="category"
+                        value="chapas"
+                    >
+
+                    Chapas
+
+                </label>
+
+
+                <label class="category-option">
+
+                    <input
+                        type="radio"
+                        name="category"
+                        value="ventanas"
+                    >
+
+                    Ventanas
+
+                </label>
+
+
+                <label class="category-option">
+
+                    <input
+                        type="radio"
+                        name="category"
+                        value="canceles"
+                    >
+
+                    Canceles
+
+                </label>
+
+
+                <label class="category-option">
+
+                    <input
+                        type="radio"
+                        name="category"
+                        value="accesorios"
+                    >
+
+                    Accesorios
+
+                </label>
+
+            </aside>
+
+
+
+            <!-- ================= PRODUCTOS ================= -->
+
+            <section class="products-section">
+
+
+                <div class="products-top">
+
+                    <span id="productCount">
+                        9 productos
+                    </span>
+
+
+                    <select id="sortProducts">
+
+                        <option value="default">
+                            Ordenar por
+                        </option>
+
+                        <option value="low">
+                            Precio: menor a mayor
+                        </option>
+
+                        <option value="high">
+                            Precio: mayor a menor
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="products-grid"
+                     id="productsGrid">
+
+
+                    <!-- PRODUCTO 1 -->
+
+                    <article
+                        class="product-card"
+                        data-category="puertas"
+                        data-name="Puerta de aluminio"
+                        data-price="4850"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/puerta.jpg"
+                                alt="Puerta de aluminio"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Puertas
+                            </span>
+
+                            <h2>
+                                Puerta de aluminio
+                            </h2>
+
+                            <p>
+                                Puerta de aluminio con diseño
+                                moderno y resistente.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $4,850 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 2 -->
+
+                    <article
+                        class="product-card"
+                        data-category="ventanas"
+                        data-name="Ventana de aluminio"
+                        data-price="2980"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/ventana.jpg"
+                                alt="Ventana de aluminio"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Ventanas
+                            </span>
+
+                            <h2>
+                                Ventana de aluminio
+                            </h2>
+
+                            <p>
+                                Ventana corrediza de aluminio
+                                para iluminación y ventilación.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $2,980 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 3 -->
+
+                    <article
+                        class="product-card"
+                        data-category="chapas"
+                        data-name="Chapa para puerta"
+                        data-price="680"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/chapa.jpg"
+                                alt="Chapa para puerta"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Chapas
+                            </span>
+
+                            <h2>
+                                Chapa para puerta
+                            </h2>
+
+                            <p>
+                                Chapa de alta seguridad
+                                para puertas.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $680 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 4 -->
+
+                    <article
+                        class="product-card"
+                        data-category="canceles"
+                        data-name="Cancel de baño"
+                        data-price="3950"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/cancel.jpg"
+                                alt="Cancel de baño"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Canceles
+                            </span>
+
+                            <h2>
+                                Cancel de baño
+                            </h2>
+
+                            <p>
+                                Cancel de baño con vidrio
+                                templado y herrajes.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $3,950 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 5 -->
+
+                    <article
+                        class="product-card"
+                        data-category="accesorios"
+                        data-name="Silicón sellador"
+                        data-price="120"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/silicon.jpg"
+                                alt="Silicón sellador"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Accesorios
+                            </span>
+
+                            <h2>
+                                Silicón sellador
+                            </h2>
+
+                            <p>
+                                Sellador para diferentes
+                                aplicaciones de instalación.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $120 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 6 -->
+
+                    <article
+                        class="product-card"
+                        data-category="marcos"
+                        data-name="Marco de aluminio"
+                        data-price="1650"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/marco.jpg"
+                                alt="Marco de aluminio"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Marcos
+                            </span>
+
+                            <h2>
+                                Marco de aluminio
+                            </h2>
+
+                            <p>
+                                Marco resistente para
+                                puertas y ventanas.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $1,650 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 7 -->
+
+                    <article
+                        class="product-card"
+                        data-category="accesorios"
+                        data-name="Jaladera para puerta"
+                        data-price="450"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/jaladera.jpg"
+                                alt="Jaladera para puerta"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Accesorios
+                            </span>
+
+                            <h2>
+                                Jaladera para puerta
+                            </h2>
+
+                            <p>
+                                Jaladera de aluminio
+                                para puertas.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $450 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 8 -->
+
+                    <article
+                        class="product-card"
+                        data-category="accesorios"
+                        data-name="Tornillos y taquetes"
+                        data-price="150"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/tornillos.jpg"
+                                alt="Tornillos y taquetes"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Accesorios
+                            </span>
+
+                            <h2>
+                                Tornillos y taquetes
+                            </h2>
+
+                            <p>
+                                Elementos para instalación
+                                de puertas y ventanas.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $150 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- PRODUCTO 9 -->
+
+                    <article
+                        class="product-card"
+                        data-category="puertas"
+                        data-name="Puerta corrediza"
+                        data-price="6200"
+                    >
+
+                        <div class="product-image">
+
+                            <img
+                                src="img/puerta-corrediza.jpg"
+                                alt="Puerta corrediza"
+                            >
+
+                        </div>
+
+
+                        <div class="product-info">
+
+                            <span class="product-category">
+                                Puertas
+                            </span>
+
+                            <h2>
+                                Puerta corrediza
+                            </h2>
+
+                            <p>
+                                Puerta corrediza de aluminio
+                                para interiores y exteriores.
+                            </p>
+
+
+                            <div class="product-bottom">
+
+                                <div>
+
+                                    <span class="price-label">
+                                        Desde
+                                    </span>
+
+                                    <strong>
+                                        $6,200 MXN
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <a href="index.html#contacto"
+                               class="quote-button">
+
+                                Solicitar cotización
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer class="footer">
+
+    <div class="container footer-bottom">
+
+        <span>
+            © 2026 GAONA. Todos los derechos reservados.
+        </span>
+
+        <span>
+            Puertas · Ventanas · Canceles · Accesorios
+        </span>
+
+    </div>
+
+</footer>
+
+
+<script src="catalogo.js"></script>
+
+</body>
+
+</html>
