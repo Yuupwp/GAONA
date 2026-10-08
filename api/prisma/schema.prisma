@@ -1,0 +1,426 @@
+// =====================================================================
+// GAONA - Sistema de administración (Electron + Node.js + Prisma + PostgreSQL)
+// Flujo: Solicitud -> Visita -> Cotización -> Aprobación y anticipo
+//        -> Pedido -> Agenda -> Instalación/Entrega (firma) -> Factura y cierre
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------
+
+enum EstadoSolicitud {
+  NUEVA
+  EN_REVISION
+  VISITA_PROGRAMADA
+  COTIZADA
+  CANCELADA
+}
+
+enum EstadoCotizacion {
+  BORRADOR
+  ENVIADA
+  APROBADA
+  RECHAZADA
+  VENCIDA
+}
+
+enum EstadoPedido {
+  EN_PROCESO
+  LISTO_PARA_INSTALAR
+  ENTREGADO
+  FACTURADO
+  CERRADO
+  CANCELADO
+}
+
+enum TipoCita {
+  MEDICION
+  ENTREGA
+  INSTALACION
+}
+
+enum EstadoCita {
+  PROGRAMADA
+  REALIZADA
+  CANCELADA
+  REPROGRAMADA
+}
+
+enum TipoConcepto {
+  PRODUCTO
+  MATERIAL
+  MANO_OBRA
+  FLETE
+}
+
+enum TipoPago {
+  ANTICIPO
+  PARCIAL
+  LIQUIDACION
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA
+  OTRO
+}
+
+enum TipoProducto {
+  PRODUCTO
+  MATERIAL
+  HERRAMIENTA
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+enum OrigenSolicitud {
+  WEB
+  ESCRITORIO
+}
+
+// ---------------------------------------------------------------------
+// USUARIOS Y ROLES (personal que usa la app de escritorio)
+// ---------------------------------------------------------------------
+
+model Rol {
+  id       String    @id @default(uuid())
+  nombre   String    @unique // ADMINISTRADOR, EMPLEADO
+  usuarios Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  id            String   @id @default(uuid())
+  idRol         String
+  nombre        String
+  apellido      String
+  usuario       String   @unique
+  passwordHash  String // bcrypt o argon2, nunca texto plano
+  correo        String   @unique
+  telefono      String?
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  rol                  Rol                    @relation(fields: [idRol], references: [id])
+  solicitudesAsignadas Solicitud[]
+  cotizaciones         Cotizacion[]
+  citas                Cita[]
+  pagosRegistrados     Pago[]
+  movimientos          MovimientoInventario[]
+  historialPedidos     HistorialPedido[]
+
+  @@index([idRol])
+  @@map("usuarios")
+}
+
+// ---------------------------------------------------------------------
+// CLIENTES (sin login: solo piden cotización desde la web)
+// ---------------------------------------------------------------------
+
+model Cliente {
+  id            String   @id @default(uuid())
+  nombre        String
+  apellido      String
+  direccion     String?
+  telefono      String
+  correo        String?
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  solicitudes Solicitud[]
+  pedidos     Pedido[]
+
+  @@index([telefono])
+  @@index([correo])
+  @@map("clientes")
+}
+
+// ---------------------------------------------------------------------
+// CATÁLOGO E INVENTARIO (Catálogo + Producto fusionados)
+// ---------------------------------------------------------------------
+
+model Categoria {
+  id        String     @id @default(uuid())
+  nombre    String     @unique // Puertas, Marcos, Chapas, Ventanas, Canceles, Accesorios
+  productos Producto[]
+
+  @@map("categorias")
+}
+
+model Producto {
+  id            String       @id @default(uuid())
+  idCategoria   String
+  tipo          TipoProducto @default(PRODUCTO)
+  nombre        String
+  descripcion   String?
+  precioDesde   Decimal      @db.Decimal(12, 2) // "Desde $X MXN" en la web
+  imagenUrl     String?
+  activo        Boolean      @default(true) // oculta del catálogo sin borrar historial
+  creadoEn      DateTime     @default(now())
+  actualizadoEn DateTime     @updatedAt
+
+  categoria          Categoria           @relation(fields: [idCategoria], references: [id])
+  inventario         Inventario?
+  solicitudDetalles  SolicitudDetalle[]
+  cotizacionDetalles CotizacionDetalle[]
+
+  @@index([idCategoria])
+  @@index([nombre])
+  @@map("productos")
+}
+
+model Inventario {
+  id            String   @id @default(uuid())
+  idProducto    String   @unique
+  existencia    Int      @default(0)
+  minimo        Int      @default(0) // para alertar stock bajo
+  actualizadoEn DateTime @updatedAt
+
+  producto    Producto               @relation(fields: [idProducto], references: [id])
+  movimientos MovimientoInventario[]
+
+  @@map("inventario")
+}
+
+model MovimientoInventario {
+  id           String         @id @default(uuid())
+  idInventario String
+  idUsuario    String
+  idPedido     String? // si la salida corresponde a un pedido
+  tipo         TipoMovimiento
+  cantidad     Int
+  motivo       String?
+  fecha        DateTime       @default(now())
+
+  inventario Inventario @relation(fields: [idInventario], references: [id])
+  usuario    Usuario    @relation(fields: [idUsuario], references: [id])
+  pedido     Pedido?    @relation(fields: [idPedido], references: [id])
+
+  @@index([idInventario])
+  @@index([idPedido])
+  @@map("movimientos_inventario")
+}
+
+// ---------------------------------------------------------------------
+// SOLICITUD (antes "Petición"): lo que llega de la web o se captura en escritorio
+// ---------------------------------------------------------------------
+
+model Solicitud {
+  id                String          @id @default(uuid())
+  idCliente         String
+  idUsuarioAsignado String? // null hasta que un empleado la toma
+  origen            OrigenSolicitud @default(WEB)
+  estado            EstadoSolicitud @default(NUEVA)
+  descripcion       String?
+  creadoEn          DateTime        @default(now())
+  actualizadoEn     DateTime        @updatedAt
+
+  cliente         Cliente            @relation(fields: [idCliente], references: [id])
+  usuarioAsignado Usuario?           @relation(fields: [idUsuarioAsignado], references: [id])
+  detalles        SolicitudDetalle[]
+  citas           Cita[]
+  cotizaciones    Cotizacion[]
+
+  @@index([idCliente])
+  @@index([estado])
+  @@index([idUsuarioAsignado])
+  @@map("solicitudes")
+}
+
+// Una solicitud puede incluir varias puertas/ventanas
+model SolicitudDetalle {
+  id            String  @id @default(uuid())
+  idSolicitud   String
+  idProducto    String
+  cantidad      Int     @default(1)
+  medidasAprox  String? // lo que el cliente estima
+  medidasReales String? // se llenan tras la visita para medir
+  notas         String?
+
+  solicitud Solicitud @relation(fields: [idSolicitud], references: [id], onDelete: Cascade)
+  producto  Producto  @relation(fields: [idProducto], references: [id])
+
+  @@index([idSolicitud])
+  @@index([idProducto])
+  @@map("solicitud_detalles")
+}
+
+// ---------------------------------------------------------------------
+// AGENDA UNIFICADA (visita para medir, entrega, instalación)
+// ---------------------------------------------------------------------
+
+model Cita {
+  id          String     @id @default(uuid())
+  tipo        TipoCita
+  estado      EstadoCita @default(PROGRAMADA)
+  idUsuario   String // empleado responsable
+  idSolicitud String? // citas de MEDICION
+  idPedido    String? // citas de ENTREGA / INSTALACION
+  inicio      DateTime
+  fin         DateTime
+  direccion   String?
+  notas       String?
+  creadoEn    DateTime   @default(now())
+
+  usuario   Usuario    @relation(fields: [idUsuario], references: [id])
+  solicitud Solicitud? @relation(fields: [idSolicitud], references: [id])
+  pedido    Pedido?    @relation(fields: [idPedido], references: [id])
+
+  @@index([idUsuario, inicio, fin])
+  @@index([idSolicitud])
+  @@index([idPedido])
+  @@map("citas")
+}
+
+// ---------------------------------------------------------------------
+// COTIZACIÓN
+// ---------------------------------------------------------------------
+
+model Cotizacion {
+  id                String           @id @default(uuid())
+  idSolicitud       String
+  idUsuario         String
+  estado            EstadoCotizacion @default(BORRADOR)
+  subtotal          Decimal          @default(0) @db.Decimal(12, 2)
+  iva               Decimal          @default(0) @db.Decimal(12, 2)
+  total             Decimal          @default(0) @db.Decimal(12, 2)
+  anticipoRequerido Decimal?         @db.Decimal(12, 2)
+  vigenciaHasta     DateTime?
+  fechaAprobacion   DateTime?
+  pdfUrl            String? // ruta del PDF guardado en el equipo
+  creadoEn          DateTime         @default(now())
+  actualizadoEn     DateTime         @updatedAt
+
+  solicitud Solicitud           @relation(fields: [idSolicitud], references: [id])
+  usuario   Usuario             @relation(fields: [idUsuario], references: [id])
+  detalles  CotizacionDetalle[]
+  pedido    Pedido?
+
+  @@index([idSolicitud])
+  @@index([estado])
+  @@map("cotizaciones")
+}
+
+// Materiales, mano de obra y fletes además de productos
+model CotizacionDetalle {
+  id             String       @id @default(uuid())
+  idCotizacion   String
+  idProducto     String? // null para mano de obra o flete
+  concepto       TipoConcepto @default(PRODUCTO)
+  descripcion    String
+  cantidad       Decimal      @default(1) @db.Decimal(10, 2)
+  precioUnitario Decimal      @db.Decimal(12, 2)
+  subtotal       Decimal      @db.Decimal(12, 2)
+  medidas        String?
+
+  cotizacion Cotizacion @relation(fields: [idCotizacion], references: [id], onDelete: Cascade)
+  producto   Producto?  @relation(fields: [idProducto], references: [id])
+
+  @@index([idCotizacion])
+  @@map("cotizacion_detalles")
+}
+
+// ---------------------------------------------------------------------
+// PEDIDO (solo existe cuando la cotización fue aprobada)
+// ---------------------------------------------------------------------
+
+model Pedido {
+  id            String       @id @default(uuid())
+  idCotizacion  String       @unique // 1 cotización aprobada -> 1 pedido
+  idCliente     String
+  estado        EstadoPedido @default(EN_PROCESO)
+  total         Decimal      @db.Decimal(12, 2) // copia congelada de la cotización
+  creadoEn      DateTime     @default(now())
+  actualizadoEn DateTime     @updatedAt
+
+  cotizacion  Cotizacion             @relation(fields: [idCotizacion], references: [id])
+  cliente     Cliente                @relation(fields: [idCliente], references: [id])
+  pagos       Pago[]
+  citas       Cita[]
+  entrega     Entrega?
+  factura     Factura?
+  historial   HistorialPedido[]
+  movimientos MovimientoInventario[]
+
+  @@index([idCliente])
+  @@index([estado])
+  @@map("pedidos")
+}
+
+// Saldo pendiente = Pedido.total - SUM(Pago.monto)  (se calcula, no se guarda)
+model Pago {
+  id         String     @id @default(uuid())
+  idPedido   String
+  idUsuario  String
+  tipo       TipoPago
+  metodo     MetodoPago
+  monto      Decimal    @db.Decimal(12, 2)
+  referencia String?
+  fecha      DateTime   @default(now())
+
+  pedido  Pedido  @relation(fields: [idPedido], references: [id])
+  usuario Usuario @relation(fields: [idUsuario], references: [id])
+
+  @@index([idPedido])
+  @@map("pagos")
+}
+
+// Cierre de la instalación con validación del cliente
+model Entrega {
+  id            String    @id @default(uuid())
+  idPedido      String    @unique
+  firmaUrl      String? // imagen de la firma o su ruta
+  nombreRecibe  String?
+  fechaFirma    DateTime?
+  observaciones String?
+
+  pedido Pedido @relation(fields: [idPedido], references: [id])
+
+  @@map("entregas")
+}
+
+model Factura {
+  id         String   @id @default(uuid())
+  idPedido   String   @unique
+  folio      String   @unique
+  monto      Decimal  @db.Decimal(12, 2)
+  fecha      DateTime @default(now())
+  archivoUrl String?
+
+  pedido Pedido @relation(fields: [idPedido], references: [id])
+
+  @@map("facturas")
+}
+
+// Auditoría: quién cambió el estado y cuándo
+model HistorialPedido {
+  id             String        @id @default(uuid())
+  idPedido       String
+  idUsuario      String
+  estadoAnterior EstadoPedido?
+  estadoNuevo    EstadoPedido
+  fecha          DateTime      @default(now())
+
+  pedido  Pedido  @relation(fields: [idPedido], references: [id])
+  usuario Usuario @relation(fields: [idUsuario], references: [id])
+
+  @@index([idPedido])
+  @@map("historial_pedidos")
+}
