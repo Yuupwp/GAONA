@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Cotización | GAONA</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+</head>
+
+
+<body>
+
+
+<!-- ================= HEADER ================= -->
+
+<header class="header">
+
+    <div class="container nav">
+
+        <a href="Inicio.html" class="logo">
+
+            <span class="logo-icon">G</span>
+
+            <span>GAONA</span>
+
+        </a>
+
+
+        <nav class="menu">
+
+            <a href="Inicio.html">
+                Inicio
+            </a>
+
+            <a href="Catalogo.html">
+                Catálogo
+            </a>
+
+            <a href="Inicio.html#nosotros">
+                Nosotros
+            </a>
+
+            <a href="Inicio.html#contacto">
+                Contacto
+            </a>
+
+        </nav>
+
+
+        <a href="Catalogo.html"
+           class="btn btn-primary">
+
+            Ver catálogo
+
+        </a>
+
+    </div>
+
+</header>
+
+
+
+<!-- ================= COTIZACIÓN ================= -->
+
+<main class="quote">
+
+    <div class="container">
+
+
+        <!-- ENCABEZADO -->
+
+        <div class="quote-header">
+
+            <span class="small-title orange">
+                SOLICITA TU COTIZACIÓN
+            </span>
+
+            <h1>
+                Cotización
+            </h1>
+
+            <p>
+                Elige los productos que necesitas y déjanos tus datos.
+                Te contactamos para confirmar medidas y precio final.
+            </p>
+
+        </div>
+
+
+
+        <!-- MENSAJE DE ÉXITO (se muestra al enviar) -->
+
+        <div class="quote-success" id="quoteSuccess" hidden>
+
+            <span class="quote-success-icon">✓</span>
+
+            <h2>
+                ¡Solicitud enviada!
+            </h2>
+
+            <p>
+                Recibimos tu solicitud. Un asesor de GAONA se comunicará
+                contigo para agendar la visita de medición.
+            </p>
+
+            <p class="quote-folio" id="quoteFolio"></p>
+
+            <a href="Catalogo.html" class="btn btn-primary">
+                Volver al catálogo
+            </a>
+
+        </div>
+
+
+
+        <!-- FORMULARIO -->
+
+        <form class="quote-layout" id="quoteForm" novalidate>
+
+
+            <!-- ================= DATOS ================= -->
+
+            <div class="quote-main">
+
+
+                <!-- PRODUCTOS -->
+
+                <section class="quote-card">
+
+                    <div class="quote-card-title">
+
+                        <h3>
+                            1. Productos
+                        </h3>
+
+                        <span id="itemCount"></span>
+
+                    </div>
+
+
+                    <div class="quote-items" id="quoteItems">
+
+                        <p class="products-message">Cargando productos...</p>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="quote-add"
+                            id="addItem"
+                            disabled>
+
+                        + Agregar otro producto
+
+                    </button>
+
+                </section>
+
+
+
+                <!-- CLIENTE -->
+
+                <section class="quote-card">
+
+                    <div class="quote-card-title">
+
+                        <h3>
+                            2. Tus datos
+                        </h3>
+
+                    </div>
+
+
+                    <div class="quote-fields">
+
+                        <label class="quote-field">
+
+                            <span>Nombre *</span>
+
+                            <input type="text"
+                                   name="nombre"
+                                   autocomplete="given-name"
+                                   maxlength="100"
+                                   required>
+
+                        </label>
+
+
+                        <label class="quote-field">
+
+                            <span>Apellido *</span>
+
+                            <input type="text"
+                                   name="apellido"
+                                   autocomplete="family-name"
+                                   maxlength="100"
+                                   required>
+
+                        </label>
+
+
+                        <label class="quote-field">
+
+                            <span>Teléfono *</span>
+
+                            <input type="tel"
+                                   name="telefono"
+                                   autocomplete="tel"
+                                   placeholder="81 1234 5678"
+                                   maxlength="20"
+                                   required>
+
+                        </label>
+
+
+                        <label class="quote-field">
+
+                            <span>Correo</span>
+
+                            <input type="email"
+                                   name="correo"
+                                   autocomplete="email"
+                                   maxlength="150">
+
+                        </label>
+
+
+                        <label class="quote-field quote-field-full">
+
+                            <span>Dirección de la obra</span>
+
+                            <input type="text"
+                                   name="direccion"
+                                   autocomplete="street-address"
+                                   placeholder="Calle, número, colonia y municipio"
+                                   maxlength="250">
+
+                        </label>
+
+
+                        <label class="quote-field quote-field-full">
+
+                            <span>Comentarios</span>
+
+                            <textarea name="descripcion"
+                                      rows="4"
+                                      maxlength="1000"
+                                      placeholder="Cuéntanos sobre tu proyecto: tipo de acabado, color, si es reemplazo u obra nueva..."></textarea>
+
+                        </label>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+
+            <!-- ================= RESUMEN ================= -->
+
+            <aside class="quote-summary">
+
+                <h3>
+                    Resumen
+                </h3>
+
+
+                <ul class="summary-list" id="summaryList">
+
+                    <li class="summary-empty">
+                        Aún no eliges productos.
+                    </li>
+
+                </ul>
+
+
+                <div class="summary-row">
+
+                    <span>Subtotal</span>
+
+                    <span id="summarySubtotal">$0 MXN</span>
+
+                </div>
+
+
+                <div class="summary-row">
+
+                    <span>IVA (16%)</span>
+
+                    <span id="summaryIva">$0 MXN</span>
+
+                </div>
+
+
+                <div class="summary-total">
+
+                    <span class="price-label">Total estimado desde</span>
+
+                    <strong id="summaryTotal">$0 MXN</strong>
+
+                </div>
+
+
+                <p class="summary-note">
+                    Precio de referencia. El monto final se confirma
+                    después de la visita de medición.
+                </p>
+
+
+                <p class="quote-error" id="quoteError" role="alert" hidden></p>
+
+
+                <button type="submit"
+                        class="quote-button"
+                        id="submitQuote">
+
+                    Enviar solicitud
+
+                </button>
+
+            </aside>
+
+        </form>
+
+    </div>
+
+</main>
+
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer class="footer footer-compact">
+
+    <div class="container footer-bottom">
+
+        <span>
+            © 2026 GAONA. Todos los derechos reservados.
+        </span>
+
+        <span>
+            Puertas · Ventanas · Canceles · Accesorios
+        </span>
+
+    </div>
+
+</footer>
+
+
+<script src="config.js"></script>
+<script src="cotizacion.js"></script>
+
+</body>
+
+</html>

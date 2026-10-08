@@ -87,9 +87,9 @@ function createCard(product) {
     bottom.appendChild(priceBox);
     info.appendChild(bottom);
 
-    // Botón: lleva a la pantalla de solicitud con el producto elegido
+    // Botón: lleva a la pantalla de cotización con el producto elegido
     const quote = createElement("a", "quote-button", "Solicitar cotización");
-    quote.href = `solicitar.html?producto=${encodeURIComponent(product.id)}`;
+    quote.href = `cotizacion.html?producto=${encodeURIComponent(product.id)}`;
     info.appendChild(quote);
 
     card.append(imageBox, info);
