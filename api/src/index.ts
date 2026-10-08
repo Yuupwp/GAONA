@@ -14,10 +14,17 @@ app.get("/salud", (_req, res) => {
 app.get("/productos", async (_req, res) => {
   try {
     const productos = await prisma.producto.findMany({
-      where: { activo: true },
-      include: { categoria: true },
-      orderBy: { nombre: "asc" },
-    });
+  where: { activo: true, tipo: "PRODUCTO" },
+  select: {
+    id: true,
+    nombre: true,
+    descripcion: true,
+    precioDesde: true,
+    imagenUrl: true,
+    categoria: { select: { nombre: true } },
+  },
+  orderBy: { nombre: "asc" },
+});
     res.json(productos);
   } catch (error) {
     console.error(error);

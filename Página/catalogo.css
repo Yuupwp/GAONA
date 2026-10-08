@@ -638,4 +638,13 @@ a {
         gap: 10px;
     }
 
+    .products-message {
+    grid-column: 1 / -1;
+    padding: 40px 0;
+    text-align: center;
+    color: var(--gray);
+    font-size: 14px;
 }
+
+}
+
