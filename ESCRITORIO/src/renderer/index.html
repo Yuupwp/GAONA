@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>GAONA</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- LOGIN -->
+
+    <main id="login-screen" class="login-screen">
+
+        <section class="login-card">
+
+            <!-- LOGO -->
+
+            <div class="logo-container">
+
+                <div class="logo">
+                    G
+                </div>
+
+                <h1>GAONA</h1>
+
+            </div>
+
+
+            <!-- FORMULARIO -->
+
+            <form id="login-form">
+
+                <div class="input-group">
+
+                    <label for="username">
+                        Nombre
+                    </label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder="Ingresa tu nombre"
+                        autocomplete="username"
+                    >
+
+                    <span id="username-error" class="input-error"></span>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="password">
+                        Contraseña
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Ingresa tu contraseña"
+                        autocomplete="current-password"
+                    >
+
+                    <span id="password-error" class="input-error"></span>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+                    Iniciar sesión
+                </button>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <!-- INTERFAZ PRINCIPAL -->
+
+    <main
+        id="main-screen"
+        class="main-screen hidden"
+    >
+
+        <!-- ==============================
+            SIDEBAR
+        =============================== -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-logo">
+
+                <div class="sidebar-logo-icon">
+                    G
+                </div>
+
+                <span>GAONA</span>
+
+            </div>
+
+
+            <div class="sidebar-divider"></div>
+
+
+            <nav class="sidebar-menu">
+
+                <button class="menu-item active" data-section="inicio">
+                    <span class="menu-icon">⌂</span>
+                    <span>Inicio</span>
+                </button>
+
+
+                <button class="menu-item" data-section="clientes">
+                    <span class="menu-icon">♙</span>
+                    <span>Clientes</span>
+                </button>
+
+
+                <button class="menu-item" data-section="cotizaciones">
+                    <span class="menu-icon">$</span>
+                    <span>Cotizaciones</span>
+                </button>
+
+
+                <button class="menu-item" data-section="finanzas">
+                    <span class="menu-icon">◷</span>
+                    <span>Finanzas</span>
+                </button>
+
+
+                <button class="menu-item" data-section="pedidos">
+                    <span class="menu-icon">▤</span>
+                    <span>Pedidos</span>
+                </button>
+
+
+                <button class="menu-item" data-section="agenda">
+                    <span class="menu-icon">◫</span>
+                    <span>Agenda</span>
+                </button>
+
+
+                <button class="menu-item" data-section="inventario">
+                    <span class="menu-icon">▦</span>
+                    <span>Inventario</span>
+                </button>
+
+
+                <button class="menu-item" data-section="empleados">
+                    <span class="menu-icon">⚙</span>
+                    <span>Empleados</span>
+                </button>
+
+            </nav>
+
+
+            <div class="sidebar-bottom">
+
+                <div class="sidebar-divider"></div>
+
+                <button
+                    class="menu-item"
+                    data-section="cuenta"
+                >
+                    <span class="menu-icon">◉</span>
+                    <span>Mi cuenta</span>
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- ==============================
+            CONTENIDO
+        =============================== -->
+
+        <section class="main-area">
+
+            <header class="main-header">
+
+                <div>
+
+                    <p class="header-small">
+                        Panel principal
+                    </p>
+
+                    <h1 id="section-title">
+                        Inicio
+                    </h1>
+
+                </div>
+
+
+                <div class="user-info">
+
+                    <div class="user-avatar">
+                        JP
+                    </div>
+
+                    <div class="user-data">
+
+                        <strong>Usuario</strong>
+
+                        <span>Administrador</span>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <div class="content-area">
+
+
+                <!-- DASHBOARD -->
+
+                <section
+                    id="inicio-section"
+                    class="dashboard-section"
+                >
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <h2>Pedidos pendientes</h2>
+
+                            <p>
+                                Pedidos que requieren atención.
+                            </p>
+
+                        </div>
+
+                        <button class="btn-primary dashboard-button">
+                            Ver todos
+                        </button>
+
+                    </div>
+
+
+                    <div class="orders-card">
+
+                        <div class="orders-header">
+
+                            <span>Pedido</span>
+                            <span>Cliente</span>
+                            <span>Fecha</span>
+                            <span>Estado</span>
+
+                        </div>
+
+
+                        <div class="order-row">
+
+                            <span class="order-number">
+                                #0001
+                            </span>
+
+                            <span>
+                                Sin pedidos registrados
+                            </span>
+
+                            <span>
+                                —
+                            </span>
+
+                            <span class="status pending">
+                                Pendiente
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- SECCIONES TEMPORALES -->
+
+                <section
+                    id="clientes-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Clientes</h2>
+                    <p>Gestión de clientes.</p>
+                </section>
+
+
+                <section
+                    id="cotizaciones-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Cotizaciones</h2>
+                    <p>Gestión de cotizaciones.</p>
+                </section>
+
+
+                <section
+                    id="finanzas-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Finanzas</h2>
+                    <p>Gestión financiera.</p>
+                </section>
+
+
+                <section
+                    id="pedidos-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Pedidos</h2>
+                    <p>Gestión de pedidos.</p>
+                </section>
+
+
+                <section
+                    id="agenda-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Agenda</h2>
+                    <p>Agenda de trabajo.</p>
+                </section>
+
+
+                <section
+                    id="inventario-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Inventario</h2>
+                    <p>Gestión de inventario.</p>
+                </section>
+
+
+                <section
+                    id="empleados-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Empleados</h2>
+                    <p>Gestión de empleados.</p>
+                </section>
+
+
+                <section
+                    id="cuenta-section"
+                    class="empty-section hidden"
+                >
+                    <h2>Mi cuenta</h2>
+                    <p>
+                        Desde aquí podrás modificar la información
+                        de tu cuenta y contraseña.
+                    </p>
+                </section>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="../../dist/renderer/renderer.js"></script>
+
+</body>
+
+</html>
