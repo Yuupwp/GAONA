@@ -12,6 +12,7 @@
     <title>GAONA</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="clientes.css">
 </head>
 
 <body>
@@ -293,14 +294,178 @@
 
                 <!-- SECCIONES TEMPORALES -->
 
-                <section
+                <!-- Reemplaza TODO el bloque <section id="clientes-section"> ... </section> de index.html por este -->
+<section
                     id="clientes-section"
-                    class="empty-section hidden"
+                    class="empty-section clientes-section hidden"
                 >
-                    <h2>Clientes</h2>
-                    <p>Gestión de clientes.</p>
-                </section>
 
+                    <!-- LISTA -->
+
+                    <div id="cl-vista-lista">
+
+                        <div class="cl-head">
+                            <div>
+                                <h2>Clientes</h2>
+                                <span class="cl-subtitle">
+                                    Administra los datos de contacto de tus clientes.
+                                </span>
+                            </div>
+
+                            <button id="cl-nuevo" class="cl-btn cl-btn-primary" type="button">
+                                + Nuevo cliente
+                            </button>
+                        </div>
+
+                        <div id="cl-banner" class="cl-banner hidden">
+                            <strong id="cl-banner-texto"></strong>
+                            <button id="cl-ver-solicitudes" class="cl-btn cl-btn-light" type="button">
+                                Ver solicitudes
+                            </button>
+                        </div>
+
+                        <div class="cl-stats">
+                            <div class="cl-stat">
+                                <span>Total de clientes</span>
+                                <strong id="cl-stat-total">0</strong>
+                            </div>
+                            <div class="cl-stat">
+                                <span>Con saldo pendiente</span>
+                                <strong id="cl-stat-saldo">0</strong>
+                            </div>
+                            <div class="cl-stat">
+                                <span>Solicitudes nuevas</span>
+                                <strong id="cl-stat-nuevas" class="cl-accent">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="cl-toolbar">
+                            <input
+                                id="cl-buscar"
+                                class="cl-search"
+                                type="search"
+                                placeholder="Buscar por nombre, teléfono o correo..."
+                                autocomplete="off"
+                            >
+
+                            <div class="cl-chips" id="cl-chips">
+                                <button type="button" class="cl-chip active" data-filtro="todos">Todos</button>
+                                <button type="button" class="cl-chip" data-filtro="nueva">Solicitud nueva</button>
+                                <button type="button" class="cl-chip" data-filtro="saldo">Con saldo pendiente</button>
+                                <button type="button" class="cl-chip" data-filtro="pedido">Con pedido activo</button>
+                            </div>
+                        </div>
+
+                        <div class="cl-card">
+                            <div class="cl-row cl-row-head">
+                                <span>Cliente</span>
+                                <span>Teléfono</span>
+                                <span>Correo</span>
+                                <span>Dirección</span>
+                                <span>Pedidos</span>
+                                <span>Saldo pendiente</span>
+                                <span>Acciones</span>
+                            </div>
+
+                            <div id="cl-filas"></div>
+
+                            <div class="cl-footer">
+                                <span id="cl-contador"></span>
+                                <div id="cl-paginacion" class="cl-pages"></div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- DETALLE -->
+
+                    <div id="cl-vista-detalle" class="hidden"></div>
+
+
+                    <!-- MODAL: NUEVO / EDITAR -->
+
+                    <div id="cl-modal" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true" aria-labelledby="cl-modal-titulo">
+
+                            <div class="cl-modal-head">
+                                <div>
+                                    <h3 id="cl-modal-titulo">Nuevo cliente</h3>
+                                    <span class="cl-subtitle">Los campos con * son obligatorios.</span>
+                                </div>
+                                <button id="cl-modal-cerrar" class="cl-close" type="button" aria-label="Cerrar">×</button>
+                            </div>
+
+                            <form id="cl-form" novalidate>
+
+                                <div class="cl-form-grid">
+                                    <div class="cl-field">
+                                        <label for="cl-f-nombre">Nombre*</label>
+                                        <input id="cl-f-nombre" type="text" placeholder="Ej. Roberto" maxlength="100" autocomplete="off">
+                                        <span class="cl-error" id="cl-e-nombre"></span>
+                                    </div>
+
+                                    <div class="cl-field">
+                                        <label for="cl-f-apellido">Apellido*</label>
+                                        <input id="cl-f-apellido" type="text" placeholder="Ej. Garza Treviño" maxlength="100" autocomplete="off">
+                                        <span class="cl-error" id="cl-e-apellido"></span>
+                                    </div>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="cl-f-telefono">Teléfono*</label>
+                                    <input id="cl-f-telefono" type="tel" placeholder="81 5550 0101" maxlength="20" autocomplete="off">
+                                    <span class="cl-hint">10 dígitos, se usará para enviar la cotización por WhatsApp</span>
+                                    <span class="cl-error" id="cl-e-telefono"></span>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="cl-f-correo">Correo electrónico (opcional)</label>
+                                    <input id="cl-f-correo" type="email" placeholder="cliente@correo.mx" maxlength="150" autocomplete="off">
+                                    <span class="cl-error" id="cl-e-correo"></span>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="cl-f-direccion">Dirección</label>
+                                    <textarea id="cl-f-direccion" rows="3" placeholder="Av. Benito Juárez 1450, Col. Centro, Guadalupe" maxlength="250"></textarea>
+                                    <span class="cl-hint">Calle, número, colonia y municipio</span>
+                                    <span class="cl-error" id="cl-e-direccion"></span>
+                                </div>
+
+                                <div class="cl-form-error hidden" id="cl-form-error"></div>
+
+                                <div class="cl-modal-actions">
+                                    <button id="cl-form-cancelar" class="cl-btn cl-btn-outline" type="button">Cancelar</button>
+                                    <button id="cl-form-guardar" class="cl-btn cl-btn-primary" type="submit">Guardar cliente</button>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL: CONFIRMAR ELIMINAR -->
+
+                    <div id="cl-confirm" class="cl-overlay hidden">
+                        <div class="cl-modal cl-modal-small" role="alertdialog" aria-modal="true">
+                            <div class="cl-alert-icon">!</div>
+                            <h3 id="cl-confirm-titulo"></h3>
+                            <span class="cl-subtitle">
+                                Esta acción no se puede deshacer. Se borrarán sus datos de contacto y solicitudes.
+                            </span>
+                            <div class="cl-modal-actions">
+                                <button id="cl-confirm-cancelar" class="cl-btn cl-btn-outline" type="button">Cancelar</button>
+                                <button id="cl-confirm-eliminar" class="cl-btn cl-btn-danger" type="button">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- AVISOS -->
+
+                    <div id="cl-toast" class="cl-toast hidden" role="status"></div>
+
+                </section>
 
                 <section
                     id="cotizaciones-section"
@@ -375,6 +540,7 @@
 
 
     <script src="../../dist/renderer/renderer.js"></script>
+      <script src="../../dist/renderer/clientes.js"></script>
 
 </body>
 

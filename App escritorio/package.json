@@ -1,7 +1,7 @@
 {
-  "name": "mi-aplicacion",
+  "name": "gaona",
   "version": "1.0.0",
-  "description": "",
+  "description": "App de escritorio GAONA",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
@@ -11,8 +11,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "...",
-    "electron": "...",
-    "typescript": "..."
+    "@types/node": "^26.6.4",
+    "electron": "^44.6.0",
+    "typescript": "^7.0.2"
   }
 }
