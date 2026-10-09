@@ -3,10 +3,12 @@ import express from "express";
 import cors from "cors";
 import { z } from "zod";
 import { prisma } from "./lib/prisma";
+import { clientesRouter } from "./clientes";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/clientes", clientesRouter);
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });
@@ -35,7 +37,6 @@ app.get("/productos", async (_req, res) => {
 
 // Solicitud de cotización enviada desde la página (cotizacion.html).
 // Crea el cliente, la solicitud (origen WEB) y un detalle por producto.
-// Los precios no se reciben: la cotización formal la arma un empleado.
 const solicitudSchema = z.object({
   cliente: z.object({
     nombre: z.string().trim().min(1).max(100),

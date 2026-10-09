@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import path from "path";
 
 let mainWindow: BrowserWindow;
@@ -15,6 +15,12 @@ function createWindow() {
         }
     });
 
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith("https://wa.me/")) {
+        shell.openExternal(url);
+    }
+    return { action: "deny" };
+});
     mainWindow.loadFile(
         path.join(__dirname, "../src/renderer/index.html")
     )
