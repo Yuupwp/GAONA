@@ -13,6 +13,7 @@
 
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="clientes.css">
+    <link rel="stylesheet" href="calendario.css">
 </head>
 
 <body>
@@ -295,7 +296,7 @@
                 <!-- SECCIONES TEMPORALES -->
 
                 <!-- Reemplaza TODO el bloque <section id="clientes-section"> ... </section> de index.html por este -->
-<section
+                <section
                     id="clientes-section"
                     class="empty-section clientes-section hidden"
                 >
@@ -494,13 +495,78 @@
                 </section>
 
 
-                <section
-                    id="agenda-section"
-                    class="empty-section hidden"
-                >
-                    <h2>Agenda</h2>
-                    <p>Agenda de trabajo.</p>
-                </section>
+                
+<section id="agenda-section" class="empty-section hidden agenda-section">
+
+    <div class="agenda-header">
+        <div>
+            <h2>Agenda de trabajo</h2>
+            <p>Organiza las visitas, mediciones e instalaciones.</p>
+        </div>
+
+        <button type="button" id="agenda-hoy" class="agenda-btn agenda-btn-light">
+            Hoy
+        </button>
+    </div>
+
+    <div class="agenda-layout">
+
+        <!-- CALENDARIO -->
+        <div class="agenda-calendar">
+
+            <div class="agenda-calendar-header">
+                <div>
+                    <span class="agenda-label">CALENDARIO</span>
+                    <h3 id="agenda-mes-titulo">Octubre 2026</h3>
+                </div>
+
+                <div class="agenda-navigation">
+                    <button type="button" id="agenda-anterior" aria-label="Mes anterior">‹</button>
+                    <button type="button" id="agenda-siguiente" aria-label="Mes siguiente">›</button>
+                </div>
+            </div>
+
+            <div class="agenda-weekdays">
+                <span>Lun</span>
+                <span>Mar</span>
+                <span>Mié</span>
+                <span>Jue</span>
+                <span>Vie</span>
+                <span>Sáb</span>
+                <span>Dom</span>
+            </div>
+
+            <div id="agenda-dias" class="agenda-days"></div>
+
+            <div class="agenda-legend">
+                <span><i class="agenda-dot visita"></i> Visita para medir</span>
+                <span><i class="agenda-dot instalacion"></i> Instalación</span>
+            </div>
+
+        </div>
+
+        <!-- PANEL LATERAL -->
+        <aside class="agenda-details">
+
+            <div class="agenda-details-header">
+                <span class="agenda-label">PROGRAMACIÓN</span>
+                <h3 id="agenda-fecha-seleccionada">Selecciona un día</h3>
+                <p id="agenda-total-eventos">Consulta tus actividades programadas.</p>
+            </div>
+
+            <div id="agenda-lista-eventos" class="agenda-events">
+                <div class="agenda-empty">
+                    <div class="agenda-empty-icon">▦</div>
+                    <strong>Selecciona una fecha</strong>
+                    <p>Aquí podrás consultar las visitas e instalaciones del día.</p>
+                </div>
+            </div>
+
+        </aside>
+
+    </div>
+
+</section>
 
 
                 <section
@@ -538,9 +604,11 @@
 
     </main>
 
-
+    
     <script src="../../dist/renderer/renderer.js"></script>
       <script src="../../dist/renderer/clientes.js"></script>
+      <script src="../../dist/renderer/calendario.js"></script>
+
 
 </body>
 

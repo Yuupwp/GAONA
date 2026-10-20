@@ -1,3 +1,7 @@
+.hidden {
+    display: none !important;
+}
+
 .empty-section.clientes-section {
     padding: 0;
 }
