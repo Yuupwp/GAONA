@@ -4,16 +4,15 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>GAONA</title>
 
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="clientes.css">
     <link rel="stylesheet" href="calendario.css">
+    <link rel="stylesheet" href="producto.css">
+    <link rel="stylesheet" href="empleado.css">
 </head>
 
 <body>
@@ -47,12 +46,7 @@
                         Nombre
                     </label>
 
-                    <input
-                        type="text"
-                        id="username"
-                        placeholder="Ingresa tu nombre"
-                        autocomplete="username"
-                    >
+                    <input type="text" id="username" placeholder="Ingresa tu nombre" autocomplete="username">
 
                     <span id="username-error" class="input-error"></span>
 
@@ -65,22 +59,15 @@
                         Contraseña
                     </label>
 
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder="Ingresa tu contraseña"
-                        autocomplete="current-password"
-                    >
+                    <input type="password" id="password" placeholder="Ingresa tu contraseña"
+                        autocomplete="current-password">
 
                     <span id="password-error" class="input-error"></span>
 
                 </div>
 
 
-                <button
-                    type="submit"
-                    class="login-button"
-                >
+                <button type="submit" class="login-button">
                     Iniciar sesión
                 </button>
 
@@ -93,10 +80,7 @@
 
     <!-- INTERFAZ PRINCIPAL -->
 
-    <main
-        id="main-screen"
-        class="main-screen hidden"
-    >
+    <main id="main-screen" class="main-screen hidden">
 
         <!-- ==============================
             SIDEBAR
@@ -174,10 +158,7 @@
 
                 <div class="sidebar-divider"></div>
 
-                <button
-                    class="menu-item"
-                    data-section="cuenta"
-                >
+                <button class="menu-item" data-section="cuenta">
                     <span class="menu-icon">◉</span>
                     <span>Mi cuenta</span>
                 </button>
@@ -232,10 +213,7 @@
 
                 <!-- DASHBOARD -->
 
-                <section
-                    id="inicio-section"
-                    class="dashboard-section"
-                >
+                <section id="inicio-section" class="dashboard-section">
 
                     <div class="section-heading">
 
@@ -296,10 +274,7 @@
                 <!-- SECCIONES TEMPORALES -->
 
                 <!-- Reemplaza TODO el bloque <section id="clientes-section"> ... </section> de index.html por este -->
-                <section
-                    id="clientes-section"
-                    class="empty-section clientes-section hidden"
-                >
+                <section id="clientes-section" class="empty-section clientes-section hidden">
 
                     <!-- LISTA -->
 
@@ -341,13 +316,8 @@
                         </div>
 
                         <div class="cl-toolbar">
-                            <input
-                                id="cl-buscar"
-                                class="cl-search"
-                                type="search"
-                                placeholder="Buscar por nombre, teléfono o correo..."
-                                autocomplete="off"
-                            >
+                            <input id="cl-buscar" class="cl-search" type="search"
+                                placeholder="Buscar por nombre, teléfono o correo..." autocomplete="off">
 
                             <div class="cl-chips" id="cl-chips">
                                 <button type="button" class="cl-chip active" data-filtro="todos">Todos</button>
@@ -394,7 +364,8 @@
                                     <h3 id="cl-modal-titulo">Nuevo cliente</h3>
                                     <span class="cl-subtitle">Los campos con * son obligatorios.</span>
                                 </div>
-                                <button id="cl-modal-cerrar" class="cl-close" type="button" aria-label="Cerrar">×</button>
+                                <button id="cl-modal-cerrar" class="cl-close" type="button"
+                                    aria-label="Cerrar">×</button>
                             </div>
 
                             <form id="cl-form" novalidate>
@@ -402,33 +373,40 @@
                                 <div class="cl-form-grid">
                                     <div class="cl-field">
                                         <label for="cl-f-nombre">Nombre*</label>
-                                        <input id="cl-f-nombre" type="text" placeholder="Ej. Roberto" maxlength="100" autocomplete="off">
+                                        <input id="cl-f-nombre" type="text" placeholder="Ej. Roberto" maxlength="100"
+                                            autocomplete="off">
                                         <span class="cl-error" id="cl-e-nombre"></span>
                                     </div>
 
                                     <div class="cl-field">
                                         <label for="cl-f-apellido">Apellido*</label>
-                                        <input id="cl-f-apellido" type="text" placeholder="Ej. Garza Treviño" maxlength="100" autocomplete="off">
+                                        <input id="cl-f-apellido" type="text" placeholder="Ej. Garza Treviño"
+                                            maxlength="100" autocomplete="off">
                                         <span class="cl-error" id="cl-e-apellido"></span>
                                     </div>
                                 </div>
 
                                 <div class="cl-field">
                                     <label for="cl-f-telefono">Teléfono*</label>
-                                    <input id="cl-f-telefono" type="tel" placeholder="81 5550 0101" maxlength="20" autocomplete="off">
-                                    <span class="cl-hint">10 dígitos, se usará para enviar la cotización por WhatsApp</span>
+                                    <input id="cl-f-telefono" type="tel" placeholder="81 5550 0101" maxlength="20"
+                                        autocomplete="off">
+                                    <span class="cl-hint">10 dígitos, se usará para enviar la cotización por
+                                        WhatsApp</span>
                                     <span class="cl-error" id="cl-e-telefono"></span>
                                 </div>
 
                                 <div class="cl-field">
                                     <label for="cl-f-correo">Correo electrónico (opcional)</label>
-                                    <input id="cl-f-correo" type="email" placeholder="cliente@correo.mx" maxlength="150" autocomplete="off">
+                                    <input id="cl-f-correo" type="email" placeholder="cliente@correo.mx" maxlength="150"
+                                        autocomplete="off">
                                     <span class="cl-error" id="cl-e-correo"></span>
                                 </div>
 
                                 <div class="cl-field">
                                     <label for="cl-f-direccion">Dirección</label>
-                                    <textarea id="cl-f-direccion" rows="3" placeholder="Av. Benito Juárez 1450, Col. Centro, Guadalupe" maxlength="250"></textarea>
+                                    <textarea id="cl-f-direccion" rows="3"
+                                        placeholder="Av. Benito Juárez 1450, Col. Centro, Guadalupe"
+                                        maxlength="250"></textarea>
                                     <span class="cl-hint">Calle, número, colonia y municipio</span>
                                     <span class="cl-error" id="cl-e-direccion"></span>
                                 </div>
@@ -436,8 +414,10 @@
                                 <div class="cl-form-error hidden" id="cl-form-error"></div>
 
                                 <div class="cl-modal-actions">
-                                    <button id="cl-form-cancelar" class="cl-btn cl-btn-outline" type="button">Cancelar</button>
-                                    <button id="cl-form-guardar" class="cl-btn cl-btn-primary" type="submit">Guardar cliente</button>
+                                    <button id="cl-form-cancelar" class="cl-btn cl-btn-outline"
+                                        type="button">Cancelar</button>
+                                    <button id="cl-form-guardar" class="cl-btn cl-btn-primary" type="submit">Guardar
+                                        cliente</button>
                                 </div>
 
                             </form>
@@ -455,8 +435,10 @@
                                 Esta acción no se puede deshacer. Se borrarán sus datos de contacto y solicitudes.
                             </span>
                             <div class="cl-modal-actions">
-                                <button id="cl-confirm-cancelar" class="cl-btn cl-btn-outline" type="button">Cancelar</button>
-                                <button id="cl-confirm-eliminar" class="cl-btn cl-btn-danger" type="button">Eliminar</button>
+                                <button id="cl-confirm-cancelar" class="cl-btn cl-btn-outline"
+                                    type="button">Cancelar</button>
+                                <button id="cl-confirm-eliminar" class="cl-btn cl-btn-danger"
+                                    type="button">Eliminar</button>
                             </div>
                         </div>
                     </div>
@@ -468,129 +450,361 @@
 
                 </section>
 
-                <section
-                    id="cotizaciones-section"
-                    class="empty-section hidden"
-                >
+                <section id="cotizaciones-section" class="empty-section hidden">
                     <h2>Cotizaciones</h2>
                     <p>Gestión de cotizaciones.</p>
                 </section>
 
 
-                <section
-                    id="finanzas-section"
-                    class="empty-section hidden"
-                >
+                <section id="finanzas-section" class="empty-section hidden">
                     <h2>Finanzas</h2>
                     <p>Gestión financiera.</p>
                 </section>
 
 
-                <section
-                    id="pedidos-section"
-                    class="empty-section hidden"
-                >
+                <section id="pedidos-section" class="empty-section hidden">
                     <h2>Pedidos</h2>
                     <p>Gestión de pedidos.</p>
                 </section>
 
 
-                
-<section id="agenda-section" class="empty-section hidden agenda-section">
 
-    <div class="agenda-header">
-        <div>
-            <h2>Agenda de trabajo</h2>
-            <p>Organiza las visitas, mediciones e instalaciones.</p>
-        </div>
+                <section id="agenda-section" class="empty-section hidden agenda-section">
 
-        <button type="button" id="agenda-hoy" class="agenda-btn agenda-btn-light">
-            Hoy
-        </button>
-    </div>
+                    <div class="agenda-header">
+                        <div>
+                            <h2>Agenda de trabajo</h2>
+                            <p>Organiza las visitas, mediciones e instalaciones.</p>
+                        </div>
 
-    <div class="agenda-layout">
+                        <button type="button" id="agenda-hoy" class="agenda-btn agenda-btn-light">
+                            Hoy
+                        </button>
+                    </div>
 
-        <!-- CALENDARIO -->
-        <div class="agenda-calendar">
+                    <div class="agenda-layout">
 
-            <div class="agenda-calendar-header">
-                <div>
-                    <span class="agenda-label">CALENDARIO</span>
-                    <h3 id="agenda-mes-titulo">Octubre 2026</h3>
-                </div>
+                        <!-- CALENDARIO -->
+                        <div class="agenda-calendar">
 
-                <div class="agenda-navigation">
-                    <button type="button" id="agenda-anterior" aria-label="Mes anterior">‹</button>
-                    <button type="button" id="agenda-siguiente" aria-label="Mes siguiente">›</button>
-                </div>
-            </div>
+                            <div class="agenda-calendar-header">
+                                <div>
+                                    <span class="agenda-label">CALENDARIO</span>
+                                    <h3 id="agenda-mes-titulo">Octubre 2026</h3>
+                                </div>
 
-            <div class="agenda-weekdays">
-                <span>Lun</span>
-                <span>Mar</span>
-                <span>Mié</span>
-                <span>Jue</span>
-                <span>Vie</span>
-                <span>Sáb</span>
-                <span>Dom</span>
-            </div>
+                                <div class="agenda-navigation">
+                                    <button type="button" id="agenda-anterior" aria-label="Mes anterior">‹</button>
+                                    <button type="button" id="agenda-siguiente" aria-label="Mes siguiente">›</button>
+                                </div>
+                            </div>
 
-            <div id="agenda-dias" class="agenda-days"></div>
+                            <div class="agenda-weekdays">
+                                <span>Lun</span>
+                                <span>Mar</span>
+                                <span>Mié</span>
+                                <span>Jue</span>
+                                <span>Vie</span>
+                                <span>Sáb</span>
+                                <span>Dom</span>
+                            </div>
 
-            <div class="agenda-legend">
-                <span><i class="agenda-dot visita"></i> Visita para medir</span>
-                <span><i class="agenda-dot instalacion"></i> Instalación</span>
-            </div>
+                            <div id="agenda-dias" class="agenda-days"></div>
 
-        </div>
+                            <div class="agenda-legend">
+                                <span><i class="agenda-dot visita"></i> Visita para medir</span>
+                                <span><i class="agenda-dot instalacion"></i> Instalación</span>
+                            </div>
 
-        <!-- PANEL LATERAL -->
-        <aside class="agenda-details">
+                        </div>
 
-            <div class="agenda-details-header">
-                <span class="agenda-label">PROGRAMACIÓN</span>
-                <h3 id="agenda-fecha-seleccionada">Selecciona un día</h3>
-                <p id="agenda-total-eventos">Consulta tus actividades programadas.</p>
-            </div>
+                        <!-- PANEL LATERAL -->
+                        <aside class="agenda-details">
 
-            <div id="agenda-lista-eventos" class="agenda-events">
-                <div class="agenda-empty">
-                    <div class="agenda-empty-icon">▦</div>
-                    <strong>Selecciona una fecha</strong>
-                    <p>Aquí podrás consultar las visitas e instalaciones del día.</p>
-                </div>
-            </div>
+                            <div class="agenda-details-header">
+                                <span class="agenda-label">PROGRAMACIÓN</span>
+                                <h3 id="agenda-fecha-seleccionada">Selecciona un día</h3>
+                                <p id="agenda-total-eventos">Consulta tus actividades programadas.</p>
+                            </div>
 
-        </aside>
+                            <div id="agenda-lista-eventos" class="agenda-events">
+                                <div class="agenda-empty">
+                                    <div class="agenda-empty-icon">▦</div>
+                                    <strong>Selecciona una fecha</strong>
+                                    <p>Aquí podrás consultar las visitas e instalaciones del día.</p>
+                                </div>
+                            </div>
 
-    </div>
+                        </aside>
 
-</section>
+                    </div>
 
-
-                <section
-                    id="inventario-section"
-                    class="empty-section hidden"
-                >
-                    <h2>Inventario</h2>
-                    <p>Gestión de inventario.</p>
                 </section>
 
 
-                <section
-                    id="empleados-section"
-                    class="empty-section hidden"
-                >
-                    <h2>Empleados</h2>
-                    <p>Gestión de empleados.</p>
+
+                <section id="inventario-section" class="empty-section hidden agenda-section">
+
+                    <div class="productos-container">
+
+                        <div class="productos-header">
+                            <div>
+                                <h2>Inventario</h2>
+                                <p>Gestión de inventario.</p>
+                            </div>
+
+                            <button type="button" id="btn-agregar-producto" class="btn-principal">
+                                <span>＋</span> Agregar producto
+                            </button>
+                        </div>
+
+                        <div class="productos-toolbar">
+                            <div class="productos-busqueda">
+                                <span>⌕</span>
+                                <input type="search" id="buscar-producto" placeholder="Buscar por nombre o código...">
+                            </div>
+
+                            <span id="productos-contador" class="productos-contador">
+                                Cargando productos...
+                            </span>
+                        </div>
+
+                        <div id="productos-grid" class="productos-grid"></div>
+
+                        <div id="productos-vacio" class="productos-vacio" hidden>
+                            <div class="productos-vacio-icono">□</div>
+                            <h3>No hay productos para mostrar</h3>
+                            <p>Agrega un producto o modifica tu búsqueda.</p>
+                        </div>
+
+                        <div id="productos-mensaje" class="productos-mensaje" hidden></div>
+
+                    </div>
+
                 </section>
 
 
-                <section
-                    id="cuenta-section"
-                    class="empty-section hidden"
-                >
+                <!-- MODAL PARA AGREGAR O EDITAR -->
+                <div id="modal-producto" class="modal-producto" hidden>
+                    <div class="modal-producto-contenido">
+
+                        <div class="modal-producto-header">
+                            <div>
+                                <h2 id="modal-producto-titulo">Agregar producto</h2>
+                                <p>Completa la información del producto.</p>
+                            </div>
+
+                            <button type="button" id="btn-cerrar-modal-producto" class="btn-cerrar-modal"
+                                aria-label="Cerrar">×</button>
+                        </div>
+
+                        <form id="form-producto">
+                            <input type="hidden" id="producto-id">
+
+                            <div class="campo-producto">
+                                <label for="producto-nombre">Nombre del producto *</label>
+                                <input id="producto-nombre" type="text" maxlength="120"
+                                    placeholder="Ej. Mesa de comedor" required>
+                            </div>
+
+                            <div class="campo-producto">
+                                <label for="producto-codigo">Código *</label>
+                                <input id="producto-codigo" type="text" maxlength="50" placeholder="Ej. PROD-001"
+                                    required>
+                            </div>
+
+                            <div class="form-producto-fila">
+                                <div class="campo-producto">
+                                    <label for="producto-precio">Precio (MXN) *</label>
+                                    <input id="producto-precio" type="number" min="0" step="0.01" placeholder="0.00"
+                                        required>
+                                </div>
+
+                                <div class="campo-producto">
+                                    <label for="producto-stock">Existencias *</label>
+                                    <input id="producto-stock" type="number" min="0" step="1" placeholder="0" required>
+                                </div>
+                            </div>
+
+                            <div class="campo-producto">
+                                <label for="producto-descripcion">Descripción</label>
+                                <textarea id="producto-descripcion" rows="3" maxlength="500"
+                                    placeholder="Describe las características del producto..."></textarea>
+                            </div>
+
+                            <div class="modal-producto-acciones">
+                                <button type="button" id="btn-cancelar-producto" class="btn-secundario">
+                                    Cancelar
+                                </button>
+
+                                <button type="submit" id="btn-guardar-producto" class="btn-principal">
+                                    Guardar producto
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <section id="empleados-section" class="empty-section hidden">
+                    <div class="empleados-header">
+                        <div>
+                            <span class="empleados-etiqueta">ADMINISTRACIÓN</span>
+                            <h2>Empleados</h2>
+                            <p>Administra las cuentas, los permisos y los roles de tu equipo.</p>
+                        </div>
+
+                        <button type="button" id="btn-nuevo-empleado" class="emp-btn-principal">
+                            <span>＋</span> Nuevo empleado
+                        </button>
+                    </div>
+
+                    <div class="empleados-resumen">
+                        <div class="empleados-resumen-card">
+                            <span>Total de empleados</span>
+                            <strong id="emp-total">0</strong>
+                        </div>
+
+                        <div class="empleados-resumen-card">
+                            <span>Administradores</span>
+                            <strong id="emp-administradores">0</strong>
+                        </div>
+
+                        <div class="empleados-resumen-card">
+                            <span>Otros roles</span>
+                            <strong id="emp-otros">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="empleados-panel">
+
+                        <div class="empleados-panel-header">
+                            <div>
+                                <h3>Directorio del equipo</h3>
+                                <p>Consulta y administra las cuentas registradas.</p>
+                            </div>
+
+                            <div class="empleados-busqueda">
+                                <span>⌕</span>
+                                <input type="search" id="emp-buscar" placeholder="Buscar por nombre o correo..."
+                                    autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="empleados-tabla-contenedor">
+                            <table class="empleados-tabla">
+                                <thead>
+                                    <tr>
+                                        <th>Empleado</th>
+                                        <th>Correo electrónico</th>
+                                        <th>Rol</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="emp-tabla-cuerpo"></tbody>
+                            </table>
+                        </div>
+
+                        <div id="emp-vacio" class="empleados-vacio" hidden>
+                            <div class="empleados-vacio-icono">♙</div>
+                            <h3>No hay empleados para mostrar</h3>
+                            <p>Agrega una cuenta o cambia el término de búsqueda.</p>
+                        </div>
+
+                        <div class="empleados-panel-footer">
+                            <span id="emp-contador">0 empleados</span>
+                        </div>
+                    </div>
+
+                    <div id="emp-mensaje" class="empleados-mensaje" role="status" hidden></div>
+
+                </section>
+
+                <!-- Modal para crear un empleado -->
+                <div id="emp-modal" class="emp-overlay" hidden>
+                    <div class="emp-modal" role="dialog" aria-modal="true" aria-labelledby="emp-modal-titulo">
+
+                        <div class="emp-modal-header">
+                            <div>
+                                <span class="empleados-etiqueta">CUENTA DE USUARIO</span>
+                                <h2 id="emp-modal-titulo">Nuevo empleado</h2>
+                                <p>Completa los datos para registrar una cuenta.</p>
+                            </div>
+
+                            <button type="button" id="emp-cerrar" class="emp-cerrar" aria-label="Cerrar">×</button>
+                        </div>
+
+                        <form id="emp-form">
+                            <div class="emp-campo">
+                                <label for="emp-nombre">Nombre completo *</label>
+                                <input type="text" id="emp-nombre" maxlength="120" placeholder="Ej. Roberto García"
+                                    autocomplete="name" required>
+                            </div>
+
+                            <div class="emp-campo">
+                                <label for="emp-correo">Correo electrónico *</label>
+                                <input type="email" id="emp-correo" maxlength="150" placeholder="empleado@gaona.com"
+                                    autocomplete="email" required>
+                            </div>
+
+                            <div class="emp-campo">
+                                <label for="emp-rol">Rol del empleado *</label>
+                                <select id="emp-rol" required>
+                                    <option value="">Selecciona un rol</option>
+                                    <option value="Administrador">Administrador</option>
+                                    <option value="Ventas">Ventas</option>
+                                    <option value="Diseño">Diseño</option>
+                                    <option value="Instalación">Instalación</option>
+                                </select>
+                            </div>
+
+                            <div class="emp-campo">
+                                <label for="emp-contrasena">Contraseña *</label>
+                                <input type="password" id="emp-contrasena" minlength="8"
+                                    placeholder="Mínimo 8 caracteres" autocomplete="new-password" required>
+                            </div>
+
+                            <div class="emp-campo">
+                                <label for="emp-confirmar-contrasena">Confirmar contraseña *</label>
+                                <input type="password" id="emp-confirmar-contrasena" minlength="8"
+                                    placeholder="Vuelve a escribir la contraseña" autocomplete="new-password" required>
+                            </div>
+
+                            <p id="emp-error" class="emp-error" role="alert" hidden></p>
+
+                            <div class="emp-modal-acciones">
+                                <button type="button" id="emp-cancelar" class="emp-btn-secundario">
+                                    Cancelar
+                                </button>
+                                <button type="submit" id="emp-guardar" class="emp-btn-principal">
+                                    Crear cuenta
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal para confirmar la eliminación -->
+                <div id="emp-confirmar-modal" class="emp-overlay" hidden>
+                    <div class="emp-modal emp-modal-confirmacion" role="alertdialog" aria-modal="true">
+                        <div class="emp-confirmacion-icono">!</div>
+                        <h2>Eliminar empleado</h2>
+                        <p id="emp-confirmar-texto">
+                            ¿Estás seguro de que deseas eliminar esta cuenta?
+                        </p>
+
+                        <div class="emp-modal-acciones">
+                            <button type="button" id="emp-eliminar-cancelar" class="emp-btn-secundario">
+                                Cancelar
+                            </button>
+                            <button type="button" id="emp-eliminar-confirmar" class="emp-btn-eliminar">
+                                Eliminar cuenta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <section id="cuenta-section" class="empty-section hidden">
                     <h2>Mi cuenta</h2>
                     <p>
                         Desde aquí podrás modificar la información
@@ -604,10 +818,12 @@
 
     </main>
 
-    
+
     <script src="../../dist/renderer/renderer.js"></script>
-      <script src="../../dist/renderer/clientes.js"></script>
-      <script src="../../dist/renderer/calendario.js"></script>
+    <script src="../../dist/renderer/clientes.js"></script>
+    <script src="../../dist/renderer/calendario.js"></script>
+    <script src="../../dist/renderer/producto.js"></script>
+    <script src="../../dist/renderer/empleado.js"></script>
 
 
 </body>
