@@ -112,11 +112,17 @@
             <input
                 type="text"
                 id="searchInput"
+                aria-label="Buscar productos"
                 placeholder="Buscar un producto..."
             >
 
-            <button>
-                🔍
+            <button type="button" id="searchButton" aria-label="Buscar productos">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                    <path d="m16 16 4.5 4.5"></path>
+                </svg>
             </button>
 
         </div>
@@ -137,96 +143,12 @@
                 </h3>
 
 
-                <label class="category-option">
-
-                    <input
-                        type="radio"
-                        name="category"
-                        value="todos"
-                        checked
-                    >
-
-                    Todos los productos
-
-                </label>
-
-
-                <label class="category-option">
-
-                    <input
-                        type="radio"
-                        name="category"
-                        value="puertas"
-                    >
-
-                    Puertas
-
-                </label>
-
-
-                <label class="category-option">
-
-                    <input
-                        type="radio"
-                        name="category"
-                        value="marcos"
-                    >
-
-                    Marcos
-
-                </label>
-
-
-                <label class="category-option">
-
-                    <input
-                        type="radio"
-                        name="category"
-                        value="chapas"
-                    >
-
-                    Chapas
-
-                </label>
-
-
-                <label class="category-option">
-
-                    <input
-                        type="radio"
-                        name="category"
-                        value="ventanas"
-                    >
-
-                    Ventanas
-
-                </label>
-
-
-                <label class="category-option">
-
-                    <input
-                        type="radio"
-                        name="category"
-                        value="canceles"
-                    >
-
-                    Canceles
-
-                </label>
-
-
-                <label class="category-option">
-
-                    <input
-                        type="radio"
-                        name="category"
-                        value="accesorios"
-                    >
-
-                    Accesorios
-
-                </label>
+                <div id="categoryFilters" role="group" aria-label="Categorías">
+                    <label class="category-option">
+                        <input type="radio" name="category" value="" checked>
+                        Todos los productos
+                    </label>
+                </div>
 
             </aside>
 
@@ -244,7 +166,7 @@
                     </span>
 
 
-                    <select id="sortProducts">
+                    <select id="sortProducts" aria-label="Ordenar productos">
 
                         <option value="default">
                             Ordenar por
@@ -265,7 +187,7 @@
 
 
                 <div class="products-grid"
-                     id="productsGrid">
+                     id="productsGrid" aria-live="polite" aria-busy="true">
 
 
                     <p class="products-message">Cargando productos...</p>
@@ -303,6 +225,7 @@
 
 
 <script src="config.js"></script>
+<script src="productos.js"></script>
 <script src="catalogo.js"></script>
 
 </body>

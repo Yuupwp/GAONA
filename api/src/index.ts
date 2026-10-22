@@ -73,7 +73,7 @@ app.post("/solicitudes", async (req, res) => {
     // Solo se aceptan productos que existen y están activos
     const ids = [...new Set(productos.map((p) => p.idProducto))];
     const encontrados = await prisma.producto.count({
-      where: { id: { in: ids }, activo: true },
+      where: { id: { in: ids }, activo: true, tipo: "PRODUCTO" },
     });
 
     if (encontrados !== ids.length) {
