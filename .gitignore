@@ -4,3 +4,28 @@ App escritorio/node_modules/
 dist/
 *.log
 .env
+
+
+# Variables de entorno y credenciales
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+# Dependencias de Node.js
+node_modules/
+**/node_modules/
+
+# Archivos compilados
+dist/
+**/dist/
+
+# Registros
+*.log
+npm-debug.log*
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+

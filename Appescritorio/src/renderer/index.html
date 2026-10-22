@@ -645,6 +645,7 @@
                     </div>
                 </div>
 
+                <!--SECCIÓN DE CRUD DE EMPLEADOS-->
                 <section id="empleados-section" class="empty-section hidden">
                     <div class="empleados-header">
                         <div>
@@ -735,9 +736,21 @@
 
                         <form id="emp-form">
                             <div class="emp-campo">
-                                <label for="emp-nombre">Nombre completo *</label>
-                                <input type="text" id="emp-nombre" maxlength="120" placeholder="Ej. Roberto García"
-                                    autocomplete="name" required>
+                                <label for="emp-nombre">Nombre(s) *</label>
+                                <input type="text" id="emp-nombre" maxlength="100" placeholder="Ej. Roberto"
+                                    autocomplete="given-name" required>
+                            </div>
+
+                            <div class="emp-campo">
+                                <label for="emp-apellido">Apellidos *</label>
+                                <input type="text" id="emp-apellido" maxlength="100" placeholder="Ej. García López"
+                                    autocomplete="family-name" required>
+                            </div>
+
+                            <div class="emp-campo">
+                                <label for="emp-usuario">Nombre de usuario *</label>
+                                <input type="text" id="emp-usuario" maxlength="80" placeholder="Ej. roberto.garcia"
+                                    autocomplete="username" required>
                             </div>
 
                             <div class="emp-campo">
@@ -747,13 +760,17 @@
                             </div>
 
                             <div class="emp-campo">
+                                <label for="emp-telefono">Teléfono</label>
+                                <input type="tel" id="emp-telefono" maxlength="20" placeholder="Ej. 8441234567"
+                                    autocomplete="tel">
+                            </div>
+
+                            <div class="emp-campo">
                                 <label for="emp-rol">Rol del empleado *</label>
                                 <select id="emp-rol" required>
                                     <option value="">Selecciona un rol</option>
-                                    <option value="Administrador">Administrador</option>
-                                    <option value="Ventas">Ventas</option>
-                                    <option value="Diseño">Diseño</option>
-                                    <option value="Instalación">Instalación</option>
+                                    <option value="ADMINISTRADOR">Administrador</option>
+                                    <option value="EMPLEADO">Empleado</option>
                                 </select>
                             </div>
 
@@ -775,6 +792,7 @@
                                 <button type="button" id="emp-cancelar" class="emp-btn-secundario">
                                     Cancelar
                                 </button>
+
                                 <button type="submit" id="emp-guardar" class="emp-btn-principal">
                                     Crear cuenta
                                 </button>
@@ -783,26 +801,31 @@
                     </div>
                 </div>
 
-                <!-- Modal para confirmar la eliminación -->
+                <!-- Modal para confirmar la desactivación de un empleado -->
                 <div id="emp-confirmar-modal" class="emp-overlay" hidden>
-                    <div class="emp-modal emp-modal-confirmacion" role="alertdialog" aria-modal="true">
+                    <div class="emp-modal emp-modal-confirmacion" role="alertdialog" aria-modal="true"
+                        aria-labelledby="emp-confirmar-titulo">
+
                         <div class="emp-confirmacion-icono">!</div>
-                        <h2>Eliminar empleado</h2>
+
+                        <h2 id="emp-confirmar-titulo">Desactivar empleado</h2>
+
                         <p id="emp-confirmar-texto">
-                            ¿Estás seguro de que deseas eliminar esta cuenta?
+                            ¿Estás seguro de que deseas desactivar esta cuenta?
+                            El empleado ya no debería poder iniciar sesión, pero sus registros se conservarán.
                         </p>
 
                         <div class="emp-modal-acciones">
                             <button type="button" id="emp-eliminar-cancelar" class="emp-btn-secundario">
                                 Cancelar
                             </button>
+
                             <button type="button" id="emp-eliminar-confirmar" class="emp-btn-eliminar">
-                                Eliminar cuenta
+                                Desactivar cuenta
                             </button>
                         </div>
                     </div>
                 </div>
-
 
                 <section id="cuenta-section" class="empty-section hidden">
                     <h2>Mi cuenta</h2>

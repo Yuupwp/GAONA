@@ -3,5 +3,8 @@
     "@types/node": "^26.6.4",
     "electron": "^44.7.0",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0"
   }
 }

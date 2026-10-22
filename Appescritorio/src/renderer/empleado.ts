@@ -1,11 +1,25 @@
 
 "use strict";
 
+interface EmpleadoAPI {
+    id: string;
+    nombre: string;
+    apellido: string;
+    usuario: string;
+    correo: string;
+    activo: boolean;
+    rol: {
+        id: string;
+        nombre: string;
+    };
+}
+
 interface Empleado {
-    id: number;
+    id: string;
     nombre: string;
     correo: string;
     rol: string;
+    activo: boolean;
 }
 
 const empTabla = document.getElementById("emp-tabla-cuerpo");
@@ -37,40 +51,52 @@ const btnCancelarEliminar = document.getElementById("emp-eliminar-cancelar");
 
 const rolesEmpleados = [
     "Administrador",
-    "Ventas",
-    "Diseño",
-    "Instalación"
+    "Empleado",
 ];
 
-// Datos de demostración. Posteriormente se cargarán desde la API.
-let empleados: Empleado[] = [
-    {
-        id: 1,
-        nombre: "María Fernanda López",
-        correo: "maria@gaona.com",
-        rol: "Administrador"
-    },
-    {
-        id: 2,
-        nombre: "Carlos Rodríguez",
-        correo: "carlos@gaona.com",
-        rol: "Ventas"
-    },
-    {
-        id: 3,
-        nombre: "Andrea Martínez",
-        correo: "andrea@gaona.com",
-        rol: "Diseño"
-    },
-    {
-        id: 4,
-        nombre: "Luis Hernández",
-        correo: "luis@gaona.com",
-        rol: "Instalación"
+let empleados: Empleado[] = [];
+
+async function cargarEmpleados(): Promise<void> {
+    try {
+        const respuesta = await fetch(
+            "http://localhost:3000/empleados"
+        );
+        if (!respuesta.ok) {
+            throw new Error(
+                `Error HTTP: ${respuesta.status}`
+            );
+        }
+
+        const datos: EmpleadoAPI[] = await respuesta.json();
+
+        empleados = datos.map((empleado) => ({
+            id: empleado.id,
+            nombre: `${empleado.nombre} ${empleado.apellido}`.trim(),
+            correo: empleado.correo,
+            rol: empleado.rol.nombre === "ADMINISTRADOR"
+                ? "Administrador"
+                : "Empleado",
+            activo: empleado.activo
+        }));
+
+        dibujarEmpleados();
+
+        console.log(
+            "Empleados cargados desde la API: ",
+            empleados
+        );
+    } catch (error) {
+        console.error(
+            "Error al cargar los empleados: ",
+            error
+        );
+        mostrarMensaje(
+            "No se pudieron cargar los empleados. Verifica que la API esté funcionando."
+        );
     }
-];
+}
 
-let empleadoPendienteEliminar: number | null = null;
+let empleadoPendienteEliminar: string | null = null;
 let mensajeTemporizador: number | undefined;
 
 function validarEmpleados(): boolean {
@@ -300,10 +326,11 @@ function crearEmpleado(event: SubmitEvent): void {
     }
 
     empleados.push({
-        id: Date.now(),
+        id: Date.now().toString(),
         nombre,
         correo,
-        rol
+        rol,
+        activo: true
     });
 
     cerrarModalEmpleado();
@@ -369,6 +396,7 @@ empConfirmarModal?.addEventListener("click", (event) => {
 
 // Inicialización
 if (validarEmpleados()) {
-    dibujarEmpleados();
+    void cargarEmpleados();
+
     console.log("Empleados: interfaz inicializada correctamente.");
 }
