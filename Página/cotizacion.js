@@ -3,7 +3,6 @@
 // - Pide los productos a la API (GET /productos) para llenar las listas.
 // - Calcula un total estimado con el precio "desde" de cada producto.
 // - Envía la solicitud a la API (POST /solicitudes).
-// Requiere config.js cargado antes (define API_URL).
 // =========================================
 
 const IVA = 0.16;
@@ -24,6 +23,8 @@ const quoteFolio = document.getElementById("quoteFolio");
 
 // Aquí se guardan los productos que llegan de la API
 let products = [];
+let productsReady = false;
+let loadingProducts = false;
 
 
 // -----------------------------------------
@@ -229,7 +230,7 @@ function updateSummary() {
 
     // Contador y botones
     itemCount.textContent = `${items.length} producto${items.length !== 1 ? "s" : ""}`;
-    addItemButton.disabled = items.length >= MAX_ITEMS;
+    addItemButton.disabled = !productsReady || items.length >= MAX_ITEMS;
 
     quoteItems.querySelectorAll(".quote-remove").forEach(button => {
         button.disabled = items.length === 1;
@@ -273,6 +274,10 @@ async function sendQuote(event) {
     quoteError.hidden = true;
 
     const items = readItems();
+    if (!productsReady || items.length === 0) {
+        showError("Espera a que haya productos disponibles para cotizar.");
+        return;
+    }
 
     if (!validate(items)) {
         showError("Revisa los campos marcados en rojo: elige cada producto, su cantidad, y escribe tu nombre, apellido y teléfono.");
@@ -312,8 +317,14 @@ async function sendQuote(event) {
 
         const result = await response.json().catch(() => ({}));
 
-        if (!response.ok) {
-            throw new Error(result.error ?? `La API respondió con el código ${response.status}`);
+        if (response.status === 400) {
+            showError("Revisa tus datos y productos: alguno podría ya no estar disponible. Actualiza la página para consultar el catálogo vigente.");
+            submitButton.disabled = false;
+            submitButton.textContent = "Enviar solicitud";
+            return;
+        }
+        if (!response.ok || typeof result.id !== "string" || !result.id) {
+            throw new Error("Respuesta de solicitud inválida");
         }
 
         // Muestra el mensaje de éxito en lugar del formulario
@@ -339,40 +350,35 @@ async function sendQuote(event) {
 // -----------------------------------------
 
 async function loadProducts() {
-
+    if (loadingProducts) return;
+    loadingProducts = true;
+    productsReady = false;
+    submitButton.disabled = true;
+    addItemButton.disabled = true;
+    quoteError.hidden = true;
+    quoteItems.replaceChildren(createElement("p", "products-message", "Cargando productos..."));
     try {
-
-        const response = await fetch(`${API_URL}/productos`);
-
-        if (!response.ok) {
-            throw new Error(`La API respondió con el código ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // precioDesde llega como texto, por eso se convierte con Number()
-        products = data.map(item => ({
-            id: item.id,
-            name: item.nombre,
-            price: Number(item.precioDesde),
-            category: item.categoria?.nombre ?? ""
-        }));
-
+        products = await CatalogProducts.load();
         quoteItems.replaceChildren();
-
-        // Si viene del catálogo (cotizacion.html?producto=ID), se preselecciona
+        if (products.length === 0) {
+            quoteItems.appendChild(createElement("p", "products-message", "Por el momento no hay productos disponibles para cotizar."));
+            return;
+        }
+        productsReady = true;
         const selectedId = new URLSearchParams(window.location.search).get("producto");
         addItem(selectedId);
-
-    } catch (error) {
-
-        console.error("Error al cargar los productos:", error);
-
-        quoteItems.replaceChildren(
-            createElement("p", "products-message", "No pudimos cargar los productos. Revisa tu conexión e intenta de nuevo en unos minutos.")
-        );
-
-        submitButton.disabled = true;
+        if (selectedId !== null && !findProduct(selectedId)) {
+            showError("El producto seleccionado no existe o ya no está disponible. Elige otro producto del catálogo.");
+        }
+        submitButton.disabled = false;
+    } catch {
+        const message = createElement("p", "products-message", "No pudimos cargar los productos. Revisa tu conexión e intenta de nuevo.");
+        const retry = createElement("button", "btn btn-primary", "Reintentar");
+        retry.type = "button";
+        retry.addEventListener("click", loadProducts);
+        quoteItems.replaceChildren(message, retry);
+    } finally {
+        loadingProducts = false;
     }
 }
 
@@ -393,7 +399,9 @@ function clearInvalid(event) {
 quoteForm.addEventListener("input", clearInvalid);
 quoteForm.addEventListener("change", clearInvalid);
 
-addItemButton.addEventListener("click", () => addItem());
+addItemButton.addEventListener("click", () => {
+    if (productsReady && readItems().length < MAX_ITEMS) addItem();
+});
 
 quoteForm.addEventListener("submit", sendQuote);
 
