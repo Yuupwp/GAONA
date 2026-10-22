@@ -1,31 +1,23 @@
 // =========================================
 // CATÁLOGO GAONA
 // Los productos se piden a la API (GET /productos).
-// Requiere config.js cargado antes (define API_URL).
 // =========================================
 
 const searchInput = document.getElementById("searchInput");
-const categoryInputs = document.querySelectorAll('input[name="category"]');
+const categoryFilters = document.getElementById("categoryFilters");
 const sortProducts = document.getElementById("sortProducts");
 const productCount = document.getElementById("productCount");
 const productsGrid = document.getElementById("productsGrid");
 
 // Aquí se guardan los productos que llegan de la API
 let products = [];
+let state = "loading";
+let loading = false;
 
 
 // -----------------------------------------
 // UTILIDADES
 // -----------------------------------------
-
-// Quita acentos y mayúsculas para que "silicon" encuentre "Silicón"
-function normalize(text) {
-    return String(text)
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-}
 
 // 4850 -> "$4,850 MXN"
 function formatPrice(value) {
@@ -44,8 +36,16 @@ function createElement(tag, className, text) {
 }
 
 // Muestra un mensaje dentro de la cuadrícula
-function showMessage(text) {
-    productsGrid.replaceChildren(createElement("p", "products-message", text));
+function showMessage(text, retry = false) {
+    const message = createElement("div", "products-message");
+    message.appendChild(createElement("p", "", text));
+    if (retry) {
+        const button = createElement("button", "btn btn-primary retry-button", "Reintentar");
+        button.type = "button";
+        button.addEventListener("click", loadProducts);
+        message.appendChild(button);
+    }
+    productsGrid.replaceChildren(message);
 }
 
 
@@ -61,12 +61,14 @@ function createCard(product) {
     // Imagen
     const imageBox = createElement("div", "product-image");
 
+    imageBox.appendChild(createElement("span", "image-placeholder", "Imagen no disponible"));
+
     if (product.image) {
         const img = document.createElement("img");
         img.src = product.image;
         img.alt = product.name;
+        img.loading = "lazy";
 
-        // Si la imagen no existe, se queda el fondo gris
         img.addEventListener("error", () => img.remove());
 
         imageBox.appendChild(img);
@@ -103,33 +105,16 @@ function createCard(product) {
 
 function updateProducts() {
 
-    const search = normalize(searchInput.value);
-
-    const selectedCategory =
-        document.querySelector('input[name="category"]:checked').value;
-
-    let visibleProducts = products.filter(product => {
-
-        const matchesSearch = normalize(product.name).includes(search);
-
-        const matchesCategory =
-            selectedCategory === "todos" ||
-            product.categorySlug === selectedCategory;
-
-        return matchesSearch && matchesCategory;
-    });
-
-    // Ordenar
-    if (sortProducts.value === "low") {
-        visibleProducts.sort((a, b) => a.price - b.price);
-    }
-
-    if (sortProducts.value === "high") {
-        visibleProducts.sort((a, b) => b.price - a.price);
-    }
+    if (state !== "ready") return;
+    const selectedCategory = categoryFilters.querySelector('input:checked')?.value || "";
+    const visibleProducts = CatalogProducts.filter(
+        products, searchInput.value, selectedCategory, sortProducts.value
+    );
 
     // Mostrar
-    if (visibleProducts.length === 0) {
+    if (products.length === 0) {
+        showMessage("Por el momento no hay productos disponibles.");
+    } else if (visibleProducts.length === 0) {
         showMessage("No encontramos productos con esos filtros. Prueba con otra búsqueda o categoría.");
     } else {
         productsGrid.replaceChildren(...visibleProducts.map(createCard));
@@ -145,54 +130,47 @@ function updateProducts() {
 // CARGAR PRODUCTOS DESDE LA API
 // -----------------------------------------
 
-async function loadProducts() {
+function renderCategories() {
+    const requested = new URLSearchParams(window.location.search).get("categoria");
+    const selected = categoryFilters.querySelector('input:checked')?.value || requested || "";
+    const categories = [...new Set(products.map(product => product.category))]
+        .sort((a, b) => a.localeCompare(b, "es"));
+    const labels = ["", ...categories].map(category => {
+        const label = createElement("label", "category-option");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "category";
+        input.value = category;
+        input.checked = category === (categories.includes(selected) ? selected : "");
+        label.append(input, category || "Todos los productos");
+        return label;
+    });
+    categoryFilters.replaceChildren(...labels);
+}
 
+async function loadProducts() {
+    if (loading) return;
+    loading = true;
+    state = "loading";
+    productsGrid.setAttribute("aria-busy", "true");
     showMessage("Cargando productos...");
     productCount.textContent = "";
-
     try {
-
-        const response = await fetch(`${API_URL}/productos`);
-
-        if (!response.ok) {
-            throw new Error(`La API respondió con el código ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Se adapta cada producto de la API a lo que usa la página.
-        // precioDesde llega como texto, por eso se convierte con Number().
-        products = data.map(item => ({
-            id: item.id,
-            name: item.nombre,
-            description: item.descripcion ?? "",
-            price: Number(item.precioDesde),
-            image: item.imagenUrl,
-            category: item.categoria?.nombre ?? "",
-            categorySlug: normalize(item.categoria?.nombre ?? "")
-        }));
-
+        products = await CatalogProducts.load();
+        renderCategories();
+        state = "ready";
         updateProducts();
-
-    } catch (error) {
-
-        console.error("Error al cargar el catálogo:", error);
-
-        showMessage("No pudimos cargar el catálogo. Revisa tu conexión e intenta de nuevo en unos minutos.");
+    } catch {
+        state = "error";
+        showMessage("No pudimos cargar el catálogo. Revisa tu conexión e intenta de nuevo.", true);
+    } finally {
+        loading = false;
+        productsGrid.setAttribute("aria-busy", "false");
     }
 }
 
-
-// -----------------------------------------
-// EVENTOS
-// -----------------------------------------
-
 searchInput.addEventListener("input", updateProducts);
-
-categoryInputs.forEach(input => {
-    input.addEventListener("change", updateProducts);
-});
-
+document.getElementById("searchButton").addEventListener("click", updateProducts);
+categoryFilters.addEventListener("change", updateProducts);
 sortProducts.addEventListener("change", updateProducts);
-
 loadProducts();

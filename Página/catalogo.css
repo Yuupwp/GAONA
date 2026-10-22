@@ -283,7 +283,9 @@ a {
 
     cursor: pointer;
 
-    font-size: 18px;
+    display: grid;
+
+    place-items: center;
 }
 
 
@@ -415,6 +417,10 @@ a {
 
 .product-card {
 
+    display: flex;
+
+    flex-direction: column;
+
     background: white;
 
     border: 1px solid var(--border);
@@ -422,22 +428,15 @@ a {
     border-radius: 10px;
 
     overflow: hidden;
-
-    transition: .25s;
 }
 
-.product-card:hover {
-
-    transform: translateY(-4px);
-
-    box-shadow:
-        0 10px 25px rgba(0,0,0,.09);
-}
 
 
 /* IMAGE */
 
 .product-image {
+
+    flex-shrink: 0;
 
     height: 210px;
 
@@ -452,21 +451,43 @@ a {
 
     height: 100%;
 
-    object-fit: cover;
+    object-fit: contain;
 
-    transition: .3s;
+    padding: 12px;
+
+    box-sizing: border-box;
+
+    transition: transform 300ms ease-in-out;
 }
 
-.product-card:hover
-.product-image img {
+@media (hover: hover) and (pointer: fine) {
 
-    transform: scale(1.04);
+    .product-image:hover img {
+        transform: scale(1.10);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .product-image img {
+        transition: none;
+    }
+
+    .product-image:hover img {
+        transform: none;
+    }
 }
 
 
 /* PRODUCT INFO */
 
 .product-info {
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
 
     padding: 20px;
 }
@@ -534,6 +555,8 @@ a {
 /* QUOTE */
 
 .quote-button {
+
+    margin-top: auto;
 
     display: flex;
 
@@ -647,3 +670,14 @@ a {
     font-size: 14px;
 }
 
+
+.product-image { position: relative; display: grid; place-items: center; }
+.image-placeholder { color: #555; font-size: 13px; padding: 15px; text-align: center; }
+.product-image img { position: absolute; inset: 0; background: #e9e6df; transform-origin: center; }
+.retry-button { border: 0; font-family: inherit; cursor: pointer; margin-top: 16px; }
+.category-option, .product-info { overflow-wrap: anywhere; }
+.products-section, .search-container input { min-width: 0; }
+@media (max-width: 380px) {
+    .products-top { flex-wrap: wrap; gap: 12px; }
+    .catalog-header h1 { font-size: 32px; }
+}
