@@ -1,6 +1,8 @@
 
 "use strict";
 
+import { electron } from "process";
+
 interface EmpleadoAPI {
     id: string;
     nombre: string;
@@ -34,6 +36,9 @@ const empMensaje = document.getElementById("emp-mensaje");
 const empModal = document.getElementById("emp-modal");
 const empForm = document.getElementById("emp-form") as HTMLFormElement | null;
 const empNombre = document.getElementById("emp-nombre") as HTMLInputElement | null;
+const empApellido = document.getElementById("emp-apellido") as HTMLInputElement | null;
+const empUsuario = document.getElementById("emp-usuario") as HTMLInputElement | null;
+const empTelefono = document.getElementById("emp-telefono") as HTMLInputElement | null;
 const empCorreo = document.getElementById("emp-correo") as HTMLInputElement | null;
 const empRol = document.getElementById("emp-rol") as HTMLSelectElement | null;
 const empContrasena = document.getElementById("emp-contrasena") as HTMLInputElement | null;
@@ -43,16 +48,23 @@ const empError = document.getElementById("emp-error");
 const empConfirmarModal = document.getElementById("emp-confirmar-modal");
 const empConfirmarTexto = document.getElementById("emp-confirmar-texto");
 const empEliminarConfirmar = document.getElementById("emp-eliminar-confirmar");
+const empEliminarConfirmarTexto = document.getElementById("emp-eliminar-confirmar");
 
 const btnNuevoEmpleado = document.getElementById("btn-nuevo-empleado");
 const btnCerrarEmp = document.getElementById("emp-cerrar");
 const btnCancelarEmp = document.getElementById("emp-cancelar");
 const btnCancelarEliminar = document.getElementById("emp-eliminar-cancelar");
+const empConfirmarTitulo = document.getElementById("emp-confirmar-titulo");
 
 const rolesEmpleados = [
     "Administrador",
     "Empleado",
 ];
+
+const idsRoles: Record<string, string> = {
+    "ADMINISTRADOR": "185a8458-6011-4d5a-816b-d3368d92121c",
+    "EMPLEADO": "60d79c65-a6b1-459f-9d51-ad8fe161eeaf"
+}
 
 let empleados: Empleado[] = [];
 
@@ -176,6 +188,10 @@ function dibujarEmpleados(): void {
     filtrados.forEach((empleado) => {
         const fila = document.createElement("tr");
 
+        if (!empleado.activo) {
+            fila.classList.add("emp-desactivado");
+        }
+
         // Nombre y avatar
         const celdaNombre = document.createElement("td");
         const identidad = document.createElement("div");
@@ -189,6 +205,10 @@ function dibujarEmpleados(): void {
         nombre.className = "emp-nombre-tabla";
         nombre.textContent = empleado.nombre;
 
+        if (!empleado.activo) {
+            nombre.classList.add("emp-texto-desactivado");
+        }
+
         identidad.append(avatar, nombre);
         celdaNombre.append(identidad);
 
@@ -196,6 +216,10 @@ function dibujarEmpleados(): void {
         const celdaCorreo = document.createElement("td");
         celdaCorreo.className = "emp-correo-tabla";
         celdaCorreo.textContent = empleado.correo;
+
+        if (!empleado.activo) {
+            celdaCorreo.classList.add("emp-texto-desactivado");
+        }
 
         // Selector de rol
         const celdaRol = document.createElement("td");
@@ -214,32 +238,90 @@ function dibujarEmpleados(): void {
             selectorRol.append(opcion);
         });
 
-        selectorRol.addEventListener("change", () => {
+        selectorRol.addEventListener("change", async () => {
             const nuevoRol = selectorRol.value;
+            const rolAnterior = empleado.rol;
 
-            if (!rolesEmpleados.includes(nuevoRol)) return;
+            if (!rolesEmpleados.includes(nuevoRol)) {
+                selectorRol.value = rolAnterior;
+                return;
+            }
+            if (nuevoRol === rolAnterior) return;
 
-            empleado.rol = nuevoRol;
-            actualizarResumen();
-            mostrarMensaje(`Rol actualizado para ${empleado.nombre}.`);
+            selectorRol.disabled = true;
+
+            try {
+                const respuesta = await fetch(
+                    `http://localhost:3000/empleados/${encodeURIComponent(empleado.id)}/rol`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            rol: nuevoRol === "Administrador"
+                                ? "ADMINISTRADOR"
+                                : "EMPLEADO"
+                        })
+                    }
+                );
+
+                const resultado = await respuesta.json();
+
+                if (!respuesta.ok) {
+                    throw new Error(
+                        resultado.error ||
+                        resultado.mensaje ||
+                        "No se pudo actualizar el rol."
+                    );
+                }
+
+                empleado.rol = nuevoRol;
+
+                actualizarResumen();
+
+                mostrarMensaje(
+                    `Rol de ${empleado.nombre} actualizado correctamente.`
+                );
+            } catch (error) {
+                selectorRol.value = rolAnterior;
+
+                console.error("Error al actualizar el rol: ", error);
+
+                mostrarMensaje(
+                    error instanceof Error
+                        ? error.message
+                        : "Ocurrió un error al actualizar el rol."
+                );
+            } finally {
+                selectorRol.disabled = false;
+            }
         });
 
         celdaRol.append(selectorRol);
 
         // Acción para eliminar
         const celdaAcciones = document.createElement("td");
-        const btnEliminar = document.createElement("button");
-        btnEliminar.type = "button";
-        btnEliminar.className = "emp-accion-eliminar";
-        btnEliminar.textContent = "Eliminar";
+        const btnEstado = document.createElement("button");
+        btnEstado.type = "button";
+        btnEstado.className = empleado.activo
+            ? "emp-accion-eliminar"
+            : "emp-accion-activar";
 
-        btnEliminar.addEventListener("click", () => {
-            solicitarEliminar(empleado);
+        btnEstado.textContent = empleado.activo
+            ? "Desactivar"
+            : "Activar";
+
+        btnEstado.addEventListener("click", () => {
+            solicitarCambioEstado(empleado);
         });
 
-        celdaAcciones.append(btnEliminar);
+        celdaAcciones.append(btnEstado);
+
         fila.append(celdaNombre, celdaCorreo, celdaRol, celdaAcciones);
         empTabla.append(fila);
+
+        selectorRol.disabled = false;
     });
 
     empVacio.hidden = filtrados.length > 0;
@@ -275,12 +357,15 @@ function mostrarErrorFormulario(texto: string): void {
     empError.hidden = false;
 }
 
-function crearEmpleado(event: SubmitEvent): void {
+async function crearEmpleado(event: SubmitEvent): Promise<void> {
     event.preventDefault();
 
     if (
         !empNombre ||
+        !empApellido ||
+        !empUsuario ||
         !empCorreo ||
+        !empTelefono ||
         !empRol ||
         !empContrasena ||
         !empConfirmarContrasena
@@ -289,34 +374,46 @@ function crearEmpleado(event: SubmitEvent): void {
     }
 
     const nombre = empNombre.value.trim();
+    const apellido = empApellido.value.trim();
+    const usuario = empUsuario.value.trim();
     const correo = empCorreo.value.trim().toLowerCase();
+    const telefono = empTelefono.value.trim();
     const rol = empRol.value;
     const contrasena = empContrasena.value;
-    const confirmar = empConfirmarContrasena.value;
+    const confirmarContrasena = empConfirmarContrasena.value;
 
-    if (!nombre || !correo || !rol || !contrasena || !confirmar) {
-        mostrarErrorFormulario("Completa todos los campos obligatorios.");
-        return;
+    if (
+        !nombre ||
+        !apellido ||
+        !usuario ||
+        !correo ||
+        !telefono ||
+        !rol ||
+        !contrasena ||
+        !confirmarContrasena
+    ) {
+        mostrarErrorFormulario(
+            "Completa todos los campo obligatorios."
+        ); return;
     }
-
-    if (!rolesEmpleados.includes(rol)) {
+    if (!idsRoles[rol]) {
         mostrarErrorFormulario("Selecciona un rol válido.");
         return;
     }
 
     if (contrasena.length < 8) {
-        mostrarErrorFormulario("La contraseña debe tener al menos 8 caracteres.");
+        mostrarErrorFormulario("La contraseña debe tener al menos 8 carácteres.");
         return;
     }
 
-    if (contrasena !== confirmar) {
+    if (contrasena !== confirmarContrasena) {
         mostrarErrorFormulario("Las contraseñas no coinciden.");
         empConfirmarContrasena.focus();
         return;
     }
 
     const correoExistente = empleados.some(
-        (empleado) => empleado.correo.toLowerCase() === correo
+        (empleado) => empleado.correo.toLocaleLowerCase() === correo
     );
 
     if (correoExistente) {
@@ -325,25 +422,75 @@ function crearEmpleado(event: SubmitEvent): void {
         return;
     }
 
-    empleados.push({
-        id: Date.now().toString(),
-        nombre,
-        correo,
-        rol,
-        activo: true
-    });
+    try {
+        const respuesta = await fetch("http://localhost:3000/empleados", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                nombre,
+                apellido,
+                usuario,
+                correo,
+                telefono: telefono || undefined,
+                idRol: idsRoles[rol],
+                contrasena,
+                confirmarcontrasena: confirmarContrasena
+            })
+        });
+        const resultado = await respuesta.json();
 
-    cerrarModalEmpleado();
-    dibujarEmpleados();
-    mostrarMensaje(`La cuenta de ${nombre} se agregó a la lista de demostración.`);
+        if (!respuesta.ok) {
+            throw new Error(
+                resultado.mensaje ||
+                resultado.error ||
+                "No se pudo crear la cuenta."
+            );
+        }
+
+        await cargarEmpleados();
+        console.log("Empleados después de recargar:", empleados);
+        cerrarModalEmpleado();
+
+        mostrarMensaje(
+            `La cuenta de ${nombre} ${apellido} se creó correctamente.`
+        );
+    } catch (error) {
+        console.error("Error al crear el empleado.")
+
+        mostrarErrorFormulario(
+            error instanceof Error
+                ? error.message
+                : "Ocurrió un error al crear la cuenta."
+        );
+    }
+
 }
 
-function solicitarEliminar(empleado: Empleado): void {
+function solicitarCambioEstado(empleado: Empleado): void {
     if (!empConfirmarModal || !empConfirmarTexto) return;
 
     empleadoPendienteEliminar = empleado.id;
-    empConfirmarTexto.textContent =
-        `¿Deseas eliminar la cuenta de ${empleado.nombre} (${empleado.correo})?`;
+
+    if (empleado.activo) {
+        if (empConfirmarTitulo) {
+            empConfirmarTitulo.textContent = "Desactivar cuenta";
+        }
+        empConfirmarTexto.textContent =
+            `¿Estás seguro de que deseas desactivar la cuenta de ${empleado.nombre}?`;
+    } else {
+        if (empConfirmarTitulo) {
+            empConfirmarTitulo.textContent = "Activar cuenta";
+        } empConfirmarTexto.textContent =
+            `¿Deseas activar la cuenta de ${empleado.nombre}? El usuario podrá volver a acceder al sistema cuando el inicio de sesión esté habilitado para su cuenta.`;
+    }
+
+    if (empEliminarConfirmar) {
+        empEliminarConfirmar.textContent = empleado.activo
+            ? "Sí, desactivar"
+            : "Sí, activar";
+    }
 
     empConfirmarModal.hidden = false;
 }
@@ -355,22 +502,57 @@ function cerrarConfirmacionEliminar(): void {
     empleadoPendienteEliminar = null;
 }
 
-function eliminarEmpleadoConfirmado(): void {
+async function eliminarEmpleadoConfirmado(): Promise<void> {
     if (empleadoPendienteEliminar === null) return;
 
     const empleado = empleados.find(
         (elemento) => elemento.id === empleadoPendienteEliminar
     );
 
-    empleados = empleados.filter(
-        (elemento) => elemento.id !== empleadoPendienteEliminar
-    );
+    if (!empleado) {
+        cerrarConfirmacionEliminar();
+        return;
+    }
 
-    cerrarConfirmacionEliminar();
-    dibujarEmpleados();
+    const nuevoEstado = !empleado.activo;
 
-    if (empleado) {
-        mostrarMensaje(`Se eliminó a ${empleado.nombre} de la lista de demostración.`);
+    try {
+        const respuesta = await fetch(
+            `http://localhost:3000/empleados/${encodeURIComponent(empleado.id)}/estado`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    activo: nuevoEstado
+                })
+            }
+        );
+
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(
+                resultado.error ||
+                resultado.mensaje ||
+                "No se pudo actualizar el estado de la cuenta."
+            );
+        }
+        cerrarConfirmacionEliminar();
+
+        await cargarEmpleados();
+
+        mostrarMensaje(
+            `La cuenta de ${empleado.nombre} se ${nuevoEstado ? "activó" : "desactivó"} correctamente.`,
+        );
+    } catch (error) {
+        console.error("Error al cambiar el estado:", error);
+        mostrarMensaje(
+            error instanceof Error
+                ? error.message
+                : "Ocurrió un error al cambiar el estado."
+        );
     }
 }
 
