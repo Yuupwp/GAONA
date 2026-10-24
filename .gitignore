@@ -29,3 +29,23 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+
+!**/.env.example
+coverage/
+test-results/
+playwright-report/
+
+# Credenciales, evidencias de correo y respaldos privados
+.pgpass
+*.eml
+*.dump
+*.backup
+*.sql.gz
+*.key
+*.p12
+*.pfx
+runtime.json
+destinatarios.json
+intento-smtp-*.json
+sesion-smtp-*.json
+origen-correo-*.json
