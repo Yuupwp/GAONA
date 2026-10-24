@@ -448,3 +448,92 @@
         width: 100%;
     }
 }
+
+
+/* Botón para activar una cuenta */
+.emp-accion-activar {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.emp-accion-activar:hover {
+    background-color: #bbf7d0;
+    transform: translateY(-1px);
+}
+
+.emp-accion-activar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* Apariencia de una cuenta desactivada */
+.emp-desactivado {
+    color: #9ca3af;
+}
+
+.emp-desactivado td {
+    background-color: #f9fafb;
+}
+
+/* Nombre y correo tachados */
+.emp-desactivado .emp-nombre,
+.emp-desactivado .emp-correo {
+    color: #9ca3af;
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+/* Mantener visible el botón para reactivar */
+.emp-desactivado .emp-accion-activar {
+    text-decoration: none;
+}
+
+
+/* Botón para activar una cuenta */
+.emp-accion-activar {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.emp-accion-activar:hover {
+    background-color: #bbf7d0;
+}
+
+.emp-accion-activar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Texto de empleados desactivados */
+.emp-texto-desactivado {
+    color: #9ca3af !important;
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+/* Fondo gris para la fila desactivada */
+.emp-desactivado td {
+    background-color: #f9fafb;
+}
+
+/* Avatar atenuado */
+.emp-desactivado .emp-avatar {
+    filter: grayscale(100%);
+    opacity: 0.55;
+}
