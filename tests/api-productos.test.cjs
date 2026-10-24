@@ -1,19 +1,32 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { createHarness } = require('./pdf-harness.cjs');
+const { readFileSync } = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const { createRequire } = require('node:module');
+const apiRequire = createRequire(path.join(__dirname, '../api/package.json'));
+const { transformSync } = apiRequire('esbuild');
+const source = transformSync(readFileSync(path.join(__dirname, '../api/src/index.ts'), 'utf8'),
+    { loader: 'ts', format: 'cjs' }).code;
 
 function routes(prisma) {
-    const { app } = createHarness({ prisma });
     const handlers = {};
-    for (const layer of app.router.stack) {
-        if (!layer.route) continue;
-        for (const route of layer.route.stack) handlers[`${route.method.toUpperCase()} ${layer.route.path}`] = route.handle;
-    }
+    const app = { use() {}, listen() {}, get(route, handler) { handlers[`GET ${route}`] = handler; },
+        post(route, handler) { handlers[`POST ${route}`] = handler; } };
+    const express = Object.assign(() => app, { json: () => () => {} });
+    vm.runInNewContext(source, { require(name) {
+        if (name === 'express') return express;
+        if (name === 'cors') return () => () => {};
+        if (name === 'dotenv/config') return {};
+        if (name === './lib/prisma') return { prisma };
+        if (name === './clientes') return { clientesRouter: {} };
+        return apiRequire(name);
+    }, process: { env: {} }, console: { log() {}, error() {} } });
     return handlers;
 }
 function response() {
     return { code: 200, body: undefined, status(code) { this.code = code; return this; },
-        setHeader() {}, json(body) { this.body = body; } };
+        json(body) { this.body = body; } };
 }
 const valid = { cliente: { nombre: 'Prueba', apellido: 'Catálogo', telefono: '5555555555' },
     productos: [{ idProducto: 'prueba-1', cantidad: 1 }] };
@@ -41,10 +54,10 @@ test('GET maneja catálogo vacío y error de base de datos sin exponer detalles'
 
 test('POST rechaza producto inexistente, inactivo o de otro tipo sin crear cliente ni solicitud', async () => {
     let writes = 0;
-    const handlers = routes({ producto: { findMany: async ({ where }) => {
+    const handlers = routes({ producto: { count: async ({ where }) => {
         assert.equal(where.activo, true);
         assert.equal(where.tipo, 'PRODUCTO');
-        return [];
+        return 0;
     } }, solicitud: { create: async () => { writes++; } } });
     const res = response();
     await handlers['POST /solicitudes']({ body: valid }, res);
@@ -54,11 +67,11 @@ test('POST rechaza producto inexistente, inactivo o de otro tipo sin crear clien
 
 test('POST valida entrada antes de consultar y conserva el contrato de solicitud válida', async () => {
     let writes = 0;
-    const handlers = routes({ producto: { findMany: async () => [{ id: 'prueba-1', nombre: 'Producto simulado', precioDesde: '25.50' }] }, solicitud: { create: async ({ data }) => {
+    const handlers = routes({ producto: { count: async () => 1 }, solicitud: { create: async ({ data }) => {
         writes++;
         assert.equal(data.origen, 'WEB');
         assert.equal(data.detalles.create[0].idProducto, 'prueba-1');
-        return { id: 'solicitud-prueba', creadoEn: new Date('2026-10-22T12:00:00Z') };
+        return { id: 'solicitud-prueba' };
     } } });
     const bad = response();
     await handlers['POST /solicitudes']({ body: { ...valid, productos: [] } }, bad);

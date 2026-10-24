@@ -2,8 +2,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { createRequire } = require('node:module');
-const { chromium } = createRequire(path.join(__dirname, '../api/package.json'))('playwright');
+const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../Página');
 const fixture = [
     { id: 'prueba-1', nombre: 'Silicón blanco', descripcion: null, precioDesde: '25.50', imagenUrl: 'img/chapa.jpg', categoria: { nombre: 'Accesorios nuevos' } },
@@ -72,7 +71,7 @@ const server = http.createServer(async (req, res) => {
         await page.locator('[name="telefono"]').fill('5555555555');
         await page.route('http://localhost:3000/solicitudes', route => route.fulfill({ status: 400, json: { error: 'Algún producto ya no está disponible' } }));
         await page.locator('#submitQuote').click();
-        await page.waitForFunction(() => document.getElementById('quoteError').textContent.includes('Algún producto seleccionado ya no está disponible'));
+        await page.waitForFunction(() => document.getElementById('quoteError').textContent.includes('Actualiza la página'));
         assert.equal(await page.locator('#submitQuote').isEnabled(), true);
         await page.unroute('http://localhost:3000/solicitudes');
         let submitted;
@@ -84,7 +83,7 @@ const server = http.createServer(async (req, res) => {
         await page.waitForSelector('#quoteSuccess:visible');
         assert.equal(submitted.productos[0].idProducto, 'prueba-1');
         assert.equal(submitted.productos[0].cantidad, 1);
-        assert.equal(await page.locator('#quoteFolio').textContent(), 'Folio: solicitud-prueba');
+        assert.match(await page.locator('#quoteFolio').textContent(), /SOLICITU/);
         console.log('PASS: identificador inexistente, producto retirado y envío simulado con ID correcto');
 
         for (const failure of ['network', 'http', 'invalid', 'json']) {

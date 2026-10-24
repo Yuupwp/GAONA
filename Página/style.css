@@ -5,7 +5,7 @@
 :root {
 
     --orange: #c47720;
-    --orange-dark: #9c5712;
+    --orange-dark: #a96116;
 
     --black: #202020;
     --black-light: #292929;
@@ -854,7 +854,7 @@ a {
 }
 
 .quote-card-title,
-.quote-summary h2 {
+.quote-summary h3 {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -864,8 +864,8 @@ a {
     border-bottom: 1px solid var(--border);
 }
 
-.quote-card-title h2,
-.quote-summary h2 {
+.quote-card-title h3,
+.quote-summary h3 {
     font-size: 17px;
 }
 
@@ -1151,7 +1151,6 @@ a {
 }
 
 .quote-success h2 {
-    text-align: center;
     font-size: 26px;
     letter-spacing: -.5px;
     margin-bottom: 12px;
@@ -1215,103 +1214,3 @@ a {
         grid-column: 1 / -1;
     }
 }
-
-#downloadPdf,
-#sharePdf,
-#openWhatsapp {
-    border: 0;
-    font-family: inherit;
-    cursor: pointer;
-    max-width: 100%;
-}
-
-#downloadPdf:disabled,
-#sharePdf:disabled {
-    opacity: .6;
-    cursor: wait;
-}
-
-#downloadPdf[hidden],
-#sharePdf[hidden],
-#quoteSharing[hidden],
-#whatsappFallback[hidden] {
-    display: none;
-}
-
-.quote-success .quote-pdf-note {
-    margin-top: 15px;
-    font-size: 12px;
-}
-
-.quote-folio,
-#quoteRecipient,
-#correoHint,
-#previousQuote,
-#pdfStatus,
-#mailStatus,
-#shareStatus {
-    overflow-wrap: anywhere;
-}
-
-.quote-layout[hidden] {
-    display: none;
-}
-
-#quoteSharing {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border);
-}
-
-#quoteSharing p {
-    margin-top: 12px;
-    font-size: 12px;
-}
-
-
-
-
-
-
-
-
-
-:is(a, button, input, select, textarea, summary):focus-visible {
-    outline: 3px solid var(--orange-dark);
-    outline-offset: 3px;
-}
-
-.skip-link {
-    position: fixed;
-    left: 12px;
-    top: -100px;
-    z-index: 1000;
-    padding: 12px;
-    background: var(--white);
-    color: var(--black);
-}
-.skip-link:focus { top: 12px; }
-.btn-primary, .btn-catalog { background: var(--orange-dark); }
-.quote-button:hover:not(:disabled) { background: var(--orange-dark); }
-.orange, .menu a:hover, .category-option:hover, .product-category { color: var(--orange-dark); }
-
-.btn-secondary {
-    color: var(--black);
-    background: var(--background);
-    border: 1px solid var(--border);
-}
-.quote-email-review {
-    padding: 16px;
-    border: 1px solid var(--orange-dark);
-    border-radius: 8px;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-}
-.quote-email-review[hidden] { display: none; }
-.quote-email-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-.quote-email-actions .btn { font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--border); }
-.quote-add { color: var(--orange-dark); }
-.quote-add:hover:not(:disabled) { background: var(--orange-dark); }
-#manualSharingOptions { margin-top: 20px; text-align: left; line-height: 1.6; }
-#manualSharingOptions summary { cursor: pointer; }
-#quoteProgress:not(:empty), #previousQuote:not([hidden]) { margin: 16px 0; line-height: 1.6; }
