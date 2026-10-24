@@ -5,7 +5,7 @@
 :root {
 
     --orange: #c47720;
-    --orange-dark: #9c5712;
+    --orange-dark: #a96116;
 
     --black: #202020;
 
@@ -324,7 +324,7 @@ a {
     top: 20px;
 }
 
-.sidebar h2 {
+.sidebar h3 {
 
     font-size: 17px;
 
@@ -681,22 +681,3 @@ a {
     .products-top { flex-wrap: wrap; gap: 12px; }
     .catalog-header h1 { font-size: 32px; }
 }
-
-:is(a, button, input, select, textarea, summary):focus-visible {
-    outline: 3px solid var(--orange-dark);
-    outline-offset: 3px;
-}
-
-.skip-link {
-    position: fixed;
-    left: 12px;
-    top: -100px;
-    z-index: 1000;
-    padding: 12px;
-    background: var(--white);
-    color: var(--black);
-}
-.skip-link:focus { top: 12px; }
-.btn-primary, .btn-catalog { background: var(--orange-dark); }
-.quote-button:hover:not(:disabled) { background: var(--orange-dark); }
-.orange, .menu a:hover, .category-option:hover, .product-category { color: var(--orange-dark); }

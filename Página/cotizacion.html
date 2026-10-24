@@ -26,7 +26,6 @@
 
 
 <body>
-<a class="skip-link" href="#contenido">Ir al contenido</a>
 
 
 <!-- ================= HEADER ================= -->
@@ -80,7 +79,7 @@
 
 <!-- ================= COTIZACIÓN ================= -->
 
-<main class="quote" id="contenido" tabindex="-1">
+<main class="quote">
 
     <div class="container">
 
@@ -112,31 +111,18 @@
 
             <span class="quote-success-icon">✓</span>
 
-            <h2 id="quoteSuccessTitle" tabindex="-1">
-                ¡Solicitud registrada!
+            <h2>
+                ¡Solicitud enviada!
             </h2>
 
+            <p>
+                Recibimos tu solicitud. Un asesor de GAONA se comunicará
+                contigo para agendar la visita de medición.
+            </p>
+
             <p class="quote-folio" id="quoteFolio"></p>
-            <p id="quoteRecipient"></p>
 
-            <p id="mailStatus" role="status" aria-live="polite"></p>
-            <p id="pdfStatus" role="status" aria-live="polite"></p>
-            <button type="button" id="downloadPdf" class="quote-button" hidden>Descargar solicitud en PDF</button>
-            <p class="quote-pdf-note" id="pdfAvailability" hidden>Acceso al PDF durante 30 minutos. Guarda el archivo antes de salir de esta página.</p>
-
-            <details id="manualSharingOptions" hidden>
-            <summary>Compartir el PDF manualmente (opcional)</summary>
-            <div id="quoteSharing" hidden>
-                <button type="button" id="sharePdf" class="btn btn-primary">Compartir PDF por WhatsApp</button>
-                <p id="shareStatus" role="status" aria-live="polite"></p>
-                <div id="whatsappFallback" hidden>
-                    <p>Descarga el PDF con el botón de arriba. Después abre WhatsApp, elige la conversación y adjunta el archivo manualmente. El enlace solo prepara el mensaje con el folio.</p>
-                    <button type="button" id="openWhatsapp" class="btn btn-primary">Abrir WhatsApp</button>
-                </div>
-            </div>
-            </details>
-
-            <a href="Catalogo.html" class="btn btn-secondary">
+            <a href="Catalogo.html" class="btn btn-primary">
                 Volver al catálogo
             </a>
 
@@ -146,10 +132,7 @@
 
         <!-- FORMULARIO -->
 
-        <p id="previousQuote" role="status" hidden></p>
-        <p id="quoteProgress" role="status" aria-live="polite"></p>
         <form class="quote-layout" id="quoteForm" novalidate>
-            <div hidden aria-hidden="true"><label>Sitio web<input name="sitioWeb" type="text" tabindex="-1" autocomplete="off"></label></div>
 
 
             <!-- ================= DATOS ================= -->
@@ -163,9 +146,9 @@
 
                     <div class="quote-card-title">
 
-                        <h2>
+                        <h3>
                             1. Productos
-                        </h2>
+                        </h3>
 
                         <span id="itemCount"></span>
 
@@ -198,9 +181,9 @@
 
                     <div class="quote-card-title">
 
-                        <h2>
+                        <h3>
                             2. Tus datos
-                        </h2>
+                        </h3>
 
                     </div>
 
@@ -249,26 +232,15 @@
 
                         <label class="quote-field">
 
-                            <span>Correo (opcional, para recibir el PDF)</span>
+                            <span>Correo</span>
 
                             <input type="email"
                                    name="correo"
                                    autocomplete="email"
-                                   aria-describedby="correoHint"
                                    maxlength="150">
-                            <small id="correoHint" role="status" aria-live="polite">Revisa tu dirección: el PDF se preparará para el correo que escribas.</small>
 
                         </label>
 
-
-                        <div class="quote-email-review quote-field-full" id="emailReview" role="group" aria-labelledby="emailReviewTitle" hidden>
-                            <p id="emailReviewTitle"><strong>Revisa la dirección de correo</strong></p>
-                            <p id="emailReviewMessage"></p>
-                            <div class="quote-email-actions">
-                                <button type="button" class="btn btn-secondary" id="correctEmail">Corregir dirección</button>
-                                <button type="button" class="btn btn-primary" id="confirmEmail">Usar esta dirección</button>
-                            </div>
-                        </div>
 
                         <label class="quote-field quote-field-full">
 
@@ -306,9 +278,9 @@
 
             <aside class="quote-summary">
 
-                <h2>
+                <h3>
                     Resumen
-                </h2>
+                </h3>
 
 
                 <ul class="summary-list" id="summaryList">
