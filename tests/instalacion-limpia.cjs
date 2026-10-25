@@ -42,6 +42,12 @@ const port=()=>new Promise(r=>{const s=net.createServer();s.listen(0,'127.0.0.1'
   assert.equal(fs.statSync(path.join(root,'api/.env')).mode&0o777,0o600);
   const normal=spawnSync(process.execPath,[path.join(root,'api/scripts/entorno-compartido.cjs'),'verificar'],{cwd:root,env,encoding:'utf8'});assert.equal(normal.status,1);assert.match(normal.stderr,/WEB_DATA_API/);
   console.log('PASS: comandos web sin PostgreSQL habitual; plantilla privada creada; configuración incompleta rechazada antes de conectar.');
+  if(process.env.GAONA_INSTALACION_SIN_POSTGRES==='1'){
+    cmd(process.execPath,['--test','tests/smtp-permanente.test.cjs']);
+    cmd(process.execPath,['tests/smtp-permanente.browser.cjs'],{env:{...env,PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}});
+    console.log('PASS: SMTP permanente y simulado sin conexiones externas; instalación habitual sin PostgreSQL. Laboratorio PostgreSQL no ejecutado.');
+    console.log('Copia de prueba y evidencias conservadas: '+work);return;
+  }
   run('preparar');run('preparar');run('verificar');
   const oldHome=process.env.HOME;process.env.HOME=home;
   local=require(path.join(root,'api/scripts/desarrollo-local.cjs'));process.env.HOME=oldHome;

@@ -36,9 +36,10 @@ test('Entorno compartido: bloquea identidad administrativa, proyecto ajeno, TLS 
 });
 test('Entorno compartido: lee solo .env privado, admite CA relativa y descarta conexiones administrativas y SMTP heredado',t=>{
   const {shared,put,url,work}=fixture(t);const u=new URL(url);u.searchParams.set('sslcert','ca-prueba.crt');
-  put({WEB_DATABASE_URL:u.toString(),DATABASE_URL:'privado',DIRECT_URL:'privado',MAIL_ENABLED:'true',SMTP_PASSWORD:'privado',WHATSAPP_ENABLED:'true'});
+  put({WEB_DATABASE_URL:u.toString(),DATABASE_URL:'privado',DIRECT_URL:'privado',MAIL_ENABLED:'false',SMTP_PASSWORD:'privado',WHATSAPP_ENABLED:'true'});
   const env=shared.entorno();assert.equal(env.MAIL_ENABLED,'false');assert.equal(env.WHATSAPP_ENABLED,'false');assert.equal(env.DATABASE_URL,undefined);assert.equal(env.DIRECT_URL,undefined);assert.equal(env.SMTP_PASSWORD,undefined);
   assert.equal(new URL(env.WEB_DATABASE_URL).searchParams.get('sslcert'),path.join(work,'api/ca-prueba.crt'));
+  put({MAIL_ENABLED:'true'});assert.throws(()=>shared.entorno(),/WEB_SMTP_ALMACEN/);
   fs.chmodSync(path.join(work,'api/.env'),0o644);assert.throws(()=>shared.entorno(),/WEB_ENV_PERMISOS/);
 });
 test('Entorno compartido: auditoría solo lectura, bloquea identidad, persistencia y permisos antes de consultar catálogo',async t=>{
