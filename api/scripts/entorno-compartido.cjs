@@ -27,19 +27,21 @@ function entorno(smtp=false) {
   const info=fs.lstatSync(file);
   if(!info.isFile()||info.isSymbolicLink()||(process.platform!=='win32'&&(info.uid!==process.getuid()||(info.mode&0o077))))throw error('WEB_ENV_PERMISOS','api/.env requiere propietario actual y permisos 600');
   const parsed=require('dotenv').parse(fs.readFileSync(file));
+  if(!['true','false'].includes(parsed.MAIL_ENABLED??'false'))throw error('WEB_MAIL_ENABLED','MAIL_ENABLED debe ser true o false');
+  const real=smtp||parsed.MAIL_ENABLED==='true';
   if(parsed.SOLICITUD_STORAGE==='data-api'){
     const env={...systemEnv(),...Object.fromEntries(Object.entries(parsed).filter(([k])=>['SUPABASE_URL','SUPABASE_PUBLISHABLE_KEY','SUPABASE_AUTH_EMAIL','SUPABASE_AUTH_PASSWORD','SUPABASE_AUTH_UID','WEB_HOST','WEB_PORT','SOLICITUD_STORAGE','SOLICITUD_IDEMPOTENCY_KEY','SOLICITUD_PDF_KEY'].includes(k))),NODE_ENV:'development',MAIL_ENABLED:'false',WHATSAPP_ENABLED:'false'};
     if((parsed.NODE_ENV||'development')!=='development')throw error('WEB_MODO','Este supervisor solo permite desarrollo');
     require('./config-data-api.cjs').validarDataApi(env);
     env.WEB_HOST=env.WEB_HOST||'127.0.0.1';env.WEB_PORT=env.WEB_PORT||'3000';
     if(env.WEB_HOST!=='127.0.0.1'||!/^\d+$/.test(env.WEB_PORT)||Number(env.WEB_PORT)<1024||Number(env.WEB_PORT)>65535)throw error('WEB_PUERTO','API solo en 127.0.0.1 con puerto válido');
-    if(smtp){
-      Object.assign(env,require('./smtp-compartido.cjs').entorno(),{WEB_CORREO_MODO:'smtp'});
-      env.WEB_SMTP_DESTINATARIO=process.env.WEB_SMTP_DESTINATARIO;
+    if(real){
+      Object.assign(env,require('./smtp-compartido.cjs').configurar(parsed),{WEB_CORREO_MODO:'smtp'});
+      if(smtp){env.WEB_SMTP_SESION='temporal';env.WEB_SMTP_DESTINATARIO=process.env.WEB_SMTP_DESTINATARIO;}
     }
     return env;
   }
-  if(smtp)throw error('WEB_SMTP_ALMACEN','SMTP web requiere persistencia Data API');
+  if(real)throw error('WEB_SMTP_ALMACEN','SMTP web requiere persistencia Data API');
   if(!parsed.WEB_DATABASE_URL)throw error('WEB_URL_FALTA','Falta WEB_DATABASE_URL; no se utiliza DATABASE_URL ni DIRECT_URL como respaldo');
   if((parsed.NODE_ENV||'development')!=='development')throw error('WEB_MODO','Este supervisor solo permite desarrollo');
   const env={...systemEnv(),...Object.fromEntries(Object.entries(parsed).filter(([k])=>['WEB_DATABASE_URL','WEB_DATABASE_ROLE','WEB_HOST','WEB_PORT','SOLICITUD_STORAGE','SOLICITUD_IDEMPOTENCY_KEY','SOLICITUD_PDF_KEY'].includes(k))),NODE_ENV:'development',MAIL_ENABLED:'false',WHATSAPP_ENABLED:'false'};
@@ -63,6 +65,7 @@ function config(env) {
   if(Object.keys(cfg).some(k=>k!=='frontendPort'))throw error('WEB_CONFIG','La configuración web solo admite frontendPort');
   const frontendPort=cfg.frontendPort??5500;
   if(!Number.isInteger(frontendPort)||frontendPort<1024||frontendPort>65535||frontendPort===Number(env.WEB_PORT))throw error('WEB_PUERTO','El puerto del frontend debe ser válido y distinto al de la API');
+  if(env.WEB_CORREO_MODO==='smtp'&&(Number(env.WEB_PORT)!==3000||frontendPort!==5500))throw error('WEB_SMTP_ORIGEN','SMTP requiere API 3000 y frontend 5500 en 127.0.0.1');
   return {apiPort:Number(env.WEB_PORT),frontendPort};
 }
 async function verificar(env=entorno(), dependencies={}) {
@@ -154,7 +157,7 @@ async function worker(env=entorno(),onStopped=()=>process.exit(0),onReady=()=>{}
     });
     await new Promise(r=>controller.listen(0,'127.0.0.1',r));write(path.join(directory,'servicios.json'),{port:controller.address().port});onReady();
     process.once('SIGINT',signal);process.once('SIGTERM',signal);process.once('SIGHUP',signal);
-    if(env.WEB_CORREO_MODO==='smtp')timer=setTimeout(signal,15*60*1000);
+    if(env.WEB_SMTP_SESION==='temporal')timer=setTimeout(signal,15*60*1000);
   }catch(e){console.error(e.seguro?e.message:'WEB_ARRANQUE: No se iniciaron los servicios; datos remotos intactos');await stop();}
 }
 async function main() {
@@ -172,7 +175,8 @@ async function main() {
   if(mode==='worker')return worker();
   const env=entorno(),c=config(env);
   if(mode==='verificar'){console.log(JSON.stringify(await verificar(env),null,2));return;}
-  if(await control('estado')){console.log(JSON.stringify(await control('estado'),null,2));return;}
+  const current=await control('estado');
+  if(current){if(current.smtp_real!==(env.WEB_CORREO_MODO==='smtp'))throw error('WEB_REINICIO','La configuración de correo cambió; ejecuta npm run web:reiniciar para aplicarla');console.log(JSON.stringify(current,null,2));return;}
   await available(c.apiPort);await available(c.frontendPort);await verificar(env);
   if(!fs.existsSync(directory))fs.mkdirSync(directory,{mode:0o700,recursive:true});
   if(!fs.existsSync(path.join(directory,'control.json')))write(path.join(directory,'control.json'),{root,token:randomBytes(32).toString('hex')},true);
