@@ -1,0 +1,5 @@
+{
+  "apiPort": 3000,
+  "frontendPort": 5500,
+  "pgBin": ""
+}

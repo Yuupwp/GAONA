@@ -6,5 +6,26 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0"
+  },
+  "scripts": {
+    "lab:preparar": "node api/scripts/desarrollo-local.cjs preparar",
+    "lab:verificar": "node api/scripts/desarrollo-local.cjs verificar",
+    "lab:iniciar": "node api/scripts/desarrollo-local.cjs iniciar",
+    "lab:estado": "node api/scripts/desarrollo-local.cjs estado",
+    "lab:detener": "node api/scripts/desarrollo-local.cjs detener",
+    "lab:reiniciar": "node api/scripts/desarrollo-local.cjs reiniciar",
+    "web:instalar": "npm --prefix api ci && npm --prefix api run prisma:generar",
+    "web:configurar": "node api/scripts/entorno-compartido.cjs configurar",
+    "web:verificar": "node api/scripts/entorno-compartido.cjs verificar",
+    "web:iniciar": "node api/scripts/entorno-compartido.cjs iniciar",
+    "web:estado": "node api/scripts/entorno-compartido.cjs estado",
+    "web:detener": "node api/scripts/entorno-compartido.cjs detener",
+    "web:reiniciar": "node api/scripts/entorno-compartido.cjs reiniciar",
+    "web:claves": "node api/scripts/preparar-data-api.cjs claves",
+    "web:parametros": "node api/scripts/preparar-data-api.cjs parametros",
+    "web:smtp:simular": "node api/scripts/smtp-compartido.cjs simular",
+    "web:smtp:prueba": "node api/scripts/smtp-compartido.cjs prueba",
+    "web:smtp:enviar": "node api/scripts/smtp-compartido.cjs enviar",
+    "web:smtp": "node api/scripts/entorno-compartido.cjs smtp"
   }
 }
