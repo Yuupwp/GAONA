@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "dev:web": "tsx watch src/web.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test ../tests/*.test.cjs",
+    "test:browser": "node ../tests/catalogo.browser.cjs && node ../tests/solicitud-pdf.browser.cjs && node ../tests/solicitud-correo.browser.cjs && node ../tests/solicitud-whatsapp.browser.cjs && node ../tests/whatsapp-cloud.browser.cjs",
+    "test:persistencia": "node scripts/probar-persistencia-local.cjs",
+    "prisma:generar": "prisma generate",
+    "test:instalacion": "node ../tests/instalacion-limpia.cjs"
   },
   "repository": {
     "type": "git",
@@ -25,12 +31,16 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.6",
     "express": "^5.2.1",
+    "nodemailer": "10.2.0",
+    "pdfkit": "0.20.2",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
+    "@types/pdfkit": "0.17.6",
+    "playwright": "1.64.1",
     "prisma": "^6.19.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
