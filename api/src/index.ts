@@ -5,11 +5,13 @@ import { z } from "zod";
 import { prisma } from "./lib/prisma";
 import { clientesRouter } from "./clientes";
 import { empleadosRouter } from "./empleado";
+import { finanzasRouter } from "./finanzas";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/clientes", clientesRouter);
+app.use("/finanzas", finanzasRouter);
 app.use("/empleados", empleadosRouter)
 
 app.get("/salud", (_req, res) => {

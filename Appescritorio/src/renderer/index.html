@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="calendario.css">
     <link rel="stylesheet" href="producto.css">
     <link rel="stylesheet" href="empleado.css">
+      <link rel="stylesheet" href="finanzas.css">
 </head>
 
 <body>
@@ -456,9 +457,195 @@
                 </section>
 
 
-                <section id="finanzas-section" class="empty-section hidden">
-                    <h2>Finanzas</h2>
-                    <p>Gestión financiera.</p>
+                <section id="finanzas-section" class="empty-section finanzas-section hidden">
+
+                    <div class="fin-head">
+                        <div>
+                            <h2>Finanzas</h2>
+                            <span class="fin-subtitulo">
+                                Registra anticipos y pagos, y da seguimiento a los saldos pendientes de cada pedido.
+                            </span>
+                        </div>
+
+                        <button id="fin-nuevo" class="cl-btn cl-btn-primary" type="button">
+                            + Registrar pago
+                        </button>
+                    </div>
+
+                    <div class="fin-stats">
+                        <div class="fin-stat">
+                            <span>Por cobrar</span>
+                            <strong id="fin-stat-cobrar" class="fin-accent">$0.00</strong>
+                        </div>
+                        <div class="fin-stat">
+                            <span>Anticipos recibidos</span>
+                            <strong id="fin-stat-anticipos">$0.00</strong>
+                        </div>
+                        <div class="fin-stat">
+                            <span id="fin-stat-mes-etiqueta">Cobrado en el mes</span>
+                            <strong id="fin-stat-mes">$0.00</strong>
+                        </div>
+                        <div class="fin-stat">
+                            <span>Pedidos con saldo</span>
+                            <strong id="fin-stat-saldo">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="fin-toolbar">
+                        <input id="fin-buscar" class="fin-search" type="search"
+                            placeholder="Buscar por cliente o número de pedido..." autocomplete="off">
+
+                        <div class="fin-chips" id="fin-chips">
+                            <button type="button" class="fin-chip active" data-filtro="todos">Todos</button>
+                            <button type="button" class="fin-chip" data-filtro="saldo">Con saldo pendiente</button>
+                            <button type="button" class="fin-chip" data-filtro="sinAnticipo">Sin anticipo</button>
+                            <button type="button" class="fin-chip" data-filtro="liquidados">Liquidados</button>
+                        </div>
+                    </div>
+
+                    <div class="fin-tabs">
+                        <button type="button" class="fin-tab active" data-pestana="cuentas">Cuentas por cobrar</button>
+                        <button type="button" class="fin-tab" data-pestana="historial">Historial de pagos</button>
+                    </div>
+
+                    <div class="fin-card">
+
+                        <div id="fin-tabla-cuentas">
+                            <div class="fin-row fin-row-cuentas fin-row-head">
+                                <span>Pedido</span>
+                                <span>Cliente</span>
+                                <span>Estado del pedido</span>
+                                <span>Total</span>
+                                <span>Pagado</span>
+                                <span>Saldo</span>
+                                <span>Acciones</span>
+                            </div>
+                            <div id="fin-filas-cuentas"></div>
+                        </div>
+
+                        <div id="fin-tabla-historial" class="hidden">
+                            <div class="fin-row fin-row-historial fin-row-head">
+                                <span>Fecha</span>
+                                <span>Pedido</span>
+                                <span>Cliente</span>
+                                <span>Tipo</span>
+                                <span>Método</span>
+                                <span>Monto</span>
+                                <span>Referencia</span>
+                            </div>
+                            <div id="fin-filas-historial"></div>
+                        </div>
+
+                        <div class="fin-footer">
+                            <span id="fin-contador"></span>
+                            <div id="fin-paginacion" class="fin-pages"></div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- MODAL: REGISTRAR PAGO -->
+
+                    <div id="fin-modal" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true" aria-labelledby="fin-modal-titulo">
+
+                            <div class="cl-modal-head">
+                                <div>
+                                    <h3 id="fin-modal-titulo">Registrar pago</h3>
+                                    <span class="fin-subtitulo">Los campos con * son obligatorios.</span>
+                                </div>
+                                <button id="fin-modal-cerrar" class="cl-close" type="button"
+                                    aria-label="Cerrar">×</button>
+                            </div>
+
+                            <form id="fin-form" novalidate>
+
+                                <div class="cl-field">
+                                    <label for="fin-f-pedido">Pedido*</label>
+                                    <select id="fin-f-pedido">
+                                        <option value="">Selecciona un pedido</option>
+                                    </select>
+                                    <span class="cl-hint" id="fin-ayuda-pedido"></span>
+                                    <span class="cl-error" id="fin-e-pedido"></span>
+                                </div>
+
+                                <div class="cl-form-grid">
+                                    <div class="cl-field">
+                                        <label for="fin-f-tipo">Tipo de pago*</label>
+                                        <select id="fin-f-tipo">
+                                            <option value="ANTICIPO">Anticipo</option>
+                                            <option value="PARCIAL">Pago parcial</option>
+                                            <option value="LIQUIDACION">Liquidación</option>
+                                        </select>
+                                        <span class="cl-error" id="fin-e-tipo"></span>
+                                    </div>
+
+                                    <div class="cl-field">
+                                        <label for="fin-f-metodo">Método de pago*</label>
+                                        <select id="fin-f-metodo">
+                                            <option value="EFECTIVO">Efectivo</option>
+                                            <option value="TRANSFERENCIA">Transferencia</option>
+                                            <option value="TARJETA">Tarjeta</option>
+                                            <option value="OTRO">Otro</option>
+                                        </select>
+                                        <span class="cl-error" id="fin-e-metodo"></span>
+                                    </div>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="fin-f-monto">Monto*</label>
+                                    <div class="fin-monto-campo">
+                                        <span class="fin-signo">$</span>
+                                        <input id="fin-f-monto" type="number" inputmode="decimal" min="0.01"
+                                            step="0.01" placeholder="0.00" autocomplete="off">
+                                    </div>
+                                    <span class="cl-hint" id="fin-ayuda-monto"></span>
+                                    <span class="cl-error" id="fin-e-monto"></span>
+                                </div>
+
+                                <div class="cl-form-grid">
+                                    <div class="cl-field">
+                                        <label for="fin-f-referencia">Referencia</label>
+                                        <input id="fin-f-referencia" type="text"
+                                            placeholder="Folio de transferencia o autorización" maxlength="100"
+                                            autocomplete="off">
+                                        <span class="cl-error" id="fin-e-referencia"></span>
+                                    </div>
+
+                                    <div class="cl-field">
+                                        <label for="fin-f-fecha">Fecha*</label>
+                                        <input id="fin-f-fecha" type="date">
+                                        <span class="cl-error" id="fin-e-fecha"></span>
+                                    </div>
+                                </div>
+
+                                <div class="cl-form-error hidden" id="fin-form-error"></div>
+
+                                <div class="cl-modal-actions">
+                                    <button id="fin-form-cancelar" class="cl-btn cl-btn-outline"
+                                        type="button">Cancelar</button>
+                                    <button id="fin-form-guardar" class="cl-btn cl-btn-primary" type="submit">Guardar
+                                        pago</button>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL: DETALLE DEL PEDIDO -->
+
+                    <div id="fin-detalle" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true">
+                            <div id="fin-detalle-contenido"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- AVISOS -->
+
+                    <div id="fin-toast" class="cl-toast hidden" role="status"></div>
+
                 </section>
 
 
@@ -846,6 +1033,7 @@
     <script src="../../dist/renderer/clientes.js"></script>
     <script src="../../dist/renderer/calendario.js"></script>
     <script src="../../dist/renderer/producto.js"></script>
+    <script src="../../dist/renderer/finanzas.js"></script>
     <script type="module" src="../../dist/renderer/empleado.js"></script>
 
 
