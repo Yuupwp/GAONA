@@ -680,6 +680,8 @@
                     monto,
                     referencia: campos.referencia.value.trim() || undefined,
                     fecha: campos.fecha.value,
+                    // Quien inició sesión es quien registra el pago
+                    idUsuario: window.gaonaSesion.actual()?.id,
                 }),
             });
 

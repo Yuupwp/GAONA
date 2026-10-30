@@ -6,13 +6,16 @@ import { prisma } from "./lib/prisma";
 import { clientesRouter } from "./clientes";
 import { empleadosRouter } from "./empleado";
 import { finanzasRouter } from "./finanzas";
+import { authRouter, cuentaRouter } from "./cuenta";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/clientes", clientesRouter);
-app.use("/finanzas", finanzasRouter);
 app.use("/empleados", empleadosRouter)
+app.use("/finanzas", finanzasRouter);
+app.use("/auth", authRouter);
+app.use("/cuenta", cuentaRouter);
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });
