@@ -1,0 +1,252 @@
+/* =========================================
+   MI CUENTA
+   Reutiliza botones, insignias, campos y avisos
+   de clientes.css (clases cl-*)
+========================================= */
+
+.empty-section.cuenta-section {
+    padding: 0;
+}
+
+.cuenta-section h2 {
+    margin: 0 0 6px;
+
+    font-size: 24px;
+    color: var(--black);
+}
+
+.cuenta-section h3 {
+    margin: 0 0 4px;
+
+    font-size: 18px;
+    color: var(--black);
+}
+
+.cuenta-section .cu-subtitulo {
+    display: block;
+
+    color: var(--gray);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.cu-head {
+    margin-bottom: 24px;
+}
+
+.cu-layout {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 24px;
+
+    align-items: start;
+}
+
+.cu-columna {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.cu-card {
+    padding: 24px;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+.cu-card-head {
+    margin-bottom: 20px;
+}
+
+.cu-card-fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.cu-card-fila .cl-btn {
+    flex-shrink: 0;
+}
+
+
+/* ---------- Tarjeta del perfil ---------- */
+
+.cu-perfil {
+    text-align: center;
+}
+
+.cu-avatar {
+    width: 80px;
+    height: 80px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 14px;
+
+    background: var(--orange);
+    border-radius: 50%;
+
+    color: var(--white);
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.cu-perfil-nombre {
+    margin-bottom: 10px;
+
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--black);
+}
+
+.cu-badges {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.cu-datos {
+    text-align: left;
+}
+
+.cu-dato {
+    margin-bottom: 14px;
+}
+
+.cu-dato span {
+    display: block;
+
+    margin-bottom: 2px;
+
+    color: var(--gray);
+    font-size: 12px;
+}
+
+.cu-dato strong {
+    display: block;
+
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--black);
+    word-break: break-word;
+}
+
+.cu-perfil .cl-btn {
+    width: 100%;
+
+    margin-top: 6px;
+}
+
+
+/* ---------- Formularios ---------- */
+
+.cuenta-section .cl-field input[readonly],
+.cuenta-section .cl-field input:disabled {
+    background: #faf9f7;
+    color: var(--gray);
+    cursor: not-allowed;
+}
+
+.cu-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    margin-top: 8px;
+}
+
+.cu-pass {
+    position: relative;
+}
+
+.cu-pass input {
+    padding-right: 84px;
+}
+
+.cu-ver {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+
+    padding: 6px 12px;
+
+    background: #faf9f7;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--black);
+
+    cursor: pointer;
+}
+
+.cu-ver:hover {
+    border-color: var(--orange);
+}
+
+
+/* ---------- Requisitos de la contraseña (lista con ✓) ---------- */
+
+.cu-requisitos {
+    list-style: none;
+
+    margin: 4px 0 18px;
+}
+
+.cu-requisitos li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+    color: var(--gray);
+}
+
+.cu-check {
+    width: 20px;
+    height: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    background: var(--gray-light);
+    border-radius: 50%;
+
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.cu-check.ok {
+    background: #2e7d50;
+}
+
+.cu-requisitos li:has(.cu-check.ok) {
+    color: var(--black);
+}
+
+
+@media (max-width: 1000px) {
+    .cu-layout {
+        grid-template-columns: 1fr;
+    }
+}

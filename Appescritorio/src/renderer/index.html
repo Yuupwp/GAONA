@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="calendario.css">
     <link rel="stylesheet" href="producto.css">
     <link rel="stylesheet" href="empleado.css">
-      <link rel="stylesheet" href="finanzas.css">
+    <link rel="stylesheet" href="finanzas.css">
+    <link rel="stylesheet" href="cuenta.css">
 </head>
 
 <body>
@@ -44,10 +45,10 @@
                 <div class="input-group">
 
                     <label for="username">
-                        Nombre
+                        Usuario
                     </label>
 
-                    <input type="text" id="username" placeholder="Ingresa tu nombre" autocomplete="username">
+                    <input type="text" id="username" placeholder="Ingresa tu usuario o correo" autocomplete="username">
 
                     <span id="username-error" class="input-error"></span>
 
@@ -192,15 +193,15 @@
 
                 <div class="user-info">
 
-                    <div class="user-avatar">
+                    <div class="user-avatar" id="user-avatar">
                         JP
                     </div>
 
                     <div class="user-data">
 
-                        <strong>Usuario</strong>
+                        <strong id="user-nombre">Usuario</strong>
 
-                        <span>Administrador</span>
+                        <span id="user-rol">Administrador</span>
 
                     </div>
 
@@ -1014,12 +1015,202 @@
                     </div>
                 </div>
 
-                <section id="cuenta-section" class="empty-section hidden">
-                    <h2>Mi cuenta</h2>
-                    <p>
-                        Desde aquí podrás modificar la información
-                        de tu cuenta y contraseña.
-                    </p>
+                <section id="cuenta-section" class="empty-section cuenta-section hidden">
+
+                    <div class="cu-head">
+                        <h2>Mi cuenta</h2>
+                        <span class="cu-subtitulo">
+                            Desde aquí podrás modificar la información de tu cuenta y contraseña.
+                        </span>
+                    </div>
+
+                    <div class="cu-layout">
+
+                        <!-- PERFIL -->
+
+                        <aside class="cu-card cu-perfil">
+
+                            <div id="cu-avatar" class="cu-avatar"></div>
+                            <div id="cu-nombre-completo" class="cu-perfil-nombre"></div>
+
+                            <div class="cu-badges">
+                                <span id="cu-badge-rol" class="cl-badge"></span>
+                                <span id="cu-badge-estado" class="cl-badge cl-badge-green">Cuenta activa</span>
+                            </div>
+
+                            <div class="cu-datos">
+                                <div class="cu-dato"><span>Usuario</span><strong id="cu-d-usuario">—</strong></div>
+                                <div class="cu-dato"><span>Correo electrónico</span><strong id="cu-d-correo">—</strong></div>
+                                <div class="cu-dato"><span>Teléfono</span><strong id="cu-d-telefono">—</strong></div>
+                                <div class="cu-dato"><span>Miembro desde</span><strong id="cu-d-miembro">—</strong></div>
+                                <div class="cu-dato"><span>Sesión iniciada</span><strong id="cu-d-sesion">—</strong></div>
+                            </div>
+
+                            <button id="cu-cerrar-sesion" class="cl-btn cl-btn-outline" type="button">
+                                Cerrar sesión
+                            </button>
+
+                        </aside>
+
+
+                        <div class="cu-columna">
+
+                            <!-- INFORMACIÓN PERSONAL -->
+
+                            <section class="cu-card">
+
+                                <div class="cu-card-head">
+                                    <h3>Información personal</h3>
+                                    <span class="cu-subtitulo">Actualiza tus datos de contacto.</span>
+                                </div>
+
+                                <form id="cu-form" novalidate>
+
+                                    <div class="cl-form-grid">
+                                        <div class="cl-field">
+                                            <label for="cu-f-nombre">Nombre*</label>
+                                            <input id="cu-f-nombre" type="text" maxlength="100" autocomplete="off">
+                                            <span class="cl-error" id="cu-e-nombre"></span>
+                                        </div>
+
+                                        <div class="cl-field">
+                                            <label for="cu-f-apellido">Apellido*</label>
+                                            <input id="cu-f-apellido" type="text" maxlength="100" autocomplete="off">
+                                            <span class="cl-error" id="cu-e-apellido"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="cl-form-grid">
+                                        <div class="cl-field">
+                                            <label for="cu-f-usuario">Usuario*</label>
+                                            <input id="cu-f-usuario" type="text" maxlength="80" autocomplete="off">
+                                            <span class="cl-error" id="cu-e-usuario"></span>
+                                        </div>
+
+                                        <div class="cl-field">
+                                            <label for="cu-f-telefono">Teléfono</label>
+                                            <input id="cu-f-telefono" type="text" inputmode="tel" maxlength="14"
+                                                placeholder="81 1234 5678" autocomplete="off">
+                                            <span class="cl-hint">10 dígitos</span>
+                                            <span class="cl-error" id="cu-e-telefono"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="cl-field">
+                                        <label for="cu-f-correo">Correo electrónico*</label>
+                                        <input id="cu-f-correo" type="email" maxlength="150" autocomplete="off">
+                                        <span class="cl-error" id="cu-e-correo"></span>
+                                    </div>
+
+                                    <div class="cl-field">
+                                        <label for="cu-f-rol">Rol</label>
+                                        <input id="cu-f-rol" type="text" disabled>
+                                        <span class="cl-hint">Solo un administrador puede cambiar tu rol desde la sección Empleados.</span>
+                                    </div>
+
+                                    <div class="cl-form-error hidden" id="cu-form-error"></div>
+
+                                    <div class="cu-acciones">
+                                        <button id="cu-descartar" class="cl-btn cl-btn-outline" type="button"
+                                            disabled>Descartar cambios</button>
+                                        <button id="cu-guardar" class="cl-btn cl-btn-primary" type="submit"
+                                            disabled>Guardar cambios</button>
+                                    </div>
+
+                                </form>
+
+                            </section>
+
+
+                            <!-- CONTRASEÑA -->
+
+                            <section class="cu-card cu-card-fila">
+
+                                <div>
+                                    <h3>Contraseña</h3>
+                                    <span class="cu-subtitulo">Cámbiala cuando quieras para mantener tu cuenta segura.</span>
+                                </div>
+
+                                <button id="cu-abrir-pass" class="cl-btn cl-btn-outline" type="button">
+                                    Cambiar contraseña
+                                </button>
+
+                            </section>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- MODAL: CAMBIAR CONTRASEÑA -->
+
+                    <div id="cu-pass-modal" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true" aria-labelledby="cu-pass-titulo">
+
+                            <div class="cl-modal-head">
+                                <div>
+                                    <h3 id="cu-pass-titulo">Cambiar contraseña</h3>
+                                    <span class="cu-subtitulo">Usa una contraseña segura que no uses en otros sitios.</span>
+                                </div>
+                                <button id="cu-pass-cerrar" class="cl-close" type="button"
+                                    aria-label="Cerrar">×</button>
+                            </div>
+
+                            <form id="cu-pass-form" novalidate>
+
+                                <div class="cl-field">
+                                    <label for="cu-p-actual">Contraseña actual*</label>
+                                    <div class="cu-pass">
+                                        <input id="cu-p-actual" type="password" autocomplete="current-password">
+                                        <button type="button" class="cu-ver" data-objetivo="cu-p-actual">Ver</button>
+                                    </div>
+                                    <span class="cl-error" id="cu-pe-actual"></span>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="cu-p-nueva">Nueva contraseña*</label>
+                                    <div class="cu-pass">
+                                        <input id="cu-p-nueva" type="password" autocomplete="new-password"
+                                            maxlength="72">
+                                        <button type="button" class="cu-ver" data-objetivo="cu-p-nueva">Ver</button>
+                                    </div>
+                                    <span class="cl-error" id="cu-pe-nueva"></span>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="cu-p-confirmar">Confirmar nueva contraseña*</label>
+                                    <div class="cu-pass">
+                                        <input id="cu-p-confirmar" type="password" autocomplete="new-password"
+                                            maxlength="72">
+                                        <button type="button" class="cu-ver" data-objetivo="cu-p-confirmar">Ver</button>
+                                    </div>
+                                    <span class="cl-error" id="cu-pe-confirmar"></span>
+                                </div>
+
+                                <ul class="cu-requisitos">
+                                    <li id="cu-req-largo"><span class="cu-check">✓</span>Mínimo 8 caracteres</li>
+                                    <li id="cu-req-coinciden"><span class="cu-check">✓</span>Las contraseñas coinciden</li>
+                                    <li id="cu-req-distinta"><span class="cu-check">✓</span>Distinta a la contraseña actual</li>
+                                </ul>
+
+                                <div class="cl-form-error hidden" id="cu-pass-error"></div>
+
+                                <div class="cl-modal-actions">
+                                    <button id="cu-pass-cancelar" class="cl-btn cl-btn-outline"
+                                        type="button">Cancelar</button>
+                                    <button id="cu-pass-guardar" class="cl-btn cl-btn-primary" type="submit"
+                                        disabled>Actualizar contraseña</button>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+
+
+                    <!-- AVISOS -->
+
+                    <div id="cu-toast" class="cl-toast hidden" role="status"></div>
+
                 </section>
 
             </div>
@@ -1029,11 +1220,13 @@
     </main>
 
 
+    <script src="../../dist/renderer/sesion.js"></script>
     <script src="../../dist/renderer/renderer.js"></script>
     <script src="../../dist/renderer/clientes.js"></script>
     <script src="../../dist/renderer/calendario.js"></script>
     <script src="../../dist/renderer/producto.js"></script>
     <script src="../../dist/renderer/finanzas.js"></script>
+    <script src="../../dist/renderer/cuenta.js"></script>
     <script type="module" src="../../dist/renderer/empleado.js"></script>
 
 

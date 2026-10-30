@@ -39,7 +39,7 @@ const sectionTitle = document.getElementById(
 ) as HTMLElement;
 
 
-loginForm.addEventListener("submit", (event) => {
+loginForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
@@ -64,7 +64,7 @@ loginForm.addEventListener("submit", (event) => {
     if (username === "") {
 
         usernameError.textContent =
-            "El nombre es obligatorio.";
+            "El usuario es obligatorio.";
 
         usernameInput.parentElement?.classList.add("has-error");
 
@@ -89,6 +89,38 @@ loginForm.addEventListener("submit", (event) => {
 
     if (hasError) {
         return;
+    }
+
+
+    // Iniciar sesión con la API (verifica usuario y contraseña reales)
+
+    const botonLogin = loginForm.querySelector(
+        ".login-button"
+    ) as HTMLButtonElement;
+
+    botonLogin.disabled = true;
+    botonLogin.textContent = "Iniciando sesión...";
+
+    try {
+
+        await window.gaonaSesion.iniciar(username, password);
+
+    } catch (error) {
+
+        passwordError.textContent =
+            error instanceof Error
+                ? error.message
+                : "No se pudo iniciar sesión.";
+
+        passwordInput.parentElement?.classList.add("has-error");
+
+        return;
+
+    } finally {
+
+        botonLogin.disabled = false;
+        botonLogin.textContent = "Iniciar sesión";
+
     }
 
 
