@@ -6,7 +6,6 @@ import { prisma } from "./lib/prisma";
 import { clientesRouter } from "./clientes";
 import { empleadosRouter } from "./empleado";
 import { productosRouter } from "./catalogo";
-import { auntRouter } from "./autenticacion";
 import { finanzasRouter } from "./finanzas";
 import { authRouter, cuentaRouter } from "./cuenta";
 
@@ -15,7 +14,10 @@ app.use(cors());
 app.use(express.json());
 app.use("/clientes", clientesRouter);
 app.use("/finanzas", finanzasRouter);
-app.use("/empleados", empleadosRouter)
+app.use("/empleados", empleadosRouter);
+app.use("/productos", productosRouter)
+app.use("/auth", authRouter);
+app.use("/cuenta", cuentaRouter);
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });

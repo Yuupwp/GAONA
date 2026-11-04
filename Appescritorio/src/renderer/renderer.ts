@@ -1,4 +1,3 @@
-
 const loginForm = document.getElementById(
     "login-form"
 ) as HTMLFormElement;
@@ -40,12 +39,13 @@ const sectionTitle = document.getElementById(
 ) as HTMLElement;
 
 
-loginForm.addEventListener("submit", (event) => {
+loginForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
     const username = usernameInput.value.trim();
-    const password = passwordInput.value;
+    const password = passwordInput.value.trim();
+
 
     // Limpiar errores anteriores
 
@@ -55,9 +55,11 @@ loginForm.addEventListener("submit", (event) => {
     usernameInput.parentElement?.classList.remove("has-error");
     passwordInput.parentElement?.classList.remove("has-error");
 
+
     let hasError = false;
 
-    // Validar usuario
+
+    // Validar nombre
 
     if (username === "") {
 
@@ -68,6 +70,7 @@ loginForm.addEventListener("submit", (event) => {
 
         hasError = true;
     }
+
 
     // Validar contraseña
 
@@ -81,10 +84,43 @@ loginForm.addEventListener("submit", (event) => {
         hasError = true;
     }
 
-    // Si hay errores, detener el proceso
+
+    // Si hay errores, no continuar
 
     if (hasError) {
         return;
+    }
+
+
+    // Iniciar sesión con la API (verifica usuario y contraseña reales)
+
+    const botonLogin = loginForm.querySelector(
+        ".login-button"
+    ) as HTMLButtonElement;
+
+    botonLogin.disabled = true;
+    botonLogin.textContent = "Iniciando sesión...";
+
+    try {
+
+        await window.gaonaSesion.iniciar(username, password);
+
+    } catch (error) {
+
+        passwordError.textContent =
+            error instanceof Error
+                ? error.message
+                : "No se pudo iniciar sesión.";
+
+        passwordInput.parentElement?.classList.add("has-error");
+
+        return;
+
+    } finally {
+
+        botonLogin.disabled = false;
+        botonLogin.textContent = "Iniciar sesión";
+
     }
 
 
@@ -92,30 +128,17 @@ loginForm.addEventListener("submit", (event) => {
 
     loginScreen.classList.add("hidden");
 
+
     // Mostrar pantalla principal
 
     mainScreen.classList.remove("hidden");
+
 
     // Maximizar ventana
 
     window.electronAPI.maximizeWindow();
 
-} catch (error) {
-
-    console.error("Error al iniciar sesión:", error);
-
-    passwordError.textContent =
-        "No se pudo conectar con el servidor.";
-
-    passwordInput.parentElement?.classList.add("has-error");
-}
-
 });
-
-
-// ==========================================
-// NAVEGACIÓN DEL MENÚ
-// ==========================================
 
 menuItems.forEach((item) => {
 
@@ -127,21 +150,25 @@ menuItems.forEach((item) => {
             return;
         }
 
+
         // Quitar selección anterior
 
         menuItems.forEach((menu) => {
             menu.classList.remove("active");
         });
 
+
         // Activar elemento seleccionado
 
         item.classList.add("active");
+
 
         // Ocultar todas las secciones
 
         sections.forEach((currentSection) => {
             currentSection.classList.add("hidden");
         });
+
 
         // Mostrar sección seleccionada
 
@@ -153,6 +180,7 @@ menuItems.forEach((item) => {
             selectedSection.classList.remove("hidden");
         }
 
+
         // Cambiar título
 
         const selectedText = item.querySelector(
@@ -160,10 +188,8 @@ menuItems.forEach((item) => {
         );
 
         if (selectedText) {
-
             sectionTitle.textContent =
                 selectedText.textContent || "";
-
         }
 
     });
