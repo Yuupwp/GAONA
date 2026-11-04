@@ -1,42 +1,108 @@
 
 "use strict";
 
-interface Producto {
-    id: number;
+import { error } from "console";
+const modalProducto = document.getElementById("modal-producto");
+const modalProductoTitulo = document.getElementById("modal-producto-titulo");
+const modalProductoDescripcion = document.getElementById("modal-producto-descripcion");
+const productosMensaje = document.getElementById("productos-mensaje");
+const productoError = document.getElementById("producto-error");
+const formProducto = document.getElementById("form-producto") as HTMLFormElement | null;
+let mensajeTemporizador: number | undefined;
+
+const productoId = document.getElementById("producto-id") as HTMLInputElement | null;
+const productoNombre = document.getElementById("producto-nombre") as HTMLInputElement | null;
+const productoPrecio = document.getElementById("producto-precio") as HTMLInputElement | null;
+const productoDescripcion = document.getElementById("producto-descripcion") as HTMLTextAreaElement | null;
+const productoTipo = document.getElementById("producto-tipo") as HTMLSelectElement | null;
+const productoCategoria = document.getElementById("producto-categoria") as HTMLSelectElement | null;
+const productoUrl = document.getElementById("producto-imagen") as HTMLInputElement | null;
+const productoActivo = document.getElementById("producto-activo") as HTMLSelectElement | null;
+const btnCerrarModalProducto = document.getElementById("btn-cerrar-modal-producto");
+const btnCancelarProducto = document.getElementById("btn-cancelar-producto");
+const btnGuardarProducto = document.getElementById("btn-guardar-producto");
+
+type TipoProducto = "PRODUCTO" | "MATERIAL" | "HERRAMIENTA";
+const idsCategoria: Record<string, string> = {
+    "05629c44-d415-40ad-a8d8-8d431e219c44": "Accesorios",
+    "089df661-3cef-4edd-9301-6ecf1a86c2c7": "Chapas",
+    "7415897b-d04a-49c8-8816-b0a1ffeb06f9": "Ventanas",
+    "7d6bcc3b-e8b6-4b5e-9c43-57f1f2dcd620": "Canceles",
+    "7fcd77ff-cd74-4271-ad99-d26da912a825": "Puertas",
+    "e32352b2-98c4-4910-bf44-492f9833d2bc": "Marcos",
+}
+
+interface ProductoAPI {
+    id: string;
     nombre: string;
-    codigo: string;
-    precio: number;
-    stock: number;
+    tipo: TipoProducto;
     descripcion: string;
+    precioDesde: number;
+    imagenUrl: string;
+    activo: boolean;
+    categoria: {
+        id: string;
+        nombre: string;
+    }
+}
+
+interface Producto {
+    id: string;
+    nombre: string;
+    tipo: TipoProducto;
+    descripcion: string;
+    precioDesde: number;
+    imagenUrl: string;
+    activo: boolean;
+    categoria: string
 }
 
 // Elementos HTML
 const productosGrid = document.getElementById("productos-grid");
 const productosContador = document.getElementById("productos-contador");
 const productosVacio = document.getElementById("productos-vacio");
-const productosMensaje = document.getElementById("productos-mensaje");
 const buscarProducto = document.getElementById("buscar-producto") as HTMLInputElement | null;
 const btnAgregarProducto = document.getElementById("btn-agregar-producto");
 
-// Productos de prueba: después los conectamos con la base de datos.
-let productos: Producto[] = [
-    {
-        id: 1,
-        nombre: "Producto de ejemplo",
-        codigo: "GAO-001",
-        precio: 1500,
-        stock: 10,
-        descripcion: "Este es un producto de prueba."
-    },
-    {
-        id: 2,
-        nombre: "Material de ejemplo",
-        codigo: "GAO-002",
-        precio: 850,
-        stock: 5,
-        descripcion: "Segundo producto para comprobar las tarjetas."
+let productos: Producto[] = []
+//Cargar productos
+async function cargarCatalogo(): Promise<void> {
+    try {
+        const respuesta = await fetch(
+            "http://localhost:3000/productos"
+        );
+        if (!respuesta.ok) {
+            throw new Error(
+                `Error HTTP: ${respuesta.status}`
+            );
+        }
+
+        const datos: ProductoAPI[] = await respuesta.json();
+        productos = datos.map((producto) => ({
+            id: producto.id,
+            nombre: producto.nombre.trim(),
+            tipo: producto.tipo,
+            descripcion: producto.descripcion,
+            precioDesde: producto.precioDesde,
+            imagenUrl: producto.imagenUrl,
+            activo: producto.activo,
+            categoria: producto.categoria.nombre
+        }));
+
+        dibujarProductos();
+
+        console.log(
+            "Productos cargados desde la API: ",
+            productos
+        );
+    } catch (error) {
+        console.error(
+            "Error al cargar los empleados: ",
+            error
+        );
     }
-];
+}
+
 
 // Comprobar que los elementos HTML existen.
 function validarElementosProductos(): boolean {
@@ -74,50 +140,63 @@ function dibujarProductos(): void {
     }
 
     const busqueda = buscarProducto?.value.trim().toLowerCase() || "";
-
     const filtrados = productos.filter((producto) =>
         producto.nombre.toLowerCase().includes(busqueda) ||
-        producto.codigo.toLowerCase().includes(busqueda)
+        producto.categoria.toLowerCase().includes(busqueda) ||
+        producto.tipo.toLowerCase().includes(busqueda)
     );
 
     productosGrid.replaceChildren();
-
     productosContador.textContent =
         `${filtrados.length} producto${filtrados.length === 1 ? "" : "s"}`;
 
     productosVacio.hidden = filtrados.length > 0;
-
     filtrados.forEach((producto) => {
+
         const tarjeta = document.createElement("article");
         tarjeta.className = "producto-card";
 
         const contenido = document.createElement("div");
         contenido.className = "producto-card-contenido";
 
-        const codigo = document.createElement("span");
-        codigo.className = "producto-codigo";
-        codigo.textContent = producto.codigo;
-
+        // Nombre.
         const nombre = document.createElement("h3");
         nombre.className = "producto-nombre";
         nombre.textContent = producto.nombre;
 
+        // Tipo.
+        const tipo = document.createElement("span");
+        tipo.className = "producto-tipo";
+        tipo.textContent = producto.tipo;
+
+        // Categoría.
+        const categoria = document.createElement("span");
+        categoria.className = "producto-categoria";
+        categoria.textContent = producto.categoria;
+
+        // Descripción.
         const descripcion = document.createElement("p");
         descripcion.className = "producto-descripcion";
         descripcion.textContent =
             producto.descripcion || "Sin descripción";
 
+        // Precio.
         const precio = document.createElement("p");
         precio.className = "producto-precio";
-        precio.textContent = producto.precio.toLocaleString("es-MX", {
+        precio.textContent = producto.precioDesde.toLocaleString("es-MX", {
             style: "currency",
             currency: "MXN"
         });
 
-        const stock = document.createElement("p");
-        stock.className = "producto-stock";
-        stock.textContent = `Existencias: ${producto.stock}`;
+        // Estado.
+        const estado = document.createElement("span");
+        estado.className = producto.activo
+            ? "producto-activo"
+            : "producto-inactivo";
 
+        estado.textContent = producto.activo ? "Activo" : "Inactivo";
+
+        // Botón de edición.
         const btnEditar = document.createElement("button");
         btnEditar.type = "button";
         btnEditar.className = "btn-editar-producto";
@@ -127,111 +206,377 @@ function dibujarProductos(): void {
             editarProducto(producto);
         });
 
-        contenido.append(codigo, nombre, descripcion, precio, stock);
+        // Agregar elementos a la tarjeta.
+        contenido.append(
+            nombre,
+            tipo,
+            categoria,
+            descripcion,
+            precio,
+            estado
+        );
+
         tarjeta.append(contenido, btnEditar);
+
         productosGrid.append(tarjeta);
     });
 }
 
-// Agregar un producto de prueba.
-function agregarProducto(): void {
-    const nombre = prompt("Nombre del producto:");
-
-    if (!nombre || !nombre.trim()) {
-        return;
-    }
-
-    const codigo = prompt("Código del producto:");
-
-    if (!codigo || !codigo.trim()) {
-        return;
-    }
-
-    const precioTexto = prompt("Precio del producto:", "0");
-    const precio = Number(precioTexto);
-
-    if (precioTexto === null || !Number.isFinite(precio) || precio < 0) {
-        alert("Ingresa un precio válido.");
-        return;
-    }
-
-    const stockTexto = prompt("Cantidad en existencia:", "0");
-    const stock = Number(stockTexto);
+async function crearProducto(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    limpiarErrorFormulario();
 
     if (
-        stockTexto === null ||
-        !Number.isInteger(stock) ||
-        stock < 0
+        !productoNombre ||
+        !productoDescripcion ||
+        !productoPrecio ||
+        !productoCategoria ||
+        !productoTipo ||
+        !productoActivo
     ) {
-        alert("Ingresa una cantidad válida.");
+        mostrarErrorFormulario("No se encontraron todos los campos del formulario.");
         return;
     }
 
-    productos.push({
-        id: Date.now(),
-        nombre: nombre.trim(),
-        codigo: codigo.trim(),
-        precio,
-        stock,
-        descripcion: ""
-    });
+    const nombre = productoNombre.value.trim();
+    const descripcion = productoDescripcion.value.trim();
+    const precioDesde = Number(productoPrecio.value);
+    const idcategoria = productoCategoria.value;
+    const tipo = productoTipo.value as TipoProducto;
+    const imagenUrl = productoUrl?.value.trim() || "";
+    const activo = productoActivo.value === "true";
 
-    dibujarProductos();
+    // Validar campos obligatorios.
+    if (
+        !nombre ||
+        !idcategoria ||
+        !tipo ||
+        !productoPrecio.value ||
+        !Number.isFinite(precioDesde) ||
+        precioDesde < 0
+    ) {
+        mostrarErrorFormulario("Completa correctamente los campos obligatorios.");
+        return;
+    }
+
+    // Validar descripción.
+    if (descripcion.length > 500) {
+        mostrarErrorFormulario("La descripción no puede superar los 500 caracteres.");
+        return;
+    }
+
+    // Comprobar si ya existe el producto.
+    const productoExistente = productos.some(
+        (producto) =>
+            producto.nombre.toLowerCase() === nombre.toLowerCase()
+    );
+
+    if (productoExistente) {
+        mostrarErrorFormulario("Ya existe un producto con ese nombre.");
+        productoNombre.focus();
+        return;
+    }
+
+    try {
+        const respuesta = await fetch("http://localhost:3000/productos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                nombre,
+                tipo,
+                descripcion,
+                precioDesde,
+                imagenUrl: imagenUrl || null,
+                activo,
+                idcategoria
+            })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(
+                resultado.mensaje ||
+                resultado.error ||
+                "No se pudo crear el producto."
+            );
+        }
+
+        await cargarCatalogo();
+        cerrarModalProducto();
+
+        formProducto?.reset();
+
+        mostrarMensaje(`El producto ${nombre} se creó correctamente.`);
+
+    } catch (error) {
+        console.error("Error al crear el producto:", error);
+
+        mostrarErrorFormulario(
+            error instanceof Error
+                ? error.message
+                : "Ocurrió un error al crear el producto."
+        );
+    }
 }
 
-// Editar un producto de prueba.
 function editarProducto(producto: Producto): void {
-    const nombre = prompt("Nombre del producto:", producto.nombre);
+    abrirModalProducto();
 
-    if (!nombre || !nombre.trim()) {
+    if (modalProductoTitulo) {
+        modalProductoTitulo.textContent = "Editar producto";
+    }
+
+    if (modalProductoDescripcion) {
+        modalProductoDescripcion.textContent =
+            "Modifica la información del producto.";
+    }
+
+    if (btnGuardarProducto) {
+        btnGuardarProducto.textContent = "Guardar cambios";
+    }
+
+    if (productoId) {
+        productoId.value = producto.id;
+    }
+
+    if (productoNombre) {
+        productoNombre.value = producto.nombre;
+    }
+
+    if (productoPrecio) {
+        productoPrecio.value = String(producto.precioDesde);
+    }
+
+    if (productoTipo) {
+        productoTipo.value = producto.tipo;
+    }
+
+    if (productoUrl) {
+        productoUrl.value = producto.imagenUrl || "";
+    }
+
+    if (productoDescripcion) {
+        productoDescripcion.value = producto.descripcion || "";
+    }
+
+    if (productoActivo) {
+        productoActivo.value = String(producto.activo);
+    }
+
+    const categoriaId = Object.entries(idsCategoria)
+        .find(([id, nombre]) => nombre === producto.categoria)?.[0];
+
+    if (productoCategoria && categoriaId) {
+        productoCategoria.value = categoriaId;
+    }
+}
+
+async function ActualizarProducto(producto: Producto) {
+    const nuevonombre = productoNombre?.value.trim();
+    const nuevodescripcion = productoDescripcion?.value.trim();
+    const nuevoprecioDesde = Number(productoPrecio?.value);
+    const nuevoidcategoria = productoCategoria?.value;
+    const nuevotipo = productoTipo?.value as TipoProducto;
+    const nuevoimagenUrl = productoUrl?.value.trim() || "";
+    const nuevoactivo = productoActivo?.value === "true";
+    const categoriaOriginal = Object.entries(idsCategoria)
+        .find(([id, nombre]) => nombre === producto.categoria)?.[0];
+
+    if (
+        nuevonombre === producto.nombre &&
+        nuevodescripcion === producto.descripcion &&
+        nuevoprecioDesde === producto.precioDesde &&
+        nuevoidcategoria === categoriaOriginal &&
+        nuevotipo === producto.tipo &&
+        nuevoimagenUrl === (producto.imagenUrl || "") &&
+        nuevoactivo === producto.activo
+    ) {
+        mostrarErrorFormulario("No has modificado ningún dato del producto.");
         return;
     }
 
-    const precioTexto = prompt(
-        "Precio del producto:",
-        String(producto.precio)
-    );
-
-    if (precioTexto === null) {
+    if (
+        !nuevonombre ||
+        !nuevoidcategoria ||
+        !nuevotipo ||
+        !Number.isFinite(nuevoprecioDesde) ||
+        nuevoprecioDesde < 0
+    ) {
+        mostrarErrorFormulario("Completa correctamente los campos obligatorios.");
         return;
     }
 
-    const precio = Number(precioTexto);
+    try {
+        const respuesta = await fetch(`http://localhost:3000/productos/${producto.id}`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    nombre: nuevonombre,
+                    tipo: nuevotipo,
+                    descripcion: nuevodescripcion,
+                    precioDesde: nuevoprecioDesde,
+                    imagenUrl: nuevoimagenUrl || null,
+                    activo: nuevoactivo,
+                    idcategoria: nuevoidcategoria
 
-    if (!Number.isFinite(precio) || precio < 0) {
-        alert("Ingresa un precio válido.");
-        return;
+                })
+            });
+
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(
+                resultado.mensaje ||
+                resultado.error ||
+                "No se pudo editar el producto."
+            );
+        }
+
+        await cargarCatalogo();
+        cerrarModalProducto();
+
+        formProducto?.reset();
+        mostrarMensaje(`El producto ${nuevonombre} se edito correctamente.`)
+    } catch (error) {
+        console.error("Error al editar el producto:", error);
+
+        mostrarErrorFormulario(
+            error instanceof Error
+                ? error.message
+                : "Ocurrió un error al editar el producto."
+        );
+    }
+}
+
+function abrirModalProducto(): void {
+    if (!modalProducto || !formProducto) return;
+
+    formProducto.reset();
+
+    if (productoId) {
+        productoId.value = "";
     }
 
-    const stockTexto = prompt(
-        "Cantidad en existencia:",
-        String(producto.stock)
-    );
-
-    if (stockTexto === null) {
-        return;
+    if (modalProductoTitulo) {
+        modalProductoTitulo.textContent = "Agregar producto";
     }
 
-    const stock = Number(stockTexto);
-
-    if (!Number.isInteger(stock) || stock < 0) {
-        alert("Ingresa una cantidad válida.");
-        return;
+    if (modalProductoDescripcion) {
+        modalProductoDescripcion.textContent =
+            "Completa la información del producto.";
     }
 
-    producto.nombre = nombre.trim();
-    producto.precio = precio;
-    producto.stock = stock;
+    if (btnGuardarProducto) {
+        btnGuardarProducto.textContent = "Guardar producto";
+    }
 
-    dibujarProductos();
+    modalProducto.hidden = false;
+}
+
+function cerrarModalProducto(): void {
+    if (!modalProducto) return;
+
+    modalProducto.hidden = true;
+}
+
+function cargarCategorias(): void {
+    if (!productoCategoria) return;
+
+    productoCategoria.replaceChildren();
+
+    const opcionInicial = document.createElement("option");
+    opcionInicial.value = "";
+    opcionInicial.textContent = "Selecciona una categoría";
+
+    productoCategoria.append(opcionInicial);
+
+    Object.entries(idsCategoria).forEach(([id, nombre]) => {
+        const opcion = document.createElement("option");
+
+        opcion.value = id;
+        opcion.textContent = nombre;
+
+        productoCategoria.append(opcion);
+    });
+}
+
+function mostrarMensaje(texto: string): void {
+    if (!productosMensaje) return;
+
+    productosMensaje.textContent = texto;
+    productosMensaje.hidden = false;
+
+    if (mensajeTemporizador !== undefined) {
+        window.clearTimeout(mensajeTemporizador);
+    }
+
+    mensajeTemporizador = window.setTimeout(() => {
+        if (productosMensaje) {
+            productosMensaje.hidden = true;
+        }
+    }, 3500);
+}
+
+function mostrarErrorFormulario(texto: string): void {
+    if (!productoError) return;
+
+    productoError.textContent = texto;
+    productoError.hidden = false;
+}
+
+function limpiarErrorFormulario(): void {
+    if (!productoError) return;
+
+    productoError.textContent = "";
+    productoError.hidden = true;
 }
 
 // Eventos
 buscarProducto?.addEventListener("input", dibujarProductos);
+btnAgregarProducto?.addEventListener("click", abrirModalProducto);
+btnCerrarModalProducto?.addEventListener("click", cerrarModalProducto);
+btnCancelarProducto?.addEventListener("click", cerrarModalProducto);
+modalProducto?.addEventListener("click", (event) => {
+    if (event.target === modalProducto) {
+        cerrarModalProducto();
+    }
+});
 
-btnAgregarProducto?.addEventListener("click", agregarProducto);
+formProducto?.addEventListener("submit", (event) => {
+
+    event.preventDefault();
+
+    if (productoId?.value) {
+        const productoSeleccionado = productos.find(
+            (producto) => producto.id === productoId.value
+        );
+
+        if (productoSeleccionado) {
+            ActualizarProducto(productoSeleccionado);
+        } else {
+            mostrarErrorFormulario("No se encontró el producto seleccionado.");
+        }
+
+    } else {
+        crearProducto(event);
+    }
+
+});
+
+document.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Escape" && modalProducto && !modalProducto.hidden) {
+        cerrarModalProducto();
+    }
+});
 
 // Inicialización
 if (validarElementosProductos()) {
-    dibujarProductos();
+    cargarCategorias();
+    cargarCatalogo();
 }

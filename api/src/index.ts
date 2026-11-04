@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "./lib/prisma";
 import { clientesRouter } from "./clientes";
 import { empleadosRouter } from "./empleado";
+import { productosRouter } from "./catalogo";
+import { auntRouter } from "./autenticacion";
 import { finanzasRouter } from "./finanzas";
 
 const app = express();
@@ -12,7 +14,9 @@ app.use(cors());
 app.use(express.json());
 app.use("/clientes", clientesRouter);
 app.use("/finanzas", finanzasRouter);
-app.use("/empleados", empleadosRouter)
+app.use("/empleados", empleadosRouter);
+app.use("/empleados", auntRouter);
+app.use("/productos", productosRouter)
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });
@@ -21,17 +25,17 @@ app.get("/salud", (_req, res) => {
 app.get("/productos", async (_req, res) => {
   try {
     const productos = await prisma.producto.findMany({
-  where: { activo: true, tipo: "PRODUCTO" },
-  select: {
-    id: true,
-    nombre: true,
-    descripcion: true,
-    precioDesde: true,
-    imagenUrl: true,
-    categoria: { select: { nombre: true } },
-  },
-  orderBy: { nombre: "asc" },
-});
+      where: { activo: true, tipo: "PRODUCTO" },
+      select: {
+        id: true,
+        nombre: true,
+        descripcion: true,
+        precioDesde: true,
+        imagenUrl: true,
+        categoria: { select: { nombre: true } },
+      },
+      orderBy: { nombre: "asc" },
+    });
     res.json(productos);
   } catch (error) {
     console.error(error);

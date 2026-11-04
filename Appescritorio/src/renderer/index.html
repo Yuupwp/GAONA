@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="calendario.css">
     <link rel="stylesheet" href="producto.css">
     <link rel="stylesheet" href="empleado.css">
-      <link rel="stylesheet" href="finanzas.css">
+    <link rel="stylesheet" href="finanzas.css">
 </head>
 
 <body>
@@ -596,8 +596,8 @@
                                     <label for="fin-f-monto">Monto*</label>
                                     <div class="fin-monto-campo">
                                         <span class="fin-signo">$</span>
-                                        <input id="fin-f-monto" type="number" inputmode="decimal" min="0.01"
-                                            step="0.01" placeholder="0.00" autocomplete="off">
+                                        <input id="fin-f-monto" type="number" inputmode="decimal" min="0.01" step="0.01"
+                                            placeholder="0.00" autocomplete="off">
                                     </div>
                                     <span class="cl-hint" id="fin-ayuda-monto"></span>
                                     <span class="cl-error" id="fin-e-monto"></span>
@@ -730,6 +730,7 @@
 
 
 
+
                 <section id="inventario-section" class="empty-section hidden agenda-section">
 
                     <div class="productos-container">
@@ -770,56 +771,97 @@
 
                 </section>
 
-
-                <!-- MODAL PARA AGREGAR O EDITAR -->
+                <!-- MODAL PARA AGREGAR / EDITAR PRODUCTOS -->
                 <div id="modal-producto" class="modal-producto" hidden>
+
                     <div class="modal-producto-contenido">
 
+                        <!-- ENCABEZADO -->
                         <div class="modal-producto-header">
                             <div>
                                 <h2 id="modal-producto-titulo">Agregar producto</h2>
-                                <p>Completa la información del producto.</p>
+                                <p id="modal-producto-descripcion">
+                                    Completa la información del producto.
+                                </p>
                             </div>
 
                             <button type="button" id="btn-cerrar-modal-producto" class="btn-cerrar-modal"
-                                aria-label="Cerrar">×</button>
+                                aria-label="Cerrar">
+                                ×
+                            </button>
                         </div>
 
+                        <!-- FORMULARIO -->
                         <form id="form-producto">
+
+                            <!-- IDENTIFICADOR DEL PRODUCTO -->
                             <input type="hidden" id="producto-id">
 
+                            <!-- MENSAJE DE ERROR -->
+                            <div id="producto-error" class="mensaje-error" role="alert" hidden>
+                            </div>
+
+                            <!-- NOMBRE -->
                             <div class="campo-producto">
-                                <label for="producto-nombre">Nombre del producto *</label>
+                                <label for="producto-nombre">Nombre *</label>
                                 <input id="producto-nombre" type="text" maxlength="120"
                                     placeholder="Ej. Mesa de comedor" required>
                             </div>
 
+                            <!-- TIPO -->
+                            <div class="form-producto-fila">
+
+                                <div class="campo-producto">
+                                    <label for="producto-tipo">Tipo *</label>
+                                    <select id="producto-tipo" required>
+                                        <option value="">Selecciona un tipo</option>
+                                        <option value="PRODUCTO">Producto</option>
+                                        <option value="MATERIAL">Material</option>
+                                        <option value="HERRAMIENTA">Herramienta</option>
+                                    </select>
+                                </div>
+
+                                <!-- CATEGORÍA -->
+                                <div class="campo-producto">
+                                    <label for="producto-categoria">Categoría *</label>
+                                    <select id="producto-categoria" required>
+                                    </select>
+                                </div>
+
+                            </div>
+
+                            <!-- PRECIO -->
                             <div class="campo-producto">
-                                <label for="producto-codigo">Código *</label>
-                                <input id="producto-codigo" type="text" maxlength="50" placeholder="Ej. PROD-001"
+                                <label for="producto-precio">Precio desde (MXN) *</label>
+                                <input id="producto-precio" type="number" min="0" step="0.01" placeholder="0.00"
                                     required>
                             </div>
 
-                            <div class="form-producto-fila">
-                                <div class="campo-producto">
-                                    <label for="producto-precio">Precio (MXN) *</label>
-                                    <input id="producto-precio" type="number" min="0" step="0.01" placeholder="0.00"
-                                        required>
-                                </div>
-
-                                <div class="campo-producto">
-                                    <label for="producto-stock">Existencias *</label>
-                                    <input id="producto-stock" type="number" min="0" step="1" placeholder="0" required>
-                                </div>
+                            <!-- IMAGEN -->
+                            <div class="campo-producto">
+                                <label for="producto-imagen">URL de la imagen</label>
+                                <input id="producto-imagen" type="url" placeholder="https://ejemplo.com/imagen.jpg">
                             </div>
 
+                            <!-- DESCRIPCIÓN -->
                             <div class="campo-producto">
                                 <label for="producto-descripcion">Descripción</label>
                                 <textarea id="producto-descripcion" rows="3" maxlength="500"
                                     placeholder="Describe las características del producto..."></textarea>
                             </div>
 
+                            <!-- ESTADO -->
+                            <div class="campo-producto">
+                                <label for="producto-activo">Estado *</label>
+                                <select id="producto-activo" required>
+                                    <option value="true">Activo</option>
+                                    <option value="false">Inactivo</option>
+                                </select>
+                            </div>
+
+                            <!-- ACCIONES -->
                             <div class="modal-producto-acciones">
+
                                 <button type="button" id="btn-cancelar-producto" class="btn-secundario">
                                     Cancelar
                                 </button>
@@ -827,9 +869,13 @@
                                 <button type="submit" id="btn-guardar-producto" class="btn-principal">
                                     Guardar producto
                                 </button>
+
                             </div>
+
                         </form>
+
                     </div>
+
                 </div>
 
                 <!--SECCIÓN DE CRUD DE EMPLEADOS-->
@@ -1032,7 +1078,7 @@
     <script src="../../dist/renderer/renderer.js"></script>
     <script src="../../dist/renderer/clientes.js"></script>
     <script src="../../dist/renderer/calendario.js"></script>
-    <script src="../../dist/renderer/producto.js"></script>
+    <script type="module" src="../../dist/renderer/producto.js"></script>
     <script src="../../dist/renderer/finanzas.js"></script>
     <script type="module" src="../../dist/renderer/empleado.js"></script>
 

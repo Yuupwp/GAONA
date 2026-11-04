@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "App de escritorio GAONA",
   "main": "dist/main.js",
+  "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.preload.json",
     "dev": "npm run build && electron ."
   },
   "keywords": [],

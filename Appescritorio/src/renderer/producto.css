@@ -2,6 +2,125 @@
    PRODUCTOS - GAONA
    ============================ */
 
+   
+/* Contenedor de tarjetas */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    align-items: stretch;
+}
+
+/* Tarjeta */
+.producto-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    gap: 18px;
+}
+
+/* Contenido */
+.producto-card-contenido {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    gap: 10px;
+}
+
+/* Nombre */
+.producto-nombre {
+    width: 100%;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+/* Tipo y categoría */
+.producto-tipo,
+.producto-categoria {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+/* Descripción */
+.producto-descripcion {
+    width: 100%;
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Precio */
+.producto-precio {
+    margin: 5px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    overflow-wrap: anywhere;
+}
+
+/* Estado */
+.producto-activo,
+.producto-inactivo {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.producto-activo {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.producto-inactivo {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Botón */
+.btn-editar-producto {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #111827;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-editar-producto:hover {
+    opacity: 0.85;
+}
+
+/* Evitar que los estilos del modal anulen hidden */
+.modal-producto[hidden] {
+    display: none !important;
+}
+
+
 .productos-container {
     padding: 28px;
     color: #202020;

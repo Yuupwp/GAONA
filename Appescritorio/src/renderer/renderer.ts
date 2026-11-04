@@ -1,3 +1,4 @@
+
 const loginForm = document.getElementById(
     "login-form"
 ) as HTMLFormElement;
@@ -39,13 +40,16 @@ const sectionTitle = document.getElementById(
 ) as HTMLElement;
 
 
-loginForm.addEventListener("submit", (event) => {
+// ==========================================
+// AUTENTICACIÓN
+// ==========================================
+
+loginForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
     const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
+    const password = passwordInput.value;
 
     // Limpiar errores anteriores
 
@@ -55,22 +59,19 @@ loginForm.addEventListener("submit", (event) => {
     usernameInput.parentElement?.classList.remove("has-error");
     passwordInput.parentElement?.classList.remove("has-error");
 
-
     let hasError = false;
 
-
-    // Validar nombre
+    // Validar usuario
 
     if (username === "") {
 
         usernameError.textContent =
-            "El nombre es obligatorio.";
+            "El usuario es obligatorio.";
 
         usernameInput.parentElement?.classList.add("has-error");
 
         hasError = true;
     }
-
 
     // Validar contraseña
 
@@ -84,29 +85,76 @@ loginForm.addEventListener("submit", (event) => {
         hasError = true;
     }
 
-
-    // Si hay errores, no continuar
+    // Si hay errores, detener el proceso
 
     if (hasError) {
         return;
     }
 
+    try {
 
-    // Ocultar login
+        // Enviar credenciales al servidor
 
-    loginScreen.classList.add("hidden");
+        const respuesta = await fetch(
+            "http://localhost:3000/empleados/login",
+            {
+                method: "POST",
 
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-    // Mostrar pantalla principal
+                body: JSON.stringify({
+                    usuario: username,
+                    contrasena: password
+                })
+            }
+        );
 
-    mainScreen.classList.remove("hidden");
+        const datos = await respuesta.json();
 
+        // Comprobar respuesta del servidor
 
-    // Maximizar ventana
+        if (!respuesta.ok) {
 
-    window.electronAPI.maximizeWindow();
+            passwordError.textContent =
+                datos.error ||
+                datos.mensaje ||
+                "Credenciales incorrectas.";
+
+            passwordInput.parentElement?.classList.add("has-error");
+
+            return;
+        }
+
+        // Ocultar pantalla de inicio de sesión
+
+        loginScreen.classList.add("hidden");
+
+        // Mostrar pantalla principal
+
+        mainScreen.classList.remove("hidden");
+
+        // Maximizar ventana
+
+        window.electronAPI.maximizeWindow();
+
+    } catch (error) {
+
+        console.error("Error al iniciar sesión:", error);
+
+        passwordError.textContent =
+            "No se pudo conectar con el servidor.";
+
+        passwordInput.parentElement?.classList.add("has-error");
+    }
 
 });
+
+
+// ==========================================
+// NAVEGACIÓN DEL MENÚ
+// ==========================================
 
 menuItems.forEach((item) => {
 
@@ -118,25 +166,21 @@ menuItems.forEach((item) => {
             return;
         }
 
-
         // Quitar selección anterior
 
         menuItems.forEach((menu) => {
             menu.classList.remove("active");
         });
 
-
         // Activar elemento seleccionado
 
         item.classList.add("active");
-
 
         // Ocultar todas las secciones
 
         sections.forEach((currentSection) => {
             currentSection.classList.add("hidden");
         });
-
 
         // Mostrar sección seleccionada
 
@@ -148,7 +192,6 @@ menuItems.forEach((item) => {
             selectedSection.classList.remove("hidden");
         }
 
-
         // Cambiar título
 
         const selectedText = item.querySelector(
@@ -156,8 +199,10 @@ menuItems.forEach((item) => {
         );
 
         if (selectedText) {
+
             sectionTitle.textContent =
                 selectedText.textContent || "";
+
         }
 
     });

@@ -1,5 +1,9 @@
 import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { fileURLToPath } from "url";
 import path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let mainWindow: BrowserWindow;
 
@@ -11,16 +15,16 @@ function createWindow() {
         minHeight: 600,
 
         webPreferences: {
-        preload: path.join(__dirname, "preload.js")
+            preload: path.join(__dirname, "preload.cjs")
         }
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https://wa.me/")) {
-        shell.openExternal(url);
-    }
-    return { action: "deny" };
-});
+        if (url.startsWith("https://wa.me/")) {
+            shell.openExternal(url);
+        }
+        return { action: "deny" };
+    });
     mainWindow.loadFile(
         path.join(__dirname, "../src/renderer/index.html")
     );

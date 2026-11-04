@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { error } from "node:console";
 
 export const empleadosRouter = Router();
-empleadosRouter.get("/", async (_req, res) =>{
+empleadosRouter.get("/", async (_req, res) => {
     try {
         const empleados = await prisma.usuario.findMany({
             select: {
@@ -15,8 +15,8 @@ empleadosRouter.get("/", async (_req, res) =>{
                 correo: true,
                 activo: true,
                 rol: {
-                    select:{
-                        id: true, 
+                    select: {
+                        id: true,
                         nombre: true,
                     },
                 },
@@ -26,7 +26,7 @@ empleadosRouter.get("/", async (_req, res) =>{
             },
         });
         res.json(empleados);
-    }catch (error){
+    } catch (error) {
         console.error("Error al consultar empleador: ", error);
         res.status(500).json({
             error: "No se pudieron obtener los empleados",
@@ -34,9 +34,9 @@ empleadosRouter.get("/", async (_req, res) =>{
     }
 });
 
-empleadosRouter.post("/", async (req, res)=>{
+empleadosRouter.post("/", async (req, res) => {
     const nuevoEmpleadoSchema = z.object({
-        nombre : z.string().trim().min(1).max(100),
+        nombre: z.string().trim().min(1).max(100),
         apellido: z.string().trim().min(1).max(100),
         usuario: z.string().trim().min(3).max(80),
         correo: z.string().trim().email().max(150),
@@ -54,7 +54,7 @@ empleadosRouter.post("/", async (req, res)=>{
     try {
         const resultado = nuevoEmpleadoSchema.safeParse(req.body);
 
-        if (!resultado.success){
+        if (!resultado.success) {
             res.status(400).json({
                 error: "Los datos del empleado no son válidos",
                 detalles: resultado.error.issues,
@@ -72,19 +72,19 @@ empleadosRouter.post("/", async (req, res)=>{
         } = resultado.data;
 
         const existence = await prisma.usuario.findFirst({
-            where:{
-                OR:[
-                    {correo},
-                    {usuario},
+            where: {
+                OR: [
+                    { correo },
+                    { usuario },
                 ],
             },
             select: {
-                correo:true,
-                usuario:true,
+                correo: true,
+                usuario: true,
             },
         });
 
-        if (existence){
+        if (existence) {
             res.status(409).json({
                 error: "El correo o nombre de usuario ya están registrado"
             });
@@ -92,10 +92,10 @@ empleadosRouter.post("/", async (req, res)=>{
         }
 
         const rol = await prisma.rol.findUnique({
-            where: {id: idRol},
+            where: { id: idRol },
         });
 
-        if (!rol){
+        if (!rol) {
             res.status(400).json({
                 error: "El rol seleccionado no existe",
             });
@@ -105,27 +105,27 @@ empleadosRouter.post("/", async (req, res)=>{
         const passwordHash = await bcrypt.hash(contrasena, 12);
 
         const empleado = await prisma.usuario.create({
-            data:{
+            data: {
                 nombre,
                 apellido,
                 usuario,
                 correo,
                 telefono: telefono || null,
                 passwordHash,
-                rol:{
-                    connect:{ id: rol.id},
+                rol: {
+                    connect: { id: rol.id },
                 },
             },
             select: {
-                id:true,
-                nombre:true,
-                apellido:true,
+                id: true,
+                nombre: true,
+                apellido: true,
                 usuario: true,
                 correo: true,
                 telefono: true,
-                activo:true,
+                activo: true,
                 rol: {
-                    select:{
+                    select: {
                         id: true,
                         nombre: true,
                     },
@@ -136,17 +136,17 @@ empleadosRouter.post("/", async (req, res)=>{
             mensaje: "Empleado creado correctamente",
             empleado,
         });
-    } catch (error){
+    } catch (error) {
         console.error("Error al crear empleado: ", error);
 
         res.status(500).json({
-            error:"No se pudo crear el empleado",
+            error: "No se pudo crear el empleado",
         });
     }
 });
 
-empleadosRouter.patch("/:id/rol", async(req, res)=>{
-    try{
+empleadosRouter.patch("/:id/rol", async (req, res) => {
+    try {
         const datos = z.object({
             rol: z.enum(["ADMINISTRADOR", "EMPLEADO"]),
         }).safeParse(req.body);
@@ -172,12 +172,12 @@ empleadosRouter.patch("/:id/rol", async(req, res)=>{
         }
 
         const rol = await prisma.rol.findUnique({
-            where:{
+            where: {
                 nombre: datos.data.rol
             },
         });
 
-        if (!rol){
+        if (!rol) {
             res.status(404).json({
                 error: "No se encontró el rol seleccionado",
             });
@@ -188,7 +188,7 @@ empleadosRouter.patch("/:id/rol", async(req, res)=>{
                 id: empleado.id,
             },
             data: {
-                rol:{
+                rol: {
                     connect: {
                         id: rol.id,
                     },
@@ -200,15 +200,15 @@ empleadosRouter.patch("/:id/rol", async(req, res)=>{
                 apellido: true,
                 correo: true,
                 activo: true,
-                rol:{
-                    select:{
+                rol: {
+                    select: {
                         id: true,
                         nombre: true,
                     },
                 },
             },
         });
-    }catch(error) {
+    } catch (error) {
         console.error("Error al cambiar el rol: ", error);
 
         res.status(500).json({
@@ -217,35 +217,35 @@ empleadosRouter.patch("/:id/rol", async(req, res)=>{
     }
 })
 
-empleadosRouter.patch("/:id/estado", async(req, res) =>{
-    try{
+empleadosRouter.patch("/:id/estado", async (req, res) => {
+    try {
         const datos = z.object({
             activo: z.boolean(),
         }).safeParse(req.body);
 
-        if(!datos.success){
+        if (!datos.success) {
             res.status(400).json({
                 error: "El campo activo debe ser True o False",
-            });return;
+            }); return;
         }
 
         const empleado = await prisma.usuario.findUnique({
-            where:{
+            where: {
                 id: req.params.id,
             },
         });
-        if (!empleado){
+        if (!empleado) {
             res.status(404).json({
                 error: "No se encontró el empleado",
             });
-        return;
+            return;
         }
 
         const empleadoActualizado = await prisma.usuario.update({
-            where:{
+            where: {
                 id: empleado?.id,
             },
-            data:{
+            data: {
                 activo: datos.data.activo,
             },
             select: {
@@ -254,8 +254,8 @@ empleadosRouter.patch("/:id/estado", async(req, res) =>{
                 apellido: true,
                 correo: true,
                 activo: true,
-                rol:{
-                    select:{
+                rol: {
+                    select: {
                         nombre: true,
                     },
                 },
@@ -263,15 +263,15 @@ empleadosRouter.patch("/:id/estado", async(req, res) =>{
         });
         res.json({
             mensaje: datos.data.activo
-            ? "Cuenta activada correctamente"
-            :"Cuenta desactivada correctamente",
+                ? "Cuenta activada correctamente"
+                : "Cuenta desactivada correctamente",
             empleado: empleadoActualizado,
         });
-    }catch (error){
+    } catch (error) {
         console.error("Error al cambiar el estado: ", error),
 
-        res.status(500).json({
-            error: "No se pudo actualizar el estado de la cuenta",
-        });
+            res.status(500).json({
+                error: "No se pudo actualizar el estado de la cuenta",
+            });
     }
 });
