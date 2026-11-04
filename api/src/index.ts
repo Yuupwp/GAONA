@@ -8,15 +8,14 @@ import { empleadosRouter } from "./empleado";
 import { productosRouter } from "./catalogo";
 import { auntRouter } from "./autenticacion";
 import { finanzasRouter } from "./finanzas";
+import { authRouter, cuentaRouter } from "./cuenta";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/clientes", clientesRouter);
 app.use("/finanzas", finanzasRouter);
-app.use("/empleados", empleadosRouter);
-app.use("/empleados", auntRouter);
-app.use("/productos", productosRouter)
+app.use("/empleados", empleadosRouter)
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });

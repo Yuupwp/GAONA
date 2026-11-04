@@ -40,11 +40,7 @@ const sectionTitle = document.getElementById(
 ) as HTMLElement;
 
 
-// ==========================================
-// AUTENTICACIÓN
-// ==========================================
-
-loginForm.addEventListener("submit", async (event) => {
+loginForm.addEventListener("submit", (event) => {
 
     event.preventDefault();
 
@@ -91,63 +87,28 @@ loginForm.addEventListener("submit", async (event) => {
         return;
     }
 
-    try {
 
-        // Enviar credenciales al servidor
+    // Ocultar login
 
-        const respuesta = await fetch(
-            "http://localhost:3000/empleados/login",
-            {
-                method: "POST",
+    loginScreen.classList.add("hidden");
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+    // Mostrar pantalla principal
 
-                body: JSON.stringify({
-                    usuario: username,
-                    contrasena: password
-                })
-            }
-        );
+    mainScreen.classList.remove("hidden");
 
-        const datos = await respuesta.json();
+    // Maximizar ventana
 
-        // Comprobar respuesta del servidor
+    window.electronAPI.maximizeWindow();
 
-        if (!respuesta.ok) {
+} catch (error) {
 
-            passwordError.textContent =
-                datos.error ||
-                datos.mensaje ||
-                "Credenciales incorrectas.";
+    console.error("Error al iniciar sesión:", error);
 
-            passwordInput.parentElement?.classList.add("has-error");
+    passwordError.textContent =
+        "No se pudo conectar con el servidor.";
 
-            return;
-        }
-
-        // Ocultar pantalla de inicio de sesión
-
-        loginScreen.classList.add("hidden");
-
-        // Mostrar pantalla principal
-
-        mainScreen.classList.remove("hidden");
-
-        // Maximizar ventana
-
-        window.electronAPI.maximizeWindow();
-
-    } catch (error) {
-
-        console.error("Error al iniciar sesión:", error);
-
-        passwordError.textContent =
-            "No se pudo conectar con el servidor.";
-
-        passwordInput.parentElement?.classList.add("has-error");
-    }
+    passwordInput.parentElement?.classList.add("has-error");
+}
 
 });
 
