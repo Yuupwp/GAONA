@@ -1,0 +1,400 @@
+/* =========================================
+   PEDIDOS
+   Reutiliza botones, insignias, modales y avisos
+   de clientes.css (clases cl-*)
+========================================= */
+
+.empty-section.ped-section {
+    padding: 0;
+}
+
+.ped-section h2 {
+    margin: 0 0 6px;
+
+    font-size: 24px;
+    color: var(--black);
+}
+
+.ped-section h3 {
+    margin: 0 0 4px;
+
+    font-size: 20px;
+    color: var(--black);
+}
+
+.ped-section .ped-subtitulo {
+    display: block;
+
+    color: var(--gray);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.ped-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin-bottom: 24px;
+}
+
+
+/* ---------- Tarjetas de resumen ---------- */
+
+.ped-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+
+    margin-bottom: 20px;
+}
+
+.ped-stat {
+    padding: 18px 20px;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.ped-stat span {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--gray);
+    font-size: 13px;
+}
+
+.ped-stat strong {
+    font-size: 26px;
+    color: var(--black);
+}
+
+.ped-stat strong.ped-accent {
+    color: var(--orange);
+}
+
+
+/* ---------- Buscador y filtros ---------- */
+
+.ped-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    margin-bottom: 18px;
+}
+
+.ped-search {
+    flex: 1 1 280px;
+    max-width: 420px;
+    height: 42px;
+
+    padding: 0 14px;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--black);
+}
+
+.ped-search:focus,
+.ped-section .cl-field select:focus {
+    outline: none;
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(196, 119, 32, 0.15);
+}
+
+.ped-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ped-chip {
+    padding: 9px 16px;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--black);
+
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.ped-chip:hover {
+    border-color: var(--orange);
+}
+
+.ped-chip.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--white);
+}
+
+
+/* ---------- Tabla ---------- */
+
+.ped-card {
+    overflow: hidden;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+.ped-row {
+    display: grid;
+    grid-template-columns:
+        90px
+        minmax(190px, 1.6fr)
+        170px
+        110px
+        minmax(120px, 1fr)
+        100px
+        110px;
+    align-items: center;
+    gap: 12px;
+
+    padding: 14px 20px;
+
+    border-bottom: 1px solid var(--border);
+
+    font-size: 13px;
+    color: var(--black);
+}
+
+.ped-row-head {
+    background: #faf9f7;
+
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.ped-row:not(.ped-row-head):hover {
+    background: #faf9f7;
+}
+
+.ped-folio {
+    font-weight: 700;
+    color: var(--orange);
+}
+
+.ped-cliente {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ped-nombre {
+    display: block;
+
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.ped-sub {
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--gray);
+    font-size: 12px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.ped-pagado span {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.ped-barra {
+    width: 100%;
+    max-width: 120px;
+    height: 5px;
+
+    background: var(--gray-light);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.ped-barra-relleno {
+    height: 100%;
+
+    background: var(--orange);
+    border-radius: 5px;
+}
+
+.ped-barra-relleno.completa {
+    background: #2e7d50;
+}
+
+.ped-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 14px 20px;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--gray);
+    font-size: 12px;
+}
+
+.ped-pages {
+    display: flex;
+    gap: 6px;
+}
+
+.ped-page {
+    min-width: 34px;
+    height: 34px;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--black);
+
+    cursor: pointer;
+}
+
+.ped-page:hover:not(:disabled) {
+    border-color: var(--orange);
+}
+
+.ped-page.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--white);
+    font-weight: 700;
+}
+
+.ped-page:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* ---------- Detalle del pedido ---------- */
+
+#ped-detalle .cl-modal {
+    max-width: 560px;
+}
+
+.ped-detalle-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    margin: 18px 0;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.ped-detalle-resumen > div {
+    padding: 14px 16px;
+
+    border-right: 1px solid var(--border);
+}
+
+.ped-detalle-resumen > div:last-child {
+    border-right: none;
+}
+
+.ped-detalle-resumen span {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.ped-detalle-resumen strong {
+    font-size: 18px;
+}
+
+.ped-saldo {
+    color: var(--orange);
+    font-weight: 700;
+}
+
+.ped-detalle-datos {
+    margin-bottom: 18px;
+}
+
+.ped-detalle-datos > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 8px 0;
+
+    border-bottom: 1px solid var(--border);
+
+    font-size: 13px;
+}
+
+.ped-detalle-datos > div > span:first-child {
+    color: var(--gray);
+}
+
+.ped-section .cl-field select {
+    width: 100%;
+    height: 42px;
+
+    padding: 0 12px;
+
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--black);
+}
+
+
+@media (max-width: 1200px) {
+    .ped-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1100px) {
+    .ped-row {
+        grid-template-columns:
+            80px
+            minmax(160px, 1.4fr)
+            150px
+            100px
+            minmax(100px, 1fr)
+            90px
+            100px;
+        padding: 14px 14px;
+    }
+}

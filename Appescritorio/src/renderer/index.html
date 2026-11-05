@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="producto.css">
     <link rel="stylesheet" href="empleado.css">
     <link rel="stylesheet" href="finanzas.css">
+    <link rel="stylesheet" href="pedidos.css">
+    <link rel="stylesheet" href="cotizaciones.css">
 </head>
 
 <body>
@@ -451,9 +453,159 @@
 
                 </section>
 
-                <section id="cotizaciones-section" class="empty-section hidden">
-                    <h2>Cotizaciones</h2>
-                    <p>Gestión de cotizaciones.</p>
+                <section id="cotizaciones-section" class="empty-section cot-section hidden">
+
+                    <div class="cot-head">
+                        <div>
+                            <h2>Cotizaciones</h2>
+                            <span class="cot-subtitulo">
+                                Crea cotizaciones, da seguimiento a su respuesta y conviértelas en pedidos.
+                            </span>
+                        </div>
+
+                        <button id="cot-nueva" class="cl-btn cl-btn-primary" type="button">
+                            + Nueva cotización
+                        </button>
+                    </div>
+
+                    <div class="cot-stats">
+                        <div class="cot-stat">
+                            <span>Total de cotizaciones</span>
+                            <strong id="cot-stat-total">0</strong>
+                        </div>
+                        <div class="cot-stat">
+                            <span>Pendientes de respuesta</span>
+                            <strong id="cot-stat-pendientes" class="cot-accent">0</strong>
+                        </div>
+                        <div class="cot-stat">
+                            <span>Aprobadas</span>
+                            <strong id="cot-stat-aprobadas">0</strong>
+                        </div>
+                        <div class="cot-stat">
+                            <span>Monto pendiente</span>
+                            <strong id="cot-stat-monto">$0.00</strong>
+                        </div>
+                    </div>
+
+                    <div class="cot-toolbar">
+                        <input id="cot-buscar" class="cot-search" type="search"
+                            placeholder="Buscar por cliente o número de cotización..." autocomplete="off">
+
+                        <div class="cot-chips" id="cot-chips">
+                            <button type="button" class="cot-chip active" data-filtro="todos">Todas</button>
+                            <button type="button" class="cot-chip" data-filtro="BORRADOR">Borrador</button>
+                            <button type="button" class="cot-chip" data-filtro="ENVIADA">Enviadas</button>
+                            <button type="button" class="cot-chip" data-filtro="APROBADA">Aprobadas</button>
+                            <button type="button" class="cot-chip" data-filtro="RECHAZADA">Rechazadas</button>
+                            <button type="button" class="cot-chip" data-filtro="VENCIDA">Vencidas</button>
+                        </div>
+                    </div>
+
+                    <div class="cot-card">
+                        <div class="cot-row cot-row-head">
+                            <span>Cotización</span>
+                            <span>Cliente</span>
+                            <span>Estado</span>
+                            <span>Total</span>
+                            <span>Anticipo</span>
+                            <span>Vigencia</span>
+                            <span>Acciones</span>
+                        </div>
+
+                        <div id="cot-filas"></div>
+
+                        <div class="cot-footer">
+                            <span id="cot-contador"></span>
+                            <div id="cot-paginacion" class="cot-pages"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL: NUEVA COTIZACIÓN -->
+
+                    <div id="cot-modal" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true" aria-labelledby="cot-modal-titulo">
+
+                            <div class="cl-modal-head">
+                                <div>
+                                    <h3 id="cot-modal-titulo">Nueva cotización</h3>
+                                    <span class="cot-subtitulo">Los campos con * son obligatorios.</span>
+                                </div>
+                                <button id="cot-modal-cerrar" class="cl-close" type="button"
+                                    aria-label="Cerrar">×</button>
+                            </div>
+
+                            <form id="cot-form" novalidate>
+
+                                <div class="cl-field">
+                                    <label for="cot-f-cliente">Cliente*</label>
+                                    <select id="cot-f-cliente">
+                                        <option value="">Selecciona un cliente</option>
+                                    </select>
+                                    <span class="cl-error" id="cot-e-cliente"></span>
+                                </div>
+
+                                <div class="cl-form-grid">
+                                    <div class="cl-field">
+                                        <label for="cot-f-vigencia">Vigencia hasta</label>
+                                        <input id="cot-f-vigencia" type="date">
+                                        <span class="cl-error" id="cot-e-vigencia"></span>
+                                    </div>
+
+                                    <div class="cl-field">
+                                        <label for="cot-f-anticipo">Anticipo requerido (MXN)</label>
+                                        <input id="cot-f-anticipo" type="number" min="0" step="0.01" placeholder="0.00"
+                                            autocomplete="off">
+                                        <span class="cl-error" id="cot-e-anticipo"></span>
+                                    </div>
+                                </div>
+
+                                <div class="cot-lineas-titulo">
+                                    <span>Concepto</span>
+                                    <span>Cantidad</span>
+                                    <span>Precio</span>
+                                    <span></span>
+                                </div>
+                                <div id="cot-lineas"></div>
+                                <span class="cl-error" id="cot-e-lineas"></span>
+
+                                <button id="cot-agregar-linea" class="cl-btn cl-btn-outline cot-agregar"
+                                    type="button">+ Agregar concepto</button>
+
+                                <div class="cot-totales">
+                                    <div><span>Subtotal</span><span id="cot-t-subtotal">$0.00</span></div>
+                                    <div><span>IVA (16%)</span><span id="cot-t-iva">$0.00</span></div>
+                                    <div class="cot-total-final"><span>Total</span><span id="cot-t-total">$0.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="cl-form-error hidden" id="cot-form-error"></div>
+
+                                <div class="cl-modal-actions">
+                                    <button id="cot-form-cancelar" class="cl-btn cl-btn-outline"
+                                        type="button">Cancelar</button>
+                                    <button id="cot-form-guardar" class="cl-btn cl-btn-primary" type="submit">Guardar
+                                        cotización</button>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL: DETALLE DE LA COTIZACIÓN -->
+
+                    <div id="cot-detalle" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true">
+                            <div id="cot-detalle-contenido"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- AVISOS -->
+
+                    <div id="cot-toast" class="cl-toast hidden" role="status"></div>
+
                 </section>
 
 
@@ -649,9 +801,84 @@
                 </section>
 
 
-                <section id="pedidos-section" class="empty-section hidden">
-                    <h2>Pedidos</h2>
-                    <p>Gestión de pedidos.</p>
+                <section id="pedidos-section" class="empty-section ped-section hidden">
+
+                    <div class="ped-head">
+                        <div>
+                            <h2>Pedidos</h2>
+                            <span class="ped-subtitulo">
+                                Da seguimiento a cada pedido: desde que se aprueba la cotización hasta la entrega.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="ped-stats">
+                        <div class="ped-stat">
+                            <span>Total de pedidos</span>
+                            <strong id="ped-stat-total">0</strong>
+                        </div>
+                        <div class="ped-stat">
+                            <span>En proceso</span>
+                            <strong id="ped-stat-proceso">0</strong>
+                        </div>
+                        <div class="ped-stat">
+                            <span>Listos para instalar</span>
+                            <strong id="ped-stat-listos" class="ped-accent">0</strong>
+                        </div>
+                        <div class="ped-stat">
+                            <span>Entregados</span>
+                            <strong id="ped-stat-entregados">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="ped-toolbar">
+                        <input id="ped-buscar" class="ped-search" type="search"
+                            placeholder="Buscar por cliente o número de pedido..." autocomplete="off">
+
+                        <div class="ped-chips" id="ped-chips">
+                            <button type="button" class="ped-chip active" data-filtro="todos">Todos</button>
+                            <button type="button" class="ped-chip" data-filtro="EN_PROCESO">En proceso</button>
+                            <button type="button" class="ped-chip" data-filtro="LISTO_PARA_INSTALAR">Listos para
+                                instalar</button>
+                            <button type="button" class="ped-chip" data-filtro="ENTREGADO">Entregados</button>
+                            <button type="button" class="ped-chip" data-filtro="FACTURADO">Facturados</button>
+                            <button type="button" class="ped-chip" data-filtro="CANCELADO">Cancelados</button>
+                        </div>
+                    </div>
+
+                    <div class="ped-card">
+                        <div class="ped-row ped-row-head">
+                            <span>Pedido</span>
+                            <span>Cliente</span>
+                            <span>Estado</span>
+                            <span>Total</span>
+                            <span>Pagado</span>
+                            <span>Fecha</span>
+                            <span>Acciones</span>
+                        </div>
+
+                        <div id="ped-filas"></div>
+
+                        <div class="ped-footer">
+                            <span id="ped-contador"></span>
+                            <div id="ped-paginacion" class="ped-pages"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL: DETALLE DEL PEDIDO -->
+
+                    <div id="ped-detalle" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true">
+                            <div id="ped-detalle-contenido"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- AVISOS -->
+
+                    <div id="ped-toast" class="cl-toast hidden" role="status"></div>
+
                 </section>
 
 
@@ -1279,6 +1506,8 @@
     <script src="../../dist/renderer/calendario.js"></script>
     <script type="module" src="../../dist/renderer/producto.js"></script>
     <script src="../../dist/renderer/finanzas.js"></script>
+    <script src="../../dist/renderer/cotizaciones.js"></script>
+    <script src="../../dist/renderer/pedidos.js"></script>
     <script src="../../dist/renderer/cuenta.js"></script>
     <script type="module" src="../../dist/renderer/empleado.js"></script>
 
