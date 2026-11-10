@@ -20,7 +20,10 @@ function createWindow() {
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        if (url.startsWith("https://wa.me/")) {
+        // El PDF de una cotización se abre en el navegador (ahí se imprime o se guarda)
+        const esPdfCotizacion = /^http:\/\/localhost:3001\/cotizaciones\/[\w-]+\/pdf$/.test(url);
+
+        if (url.startsWith("https://wa.me/") || esPdfCotizacion) {
             shell.openExternal(url);
         }
         return { action: "deny" };

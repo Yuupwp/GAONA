@@ -487,6 +487,30 @@
                         </div>
                     </div>
 
+                    <!-- SOLICITUDES NUEVAS: lo que los clientes pidieron y aún no se cotiza -->
+                    <div id="cot-sol" class="cot-sol hidden">
+                        <div class="cot-sol-head">
+                            <div>
+                                <h3>Solicitudes por cotizar <span id="cot-sol-num" class="cot-sol-num">0</span></h3>
+                                <span class="cot-subtitulo">
+                                    Clientes que pidieron una cotización (casi siempre desde la página) y todavía no tienen respuesta.
+                                </span>
+                            </div>
+                            <button id="cot-sol-toggle" class="cl-link hidden" type="button">Ver todas</button>
+                        </div>
+
+                        <div class="cot-card">
+                            <div class="cot-sol-row cot-row-head">
+                                <span>Cliente</span>
+                                <span>Productos solicitados</span>
+                                <span>Recibida</span>
+                                <span>Estimado</span>
+                                <span></span>
+                            </div>
+                            <div id="cot-sol-filas"></div>
+                        </div>
+                    </div>
+
                     <div class="cot-toolbar">
                         <input id="cot-buscar" class="cot-search" type="search"
                             placeholder="Buscar por cliente o número de cotización..." autocomplete="off">
@@ -899,9 +923,14 @@
                             <p>Organiza las visitas, mediciones e instalaciones.</p>
                         </div>
 
-                        <button type="button" id="agenda-hoy" class="agenda-btn agenda-btn-light">
-                            Hoy
-                        </button>
+                        <div class="agenda-header-acciones">
+                            <button type="button" id="agenda-hoy" class="agenda-btn agenda-btn-light">
+                                Hoy
+                            </button>
+                            <button type="button" id="agenda-nueva" class="cl-btn cl-btn-primary">
+                                + Nueva cita
+                            </button>
+                        </div>
                     </div>
 
                     <div class="agenda-layout">
@@ -936,6 +965,7 @@
                             <div class="agenda-legend">
                                 <span><i class="agenda-dot visita"></i> Visita para medir</span>
                                 <span><i class="agenda-dot instalacion"></i> Instalación</span>
+                                <span><i class="agenda-dot entrega"></i> Entrega</span>
                             </div>
 
                         </div>
@@ -960,6 +990,82 @@
                         </aside>
 
                     </div>
+
+                    <!-- MODAL: NUEVA CITA / REPROGRAMAR -->
+                    <div id="ag-modal" class="cl-overlay hidden">
+                        <div class="cl-modal" role="dialog" aria-modal="true" aria-labelledby="ag-modal-titulo">
+
+                            <div class="cl-modal-head">
+                                <div>
+                                    <h3 id="ag-modal-titulo">Nueva cita</h3>
+                                    <span class="ag-subtitulo" id="ag-modal-subtitulo">Los campos con * son obligatorios.</span>
+                                </div>
+                                <button id="ag-modal-cerrar" class="cl-close" type="button" aria-label="Cerrar">×</button>
+                            </div>
+
+                            <form id="ag-form" novalidate>
+                                <div class="cl-field" id="ag-campo-tipo">
+                                    <label for="ag-f-tipo">Tipo de cita*</label>
+                                    <select id="ag-f-tipo">
+                                        <option value="MEDICION">Visita para medir</option>
+                                        <option value="INSTALACION">Instalación</option>
+                                        <option value="ENTREGA">Entrega</option>
+                                    </select>
+                                </div>
+
+                                <div class="cl-field" id="ag-campo-para">
+                                    <label for="ag-f-para" id="ag-f-para-label">Solicitud*</label>
+                                    <select id="ag-f-para"></select>
+                                    <span class="cl-error" id="ag-e-para"></span>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="ag-f-responsable">Responsable*</label>
+                                    <select id="ag-f-responsable"></select>
+                                    <span class="cl-error" id="ag-e-responsable"></span>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="ag-f-fecha">Fecha*</label>
+                                    <input id="ag-f-fecha" type="date">
+                                    <span class="cl-error" id="ag-e-fecha"></span>
+                                </div>
+
+                                <div class="cl-form-grid">
+                                    <div class="cl-field">
+                                        <label for="ag-f-inicio">Hora de inicio*</label>
+                                        <input id="ag-f-inicio" type="time" step="900" value="10:00">
+                                    </div>
+                                    <div class="cl-field">
+                                        <label for="ag-f-fin">Hora de fin*</label>
+                                        <input id="ag-f-fin" type="time" step="900" value="11:00">
+                                        <span class="cl-error" id="ag-e-hora"></span>
+                                    </div>
+                                </div>
+
+                                <div class="cl-field" id="ag-campo-direccion">
+                                    <label for="ag-f-direccion">Dirección</label>
+                                    <input id="ag-f-direccion" type="text" maxlength="250" autocomplete="off"
+                                        placeholder="Se llena con la dirección del cliente si la tiene">
+                                </div>
+
+                                <div class="cl-field" id="ag-campo-notas">
+                                    <label for="ag-f-notas">Notas</label>
+                                    <textarea id="ag-f-notas" rows="2" maxlength="500"
+                                        placeholder="Ej. llevar muestras, tocar en la puerta trasera"></textarea>
+                                </div>
+
+                                <div class="cl-form-error hidden" id="ag-form-error"></div>
+
+                                <div class="cl-modal-actions">
+                                    <button id="ag-form-cancelar" class="cl-btn cl-btn-outline" type="button">Cancelar</button>
+                                    <button id="ag-form-guardar" class="cl-btn cl-btn-primary" type="submit">Agendar cita</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="ag-toast" class="cl-toast hidden" role="status"></div>
 
                 </section>
 

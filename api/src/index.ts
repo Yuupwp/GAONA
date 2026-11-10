@@ -10,6 +10,7 @@ import { finanzasRouter } from "./finanzas";
 import { authRouter, cuentaRouter } from "./cuenta";
 import { cotizacionesRouter } from "./cotizaciones";
 import { pedidosRouter } from "./pedidos";
+import { citasRouter } from "./citas";
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,7 @@ app.use("/auth", authRouter);
 app.use("/cuenta", cuentaRouter);
 app.use("/cotizaciones", cotizacionesRouter);
 app.use("/pedidos", pedidosRouter);
+app.use("/citas", citasRouter);
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });

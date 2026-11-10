@@ -21,6 +21,7 @@
         folio: string;
         cliente: string;
         telefono: string;
+        correo: string | null;
         estado: Estado;
         origen: "WEB" | "ESCRITORIO";
         subtotal: number;
@@ -39,10 +40,28 @@
     interface SolicitudAbierta {
         id: string;
         origen: "WEB" | "ESCRITORIO";
+        estado: "NUEVA" | "EN_REVISION" | "VISITA_PROGRAMADA";
         descripcion: string | null;
         creadoEn: string;
-        productos: { idProducto: string; nombre: string; cantidad: number; precio: number; medidas: string | null }[];
+        productos: {
+            idProducto: string;
+            nombre: string;
+            cantidad: number;
+            precio: number;
+            medidas: string | null;
+            notas: string | null;
+        }[];
     }
+
+    const ESTADOS_SOLICITUD: Record<SolicitudAbierta["estado"], string> = {
+        NUEVA: "Nueva",
+        EN_REVISION: "En revisión",
+        VISITA_PROGRAMADA: "Visita programada",
+    };
+
+    // Cuántas solicitudes se ven antes de "Ver todas"
+    const SOLICITUDES_VISIBLES = 5;
+    let verTodasLasSolicitudes = false;
 
     interface ClienteOpcion {
         id: string;
@@ -66,6 +85,7 @@
     let CLIENTES: ClienteOpcion[] = [];
     let cargando = false;
     let ocupado = false; // evita doble clic mientras se guarda
+    let correoActivo = false; // la API dice si el envío de correos está configurado
 
     // Estado del módulo
     const estado = {
@@ -336,8 +356,13 @@
         pintarLista();
 
         try {
-            const datos = await api<{ items: Cotizacion[] }>("/cotizaciones");
+            const [datos, opciones] = await Promise.all([
+                api<{ items: Cotizacion[]; correoActivo: boolean }>("/cotizaciones"),
+                api<{ clientes: ClienteOpcion[] }>("/cotizaciones/opciones"),
+            ]);
             COTIZACIONES = datos.items;
+            correoActivo = datos.correoActivo;
+            CLIENTES = opciones.clientes;
         } catch (error) {
             avisar(mensajeDe(error), true);
         } finally {
@@ -345,7 +370,78 @@
         }
 
         pintarResumen();
+        pintarSolicitudesNuevas();
         pintarLista();
+    }
+
+    // ---------- Solicitudes por cotizar ----------
+    function hace(fechaTexto: string): string {
+        const dias = Math.floor(
+            (new Date(`${hoy()}T00:00:00`).getTime() - new Date(`${fechaTexto}T00:00:00`).getTime()) / 86400000
+        );
+        if (dias <= 0) return "Hoy";
+        if (dias === 1) return "Ayer";
+        return `Hace ${dias} días`;
+    }
+
+    function pintarSolicitudesNuevas(): void {
+        const contenedor = el<HTMLDivElement>("cot-sol");
+        const filasSol = el<HTMLDivElement>("cot-sol-filas");
+        const toggle = el<HTMLButtonElement>("cot-sol-toggle");
+
+        // Las más antiguas primero: son las que llevan más tiempo esperando
+        const pendientes = CLIENTES.flatMap((c) => c.solicitudes.map((s) => ({ cliente: c, s }))).sort((a, b) =>
+            a.s.creadoEn.localeCompare(b.s.creadoEn)
+        );
+
+        contenedor.classList.toggle("hidden", pendientes.length === 0);
+        el("cot-sol-num").textContent = String(pendientes.length);
+
+        toggle.classList.toggle("hidden", pendientes.length <= SOLICITUDES_VISIBLES);
+        toggle.textContent = verTodasLasSolicitudes ? "Ver menos" : `Ver todas (${pendientes.length})`;
+
+        const visibles = verTodasLasSolicitudes ? pendientes : pendientes.slice(0, SOLICITUDES_VISIBLES);
+
+        filasSol.innerHTML = visibles
+            .map(({ cliente, s }) => {
+                const productos = s.productos.length
+                    ? s.productos
+                          .map((p) => `${p.cantidad} × ${esc(p.nombre)}${p.medidas ? ` (${esc(p.medidas)})` : ""}`)
+                          .join(", ")
+                    : "Sin productos";
+                const notas = [s.descripcion, ...s.productos.map((p) => p.notas)].filter(Boolean).join(" · ");
+                const estimado = calcular(s.productos.map((p) => ({ nombre: p.nombre, cantidad: p.cantidad, precio: p.precio }))).total;
+
+                return `
+                <div class="cot-sol-row">
+                    <div class="cot-cliente">
+                        <div class="cl-avatar">${esc(iniciales(cliente.nombre))}</div>
+                        <div>
+                            <strong class="cot-nombre">${esc(cliente.nombre)}</strong>
+                            <span class="cot-sub">${esc(cliente.telefono)} · ${s.origen === "WEB" ? "Página" : "Escritorio"}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span>${productos}</span>
+                        ${notas ? `<span class="cot-sub">${esc(notas)}</span>` : ""}
+                    </div>
+
+                    <div>
+                        <span class="${s.estado === "NUEVA" ? "cot-sol-nueva" : ""}">${esc(ESTADOS_SOLICITUD[s.estado])}</span>
+                        <span class="cot-sub">${hace(s.creadoEn)}</span>
+                    </div>
+
+                    <div>
+                        <span class="cot-monto">${s.productos.length ? dinero(estimado) : "—"}</span>
+                        <span class="cot-sub">con IVA, precio de catálogo</span>
+                    </div>
+
+                    <button class="cl-btn cl-btn-primary" type="button" data-accion="cotizar"
+                        data-cliente="${esc(cliente.id)}" data-solicitud="${esc(s.id)}">Cotizar</button>
+                </div>`;
+            })
+            .join("");
     }
 
     // Detalle de una cotización
@@ -411,12 +507,89 @@
                 <div class="cot-total-final"><span>Total</span><span>${dinero(c.total)}</span></div>
             </div>
 
+            ${seccionCorreo(c)}
+
             <div class="cl-modal-actions">
                 <button class="cl-btn cl-btn-outline" type="button" data-accion="cerrar">Cerrar</button>
+                <button class="cl-btn cl-btn-outline" type="button" data-accion="pdf" data-id="${esc(c.id)}">Ver PDF</button>
                 ${acciones}
             </div>`;
 
         modalDetalle.classList.remove("hidden");
+    }
+
+    // Envío por correo: solo si la API tiene el correo configurado y la cotización sigue vigente
+    function seccionCorreo(c: Cotizacion): string {
+        if (!["BORRADOR", "ENVIADA", "APROBADA"].includes(c.estado)) return "";
+
+        if (!correoActivo) {
+            return `<p class="cot-sub">El envío por correo no está configurado en la API (MAIL_ENABLED y SMTP_* en api/.env).</p>`;
+        }
+
+        const ayuda =
+            c.estado === "BORRADOR"
+                ? "Al enviarla, la cotización pasa a “Enviada”."
+                : "Se reenviará el PDF actualizado.";
+
+        return `
+            <h4 class="cot-detalle-titulo">Enviar por correo</h4>
+            <div class="cl-field">
+                <label for="cot-f-correo">Correo del cliente</label>
+                <input id="cot-f-correo" type="email" maxlength="150" autocomplete="off"
+                    placeholder="cliente@correo.com" value="${esc(c.correo ?? "")}">
+                <span class="cl-error" id="cot-e-correo"></span>
+                <span class="cot-sub">El PDF va adjunto. ${ayuda}${
+                    c.correo ? "" : " Como el cliente no tiene correo, se guardará en su ficha."
+                }</span>
+            </div>
+            <div class="cl-modal-actions">
+                <button class="cl-btn cl-btn-outline" type="button" data-accion="enviar" data-id="${esc(c.id)}">Enviar PDF por correo</button>
+            </div>`;
+    }
+
+    async function enviarPorCorreo(id: string, boton: HTMLButtonElement): Promise<void> {
+        const c = COTIZACIONES.find((x) => x.id === id);
+        const campo = document.getElementById("cot-f-correo") as HTMLInputElement | null;
+        const error = document.getElementById("cot-e-correo");
+        if (!c || !campo || ocupado) return;
+
+        const correo = campo.value.trim();
+        if (error) error.textContent = "";
+        campo.parentElement?.classList.remove("has-error");
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            if (error) error.textContent = "Escribe un correo válido.";
+            campo.parentElement?.classList.add("has-error");
+            campo.focus();
+            return;
+        }
+
+        ocupado = true;
+        boton.disabled = true;
+        boton.textContent = "Enviando…";
+
+        try {
+            const r = await api<{ enviadoA: string }>(`/cotizaciones/${encodeURIComponent(id)}/enviar`, {
+                method: "POST",
+                body: JSON.stringify({ correo, idUsuario: idUsuario() }),
+            });
+
+            modalDetalle.classList.add("hidden");
+            avisar(`Cotización #${c.folio} enviada a ${r.enviadoA}.`);
+            ocupado = false;
+            await recargar();
+        } catch (e) {
+            ocupado = false;
+            boton.disabled = false;
+            boton.textContent = "Enviar PDF por correo";
+            if (error) error.textContent = mensajeDe(e);
+            campo.parentElement?.classList.add("has-error");
+        }
+    }
+
+    // El PDF se abre en el navegador, donde se puede imprimir o guardar
+    function verPdf(id: string): void {
+        window.open(`${API_URL}/cotizaciones/${encodeURIComponent(id)}/pdf`, "_blank");
     }
 
     async function cambiarEstado(id: string, nuevo: Estado): Promise<void> {
@@ -473,7 +646,7 @@
     function lineaHtml(concepto?: Concepto): string {
         return `
             <div class="cot-linea" data-id-producto="${esc(concepto?.idProducto ?? "")}" data-medidas="${esc(concepto?.medidas ?? "")}">
-                <input type="text" class="cot-l-nombre" placeholder="Producto o servicio" maxlength="120" autocomplete="off" value="${esc(concepto?.nombre ?? "")}">
+                <input type="text" class="cot-l-nombre" placeholder="Producto o servicio" maxlength="200" autocomplete="off" value="${esc(concepto?.nombre ?? "")}">
                 <input type="number" class="cot-l-cantidad" min="1" step="1" value="${concepto?.cantidad ?? 1}">
                 <input type="number" class="cot-l-precio" min="0" step="0.01" placeholder="0.00" value="${concepto?.precio ?? ""}">
                 <button type="button" class="cot-quitar" data-accion="quitar" aria-label="Quitar concepto">×</button>
@@ -563,7 +736,8 @@
             contLineas.innerHTML = solicitud.productos
                 .map((p) =>
                     lineaHtml({
-                        nombre: p.nombre,
+                        // Las notas del cliente van en el concepto para que salgan en el PDF
+                        nombre: (p.notas ? `${p.nombre} — ${p.notas.trim()}` : p.nombre).slice(0, 200),
                         cantidad: p.cantidad,
                         precio: p.precio,
                         idProducto: p.idProducto,
@@ -578,7 +752,8 @@
         actualizarTotales();
     }
 
-    async function abrirFormulario(): Promise<void> {
+    // "preseleccion" llega desde el botón Cotizar de una solicitud
+    async function abrirFormulario(preseleccion?: { idCliente: string; idSolicitud: string }): Promise<void> {
         form.reset();
         limpiarErrores();
 
@@ -605,6 +780,17 @@
                 const pendientes = c.solicitudes.length > 0 ? ` (${c.solicitudes.length} solicitud${c.solicitudes.length === 1 ? "" : "es"})` : "";
                 return `<option value="${esc(c.id)}">${esc(c.nombre)}${pendientes}</option>`;
             }).join("");
+
+        if (preseleccion && CLIENTES.some((c) => c.id === preseleccion.idCliente)) {
+            campos.cliente.value = preseleccion.idCliente;
+            pintarSolicitudes();
+            campos.solicitud.value = preseleccion.idSolicitud;
+            llenarDesdeSolicitud();
+
+            // Lo primero que suele ajustarse es el precio
+            contLineas.querySelector<HTMLInputElement>(".cot-l-precio")?.focus();
+            return;
+        }
 
         campos.cliente.focus();
     }
@@ -685,6 +871,21 @@
 
     el("cot-nueva").addEventListener("click", () => void abrirFormulario());
 
+    el("cot-sol-toggle").addEventListener("click", () => {
+        verTodasLasSolicitudes = !verTodasLasSolicitudes;
+        pintarSolicitudesNuevas();
+    });
+
+    el("cot-sol-filas").addEventListener("click", (evento) => {
+        const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>('[data-accion="cotizar"]');
+        if (!boton) return;
+
+        void abrirFormulario({
+            idCliente: boton.dataset.cliente ?? "",
+            idSolicitud: boton.dataset.solicitud ?? "",
+        });
+    });
+
     let temporizadorBusqueda: number | undefined;
 
     buscador.addEventListener("input", () => {
@@ -742,6 +943,8 @@
         if (boton.dataset.accion === "cerrar") modalDetalle.classList.add("hidden");
         if (boton.dataset.accion === "cambiar") void cambiarEstado(id, boton.dataset.nuevo as Estado);
         if (boton.dataset.accion === "convertir") void convertirEnPedido(id);
+        if (boton.dataset.accion === "pdf") verPdf(id);
+        if (boton.dataset.accion === "enviar") void enviarPorCorreo(id, boton);
     });
 
     // Formulario

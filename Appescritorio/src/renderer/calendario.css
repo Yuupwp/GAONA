@@ -556,3 +556,52 @@ body {
         gap: 10px;
     }
 }
+
+/* ---------- Citas conectadas a la API ---------- */
+
+.agenda-header-acciones {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.agenda-dot.entrega {
+    background: #c47720;
+}
+
+.agenda-event.tipo-entrega {
+    border-left-color: #c47720;
+}
+
+.agenda-event-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.agenda-event-top .agenda-event-hora {
+    margin-bottom: 0;
+}
+
+.agenda-event.inactiva {
+    opacity: 0.6;
+}
+
+.agenda-event.cancelada h4 {
+    text-decoration: line-through;
+}
+
+.agenda-event-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.ag-subtitulo {
+    display: block;
+    color: var(--gray);
+    font-size: 13px;
+}
