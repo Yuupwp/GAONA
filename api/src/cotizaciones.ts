@@ -2,6 +2,9 @@ import { Router } from "express";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./lib/prisma";
+import { generarCotizacionPdf, type DatosCotizacionPdf } from "./cotizacion-pdf";
+import { correoDisponible, enviarCotizacion, type FabricaTransporte } from "./cotizacion-correo";
+import { correoValido } from "./solicitud-correo-validacion";
 
 export const cotizacionesRouter = Router();
 
@@ -105,7 +108,9 @@ const seleccionCotizacion = {
       id: true,
       origen: true,
       descripcion: true,
-      cliente: { select: { id: true, nombre: true, apellido: true, telefono: true } },
+      cliente: {
+        select: { id: true, nombre: true, apellido: true, telefono: true, correo: true, direccion: true },
+      },
     },
   },
   detalles: {
@@ -133,6 +138,7 @@ function aRespuesta(c: CotizacionBD) {
     cliente: `${cliente.nombre} ${cliente.apellido}`.trim(),
     idCliente: cliente.id,
     telefono: cliente.telefono,
+    correo: cliente.correo,
     origen: c.solicitud.origen,
     solicitud: c.solicitud.descripcion,
     subtotal: redondear(Number(c.subtotal)),
@@ -215,7 +221,8 @@ cotizacionesRouter.get("/", async (_req, res) => {
       select: seleccionCotizacion,
     });
 
-    res.json({ items: cotizaciones.map(aRespuesta) });
+    // correoActivo le dice a la pantalla si puede ofrecer "Enviar por correo"
+    res.json({ items: cotizaciones.map(aRespuesta), correoActivo: correoDisponible() !== null });
   } catch (error) {
     responderError(res, error, "No se pudieron cargar las cotizaciones.");
   }
@@ -513,5 +520,168 @@ cotizacionesRouter.post("/:id/pedido", async (req, res) => {
       return;
     }
     responderError(res, error, "No se pudo crear el pedido.");
+  }
+});
+
+// ---------------------------------------------------------------------
+// PDF y correo
+// ---------------------------------------------------------------------
+
+// Las pruebas cambian el transporte para no mandar correos reales
+export const opcionesCorreo: { fabrica?: FabricaTransporte } = {};
+
+async function datosParaPdf(id: string): Promise<{ datos: DatosCotizacionPdf; estado: string; correo: string | null; idCliente: string } | null> {
+  const c = await prisma.cotizacion.findUnique({ where: { id }, select: seleccionCotizacion });
+  if (!c) return null;
+
+  const r = aRespuesta(c);
+  const cliente = c.solicitud.cliente;
+
+  return {
+    estado: c.estado,
+    correo: cliente.correo,
+    idCliente: cliente.id,
+    datos: {
+      folio: r.folio,
+      estado: r.estado,
+      creadoEn: c.creadoEn,
+      vigenciaHasta: c.vigenciaHasta,
+      elaboradaPor: r.elaboradaPor,
+      cliente: {
+        nombre: r.cliente,
+        telefono: cliente.telefono,
+        correo: cliente.correo,
+        direccion: cliente.direccion,
+      },
+      conceptos: r.conceptos.map((k) => ({
+        nombre: k.nombre,
+        medidas: k.medidas,
+        cantidad: k.cantidad,
+        precio: k.precio,
+        importe: k.subtotal,
+      })),
+      subtotal: r.subtotal,
+      iva: r.iva,
+      total: r.total,
+      anticipoRequerido: r.anticipoRequerido,
+    },
+  };
+}
+
+// GET /cotizaciones/:id/pdf  ->  el PDF de la cotización (se abre en el navegador)
+cotizacionesRouter.get("/:id/pdf", async (req, res) => {
+  try {
+    const encontrada = await datosParaPdf(req.params.id);
+    if (!encontrada) {
+      res.status(404).json({ error: "La cotización no existe." });
+      return;
+    }
+
+    const pdf = await generarCotizacionPdf(encontrada.datos);
+    res
+      .status(200)
+      .type("application/pdf")
+      .set("Content-Disposition", `inline; filename="GAONA-Cotizacion-${encontrada.datos.folio}.pdf"`)
+      .set("Cache-Control", "no-store")
+      .send(pdf);
+  } catch (error) {
+    responderError(res, error, "No se pudo generar el PDF.");
+  }
+});
+
+// Evita mandar dos veces la misma cotización por doble clic
+const enviando = new Set<string>();
+const ultimoEnvio = new Map<string, number>();
+const ESPERA_ENTRE_ENVIOS = 60 * 1000;
+
+const envioSchema = z.object({
+  correo: correoValido,
+  idUsuario: z.string().trim().min(1).optional(),
+});
+
+// POST /cotizaciones/:id/enviar  ->  manda el PDF por correo al cliente.
+// Si la cotización era borrador, pasa a "Enviada".
+cotizacionesRouter.post("/:id/enviar", async (req, res) => {
+  const resultado = envioSchema.safeParse({
+    ...req.body,
+    correo: typeof req.body?.correo === "string" ? req.body.correo.trim() : req.body?.correo,
+  });
+
+  if (!resultado.success) {
+    res.status(400).json({ error: "Escribe un correo válido." });
+    return;
+  }
+
+  const id = req.params.id;
+  const destinatario = resultado.data.correo;
+
+  if (!correoDisponible() && !opcionesCorreo.fabrica) {
+    res.status(503).json({
+      error: "El envío de correos no está configurado. Revisa MAIL_ENABLED y SMTP_* en api/.env.",
+    });
+    return;
+  }
+
+  if (enviando.has(id)) {
+    res.status(409).json({ error: "Esta cotización ya se está enviando." });
+    return;
+  }
+
+  const antes = ultimoEnvio.get(id);
+  if (antes && Date.now() - antes < ESPERA_ENTRE_ENVIOS) {
+    res.status(429).json({ error: "Esta cotización se acaba de enviar. Espera un minuto para reenviarla." });
+    return;
+  }
+
+  enviando.add(id);
+
+  try {
+    await marcarVencidas();
+    const encontrada = await datosParaPdf(id);
+
+    if (!encontrada) {
+      res.status(404).json({ error: "La cotización no existe." });
+      return;
+    }
+
+    if (encontrada.estado === "RECHAZADA" || encontrada.estado === "VENCIDA") {
+      res.status(409).json({
+        error: `La cotización está ${encontrada.estado === "RECHAZADA" ? "rechazada" : "vencida"}; no se puede enviar.`,
+      });
+      return;
+    }
+
+    const pdf = await generarCotizacionPdf(encontrada.datos);
+
+    try {
+      await enviarCotizacion(encontrada.datos, destinatario, pdf, process.env, opcionesCorreo.fabrica);
+    } catch (error) {
+      console.error("No se pudo enviar la cotización por correo:", (error as Error)?.message);
+      res.status(502).json({
+        error: "El servidor de correo no aceptó el mensaje. Revisa el correo del cliente e inténtalo de nuevo.",
+      });
+      return;
+    }
+
+    ultimoEnvio.set(id, Date.now());
+
+    // Si el cliente no tenía correo, se guarda el que se usó
+    if (!encontrada.correo) {
+      await prisma.cliente.update({ where: { id: encontrada.idCliente }, data: { correo: destinatario } });
+    }
+
+    // Un borrador enviado pasa a "Enviada"
+    if (encontrada.estado === "BORRADOR") {
+      await prisma.cotizacion.updateMany({ where: { id, estado: "BORRADOR" }, data: { estado: "ENVIADA" } });
+    }
+
+    res.json({
+      enviadoA: destinatario,
+      estado: encontrada.estado === "BORRADOR" ? "ENVIADA" : encontrada.estado,
+    });
+  } catch (error) {
+    responderError(res, error, "No se pudo enviar la cotización.");
+  } finally {
+    enviando.delete(id);
   }
 });

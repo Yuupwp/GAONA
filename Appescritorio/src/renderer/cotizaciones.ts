@@ -21,6 +21,7 @@
         folio: string;
         cliente: string;
         telefono: string;
+        correo: string | null;
         estado: Estado;
         origen: "WEB" | "ESCRITORIO";
         subtotal: number;
@@ -66,6 +67,7 @@
     let CLIENTES: ClienteOpcion[] = [];
     let cargando = false;
     let ocupado = false; // evita doble clic mientras se guarda
+    let correoActivo = false; // la API dice si el envío de correos está configurado
 
     // Estado del módulo
     const estado = {
@@ -336,8 +338,9 @@
         pintarLista();
 
         try {
-            const datos = await api<{ items: Cotizacion[] }>("/cotizaciones");
+            const datos = await api<{ items: Cotizacion[]; correoActivo: boolean }>("/cotizaciones");
             COTIZACIONES = datos.items;
+            correoActivo = datos.correoActivo;
         } catch (error) {
             avisar(mensajeDe(error), true);
         } finally {
@@ -411,12 +414,89 @@
                 <div class="cot-total-final"><span>Total</span><span>${dinero(c.total)}</span></div>
             </div>
 
+            ${seccionCorreo(c)}
+
             <div class="cl-modal-actions">
                 <button class="cl-btn cl-btn-outline" type="button" data-accion="cerrar">Cerrar</button>
+                <button class="cl-btn cl-btn-outline" type="button" data-accion="pdf" data-id="${esc(c.id)}">Ver PDF</button>
                 ${acciones}
             </div>`;
 
         modalDetalle.classList.remove("hidden");
+    }
+
+    // Envío por correo: solo si la API tiene el correo configurado y la cotización sigue vigente
+    function seccionCorreo(c: Cotizacion): string {
+        if (!["BORRADOR", "ENVIADA", "APROBADA"].includes(c.estado)) return "";
+
+        if (!correoActivo) {
+            return `<p class="cot-sub">El envío por correo no está configurado en la API (MAIL_ENABLED y SMTP_* en api/.env).</p>`;
+        }
+
+        const ayuda =
+            c.estado === "BORRADOR"
+                ? "Al enviarla, la cotización pasa a “Enviada”."
+                : "Se reenviará el PDF actualizado.";
+
+        return `
+            <h4 class="cot-detalle-titulo">Enviar por correo</h4>
+            <div class="cl-field">
+                <label for="cot-f-correo">Correo del cliente</label>
+                <input id="cot-f-correo" type="email" maxlength="150" autocomplete="off"
+                    placeholder="cliente@correo.com" value="${esc(c.correo ?? "")}">
+                <span class="cl-error" id="cot-e-correo"></span>
+                <span class="cot-sub">El PDF va adjunto. ${ayuda}${
+                    c.correo ? "" : " Como el cliente no tiene correo, se guardará en su ficha."
+                }</span>
+            </div>
+            <div class="cl-modal-actions">
+                <button class="cl-btn cl-btn-outline" type="button" data-accion="enviar" data-id="${esc(c.id)}">Enviar PDF por correo</button>
+            </div>`;
+    }
+
+    async function enviarPorCorreo(id: string, boton: HTMLButtonElement): Promise<void> {
+        const c = COTIZACIONES.find((x) => x.id === id);
+        const campo = document.getElementById("cot-f-correo") as HTMLInputElement | null;
+        const error = document.getElementById("cot-e-correo");
+        if (!c || !campo || ocupado) return;
+
+        const correo = campo.value.trim();
+        if (error) error.textContent = "";
+        campo.parentElement?.classList.remove("has-error");
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            if (error) error.textContent = "Escribe un correo válido.";
+            campo.parentElement?.classList.add("has-error");
+            campo.focus();
+            return;
+        }
+
+        ocupado = true;
+        boton.disabled = true;
+        boton.textContent = "Enviando…";
+
+        try {
+            const r = await api<{ enviadoA: string }>(`/cotizaciones/${encodeURIComponent(id)}/enviar`, {
+                method: "POST",
+                body: JSON.stringify({ correo, idUsuario: idUsuario() }),
+            });
+
+            modalDetalle.classList.add("hidden");
+            avisar(`Cotización #${c.folio} enviada a ${r.enviadoA}.`);
+            ocupado = false;
+            await recargar();
+        } catch (e) {
+            ocupado = false;
+            boton.disabled = false;
+            boton.textContent = "Enviar PDF por correo";
+            if (error) error.textContent = mensajeDe(e);
+            campo.parentElement?.classList.add("has-error");
+        }
+    }
+
+    // El PDF se abre en el navegador, donde se puede imprimir o guardar
+    function verPdf(id: string): void {
+        window.open(`${API_URL}/cotizaciones/${encodeURIComponent(id)}/pdf`, "_blank");
     }
 
     async function cambiarEstado(id: string, nuevo: Estado): Promise<void> {
@@ -742,6 +822,8 @@
         if (boton.dataset.accion === "cerrar") modalDetalle.classList.add("hidden");
         if (boton.dataset.accion === "cambiar") void cambiarEstado(id, boton.dataset.nuevo as Estado);
         if (boton.dataset.accion === "convertir") void convertirEnPedido(id);
+        if (boton.dataset.accion === "pdf") verPdf(id);
+        if (boton.dataset.accion === "enviar") void enviarPorCorreo(id, boton);
     });
 
     // Formulario
