@@ -248,6 +248,7 @@ cotizacionesRouter.get("/opciones", async (_req, res) => {
           select: {
             id: true,
             origen: true,
+            estado: true,
             descripcion: true,
             creadoEn: true,
             detalles: {
@@ -272,6 +273,7 @@ cotizacionesRouter.get("/opciones", async (_req, res) => {
         solicitudes: c.solicitudes.map((s) => ({
           id: s.id,
           origen: s.origen,
+          estado: s.estado,
           descripcion: s.descripcion,
           creadoEn: soloFecha(s.creadoEn),
           productos: s.detalles.map((d) => ({
@@ -280,6 +282,7 @@ cotizacionesRouter.get("/opciones", async (_req, res) => {
             cantidad: d.cantidad,
             precio: redondear(Number(d.producto.precioDesde)),
             medidas: d.medidasReales ?? d.medidasAprox ?? null,
+            notas: d.notas,
           })),
         })),
       })),

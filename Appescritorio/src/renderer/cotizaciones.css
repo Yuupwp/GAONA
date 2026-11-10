@@ -483,3 +483,75 @@
         padding: 14px 14px;
     }
 }
+/* ---------- Solicitudes por cotizar ---------- */
+
+.cot-sol {
+    margin-bottom: 24px;
+}
+
+.cot-sol-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+
+    margin-bottom: 12px;
+}
+
+.cot-sol-head h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 17px;
+}
+
+.cot-sol-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+
+    background: var(--orange);
+    border-radius: 999px;
+
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cot-sol-row {
+    display: grid;
+    grid-template-columns:
+        minmax(190px, 1.2fr)
+        minmax(220px, 2fr)
+        110px
+        120px
+        110px;
+    align-items: center;
+    gap: 12px;
+
+    padding: 14px 20px;
+
+    border-bottom: 1px solid var(--border);
+
+    font-size: 13px;
+    color: var(--black);
+}
+
+.cot-sol-row:not(.cot-row-head):hover {
+    background: #faf9f7;
+}
+
+.cot-sol-row .cl-btn {
+    padding: 8px 14px;
+    justify-self: end;
+}
+
+.cot-sol-nueva {
+    color: var(--orange);
+    font-weight: 700;
+}

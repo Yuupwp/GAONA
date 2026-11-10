@@ -487,6 +487,30 @@
                         </div>
                     </div>
 
+                    <!-- SOLICITUDES NUEVAS: lo que los clientes pidieron y aún no se cotiza -->
+                    <div id="cot-sol" class="cot-sol hidden">
+                        <div class="cot-sol-head">
+                            <div>
+                                <h3>Solicitudes por cotizar <span id="cot-sol-num" class="cot-sol-num">0</span></h3>
+                                <span class="cot-subtitulo">
+                                    Clientes que pidieron una cotización (casi siempre desde la página) y todavía no tienen respuesta.
+                                </span>
+                            </div>
+                            <button id="cot-sol-toggle" class="cl-link hidden" type="button">Ver todas</button>
+                        </div>
+
+                        <div class="cot-card">
+                            <div class="cot-sol-row cot-row-head">
+                                <span>Cliente</span>
+                                <span>Productos solicitados</span>
+                                <span>Recibida</span>
+                                <span>Estimado</span>
+                                <span></span>
+                            </div>
+                            <div id="cot-sol-filas"></div>
+                        </div>
+                    </div>
+
                     <div class="cot-toolbar">
                         <input id="cot-buscar" class="cot-search" type="search"
                             placeholder="Buscar por cliente o número de cotización..." autocomplete="off">
