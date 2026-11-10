@@ -1,11 +1,10 @@
 // ========================================
 // Módulo de cotizaciones (app de escritorio)
-// DISEÑO CON DATOS DE EJEMPLO: aún no se conecta a la API.
-// Cuando existan las rutas, solo hay que cambiar
-// COTIZACIONES y CLIENTES por llamadas a la API.
+// Lee y guarda las cotizaciones en la API (/cotizaciones).
 // ========================================
 (() => {
-    // OJO: ajusta estos valores a los de tu enum EstadoCotizacion
+    const API_URL = "http://localhost:3001";
+
     type Estado = "BORRADOR" | "ENVIADA" | "APROBADA" | "RECHAZADA" | "VENCIDA";
     type Filtro = "todos" | Estado;
 
@@ -13,6 +12,8 @@
         nombre: string;
         cantidad: number;
         precio: number;
+        idProducto?: string | null;
+        medidas?: string | null;
     }
 
     interface Cotizacion {
@@ -21,11 +22,33 @@
         cliente: string;
         telefono: string;
         estado: Estado;
+        origen: "WEB" | "ESCRITORIO";
+        subtotal: number;
+        iva: number;
+        total: number;
         conceptos: Concepto[];
         anticipoRequerido: number | null;
         vigenciaHasta: string | null;
+        fechaAprobacion: string | null;
         creadoEn: string;
-        pdfUrl: string | null;
+        elaboradaPor: string;
+        idPedido: string | null;
+        folioPedido: string | null;
+    }
+
+    interface SolicitudAbierta {
+        id: string;
+        origen: "WEB" | "ESCRITORIO";
+        descripcion: string | null;
+        creadoEn: string;
+        productos: { idProducto: string; nombre: string; cantidad: number; precio: number; medidas: string | null }[];
+    }
+
+    interface ClienteOpcion {
+        id: string;
+        nombre: string;
+        telefono: string;
+        solicitudes: SolicitudAbierta[];
     }
 
     const IVA = 0.16;
@@ -38,56 +61,11 @@
         VENCIDA: { texto: "Vencida", clase: "cl-badge-gray" },
     };
 
-    // ---------- DATOS DE EJEMPLO (borrar al conectar la API) ----------
-    const CLIENTES = [
-        { nombre: "Roberto Garza Treviño", telefono: "81 5550 0101" },
-        { nombre: "María Fernanda López", telefono: "81 5550 0102" },
-        { nombre: "Carlos Treviño Salinas", telefono: "81 5550 0103" },
-        { nombre: "Ana Sofía Martínez", telefono: "81 5550 0104" },
-        { nombre: "Jorge Ramírez Cantú", telefono: "81 5550 0105" },
-    ];
-
-    const COTIZACIONES: Cotizacion[] = [
-        {
-            id: "c1", folio: "0001", cliente: "Roberto Garza Treviño", telefono: "81 5550 0101",
-            estado: "APROBADA", anticipoRequerido: 9250, vigenciaHasta: "2026-11-30", creadoEn: "2026-10-01", pdfUrl: "#",
-            conceptos: [
-                { nombre: "Cocina integral 3 m", cantidad: 1, precio: 14200 },
-                { nombre: "Instalación", cantidad: 1, precio: 1660.34 },
-            ],
-        },
-        {
-            id: "c2", folio: "0002", cliente: "María Fernanda López", telefono: "81 5550 0102",
-            estado: "ENVIADA", anticipoRequerido: 18000, vigenciaHasta: "2026-11-20", creadoEn: "2026-10-20", pdfUrl: "#",
-            conceptos: [
-                { nombre: "Clóset empotrado", cantidad: 2, precio: 15500 },
-                { nombre: "Puertas corredizas", cantidad: 2, precio: 3200 },
-            ],
-        },
-        {
-            id: "c3", folio: "0003", cliente: "Carlos Treviño Salinas", telefono: "81 5550 0103",
-            estado: "ENVIADA", anticipoRequerido: null, vigenciaHasta: "2026-11-15", creadoEn: "2026-10-27", pdfUrl: "#",
-            conceptos: [{ nombre: "Mesa de comedor 8 personas", cantidad: 1, precio: 11000 }],
-        },
-        {
-            id: "c4", folio: "0004", cliente: "Ana Sofía Martínez", telefono: "81 5550 0104",
-            estado: "BORRADOR", anticipoRequerido: null, vigenciaHasta: null, creadoEn: "2026-11-03", pdfUrl: null,
-            conceptos: [
-                { nombre: "Baño: gabinete y espejo", cantidad: 1, precio: 6800 },
-                { nombre: "Cubierta de cuarzo", cantidad: 1, precio: 5200 },
-            ],
-        },
-        {
-            id: "c5", folio: "0005", cliente: "Jorge Ramírez Cantú", telefono: "81 5550 0105",
-            estado: "RECHAZADA", anticipoRequerido: 5000, vigenciaHasta: "2026-10-25", creadoEn: "2026-10-10", pdfUrl: "#",
-            conceptos: [{ nombre: "Librero a la medida", cantidad: 1, precio: 9900 }],
-        },
-        {
-            id: "c6", folio: "0006", cliente: "María Fernanda López", telefono: "81 5550 0102",
-            estado: "VENCIDA", anticipoRequerido: null, vigenciaHasta: "2026-10-15", creadoEn: "2026-09-28", pdfUrl: "#",
-            conceptos: [{ nombre: "Recámara completa", cantidad: 1, precio: 28000 }],
-        },
-    ];
+    // Datos cargados de la API
+    let COTIZACIONES: Cotizacion[] = [];
+    let CLIENTES: ClienteOpcion[] = [];
+    let cargando = false;
+    let ocupado = false; // evita doble clic mientras se guarda
 
     // Estado del módulo
     const estado = {
@@ -112,15 +90,18 @@
     const form = el<HTMLFormElement>("cot-form");
     const formError = el<HTMLDivElement>("cot-form-error");
     const contLineas = el<HTMLDivElement>("cot-lineas");
+    const botonGuardar = el<HTMLButtonElement>("cot-form-guardar");
 
     const campos = {
         cliente: el<HTMLSelectElement>("cot-f-cliente"),
+        solicitud: el<HTMLSelectElement>("cot-f-solicitud"),
         vigencia: el<HTMLInputElement>("cot-f-vigencia"),
         anticipo: el<HTMLInputElement>("cot-f-anticipo"),
     };
 
     const errores = {
         cliente: el<HTMLSpanElement>("cot-e-cliente"),
+        solicitud: el<HTMLSpanElement>("cot-e-solicitud"),
         vigencia: el<HTMLSpanElement>("cot-e-vigencia"),
         anticipo: el<HTMLSpanElement>("cot-e-anticipo"),
         lineas: el<HTMLSpanElement>("cot-e-lineas"),
@@ -149,6 +130,7 @@
         return formatoMoneda.format(valor);
     }
 
+    // "2026-10-02" se interpreta como hora local, no UTC
     function fecha(valor: string | null): string {
         if (!valor) return "—";
 
@@ -175,7 +157,8 @@
         return `${ahora.getFullYear()}-${mes}-${dia}`;
     }
 
-    // Subtotal, IVA y total de una lista de conceptos
+    // Solo para mostrar el total mientras se llena el formulario;
+    // el total que se guarda lo calcula la API.
     function calcular(conceptos: Concepto[]): { subtotal: number; iva: number; total: number } {
         const subtotal = redondear(conceptos.reduce((s, c) => s + c.cantidad * c.precio, 0));
         const iva = redondear(subtotal * IVA);
@@ -195,10 +178,42 @@
         }, 4500);
     }
 
+    // Llamadas a la API
+    async function api<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
+        let respuesta: Response;
+
+        try {
+            respuesta = await fetch(`${API_URL}${ruta}`, {
+                ...opciones,
+                headers: opciones.body ? { "Content-Type": "application/json" } : undefined,
+            });
+        } catch {
+            throw new Error(
+                "No se pudo conectar con la API. Revisa que esté encendida (npm run dev dentro de la carpeta api)."
+            );
+        }
+
+        const datos = await respuesta.json().catch(() => null);
+
+        if (!respuesta.ok) {
+            throw new Error(datos?.error ?? "Ocurrió un error inesperado.");
+        }
+
+        return datos as T;
+    }
+
+    function mensajeDe(error: unknown): string {
+        return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+    }
+
+    function idUsuario(): string | undefined {
+        return window.gaonaSesion?.actual()?.id;
+    }
+
     // Resumen (tarjetas de arriba)
     function pintarResumen(): void {
         const pendientes = COTIZACIONES.filter((c) => c.estado === "ENVIADA");
-        const monto = pendientes.reduce((s, c) => s + calcular(c.conceptos).total, 0);
+        const monto = pendientes.reduce((s, c) => s + c.total, 0);
 
         el("cot-stat-total").textContent = String(COTIZACIONES.length);
         el("cot-stat-pendientes").textContent = String(pendientes.length);
@@ -210,20 +225,27 @@
 
     // Lista
     function filtrar(): Cotizacion[] {
-        const texto = estado.busqueda.toLowerCase();
+        const texto = estado.busqueda.toLowerCase().replace(/^#/, "");
 
         return COTIZACIONES.filter((c) => {
             const coincideEstado = estado.filtro === "todos" || c.estado === estado.filtro;
             const coincideTexto =
                 texto === "" ||
                 c.cliente.toLowerCase().includes(texto) ||
-                c.folio.includes(texto);
+                c.folio.toLowerCase().includes(texto);
 
             return coincideEstado && coincideTexto;
         });
     }
 
     function pintarLista(): void {
+        if (cargando && COTIZACIONES.length === 0) {
+            filas.innerHTML = `<div class="cl-vacio">Cargando cotizaciones…</div>`;
+            contador.textContent = "";
+            paginacion.innerHTML = "";
+            return;
+        }
+
         const resultado = filtrar();
         const totalPaginas = Math.max(1, Math.ceil(resultado.length / estado.limite));
         estado.pagina = Math.min(estado.pagina, totalPaginas);
@@ -247,7 +269,6 @@
         filas.innerHTML = visibles
             .map((c) => {
                 const info = ESTADOS[c.estado];
-                const { total } = calcular(c.conceptos);
 
                 return `
                 <div class="cot-row">
@@ -263,7 +284,7 @@
 
                     <div><span class="cl-badge ${info.clase}">${esc(info.texto)}</span></div>
 
-                    <span class="cot-monto">${dinero(total)}</span>
+                    <span class="cot-monto">${dinero(c.total)}</span>
 
                     <span>${c.anticipoRequerido !== null ? dinero(c.anticipoRequerido) : "—"}</span>
 
@@ -272,7 +293,7 @@
                     <div class="cot-acciones">
                         <button type="button" class="cl-link" data-accion="detalle" data-id="${esc(c.id)}">Ver detalle</button>
                         ${
-                            c.estado === "APROBADA"
+                            c.estado === "APROBADA" && !c.idPedido
                                 ? `<button type="button" class="cl-link" data-accion="convertir" data-id="${esc(c.id)}">Crear pedido</button>`
                                 : ""
                         }
@@ -310,7 +331,19 @@
         paginacion.innerHTML = botones;
     }
 
-    function recargar(): void {
+    async function recargar(): Promise<void> {
+        cargando = true;
+        pintarLista();
+
+        try {
+            const datos = await api<{ items: Cotizacion[] }>("/cotizaciones");
+            COTIZACIONES = datos.items;
+        } catch (error) {
+            avisar(mensajeDe(error), true);
+        } finally {
+            cargando = false;
+        }
+
         pintarResumen();
         pintarLista();
     }
@@ -321,7 +354,6 @@
         if (!c) return;
 
         const info = ESTADOS[c.estado];
-        const { subtotal, iva, total } = calcular(c.conceptos);
 
         const conceptos = c.conceptos
             .map(
@@ -329,9 +361,11 @@
                 <div class="cot-concepto">
                     <div>
                         <strong>${esc(k.nombre)}</strong>
-                        <span class="cot-sub">${k.cantidad} × ${dinero(k.precio)}</span>
+                        <span class="cot-sub">${k.cantidad} × ${dinero(k.precio)}${
+                            k.medidas ? ` · ${esc(k.medidas)}` : ""
+                        }</span>
                     </div>
-                    <strong class="cot-monto">${dinero(k.cantidad * k.precio)}</strong>
+                    <strong class="cot-monto">${dinero(redondear(k.cantidad * k.precio))}</strong>
                 </div>`
             )
             .join("");
@@ -345,7 +379,7 @@
             acciones = `
                 <button class="cl-btn cl-btn-danger" type="button" data-accion="cambiar" data-nuevo="RECHAZADA" data-id="${esc(c.id)}">Rechazar</button>
                 <button class="cl-btn cl-btn-primary" type="button" data-accion="cambiar" data-nuevo="APROBADA" data-id="${esc(c.id)}">Aprobar</button>`;
-        } else if (c.estado === "APROBADA") {
+        } else if (c.estado === "APROBADA" && !c.idPedido) {
             acciones = `<button class="cl-btn cl-btn-primary" type="button" data-accion="convertir" data-id="${esc(c.id)}">Crear pedido</button>`;
         }
 
@@ -363,56 +397,85 @@
                 <div><span>Creada</span><strong>${fecha(c.creadoEn)}</strong></div>
                 <div><span>Vigencia</span><strong>${fecha(c.vigenciaHasta)}</strong></div>
                 <div><span>Anticipo requerido</span><strong>${c.anticipoRequerido !== null ? dinero(c.anticipoRequerido) : "No se requiere"}</strong></div>
+                <div><span>Origen</span><strong>${c.origen === "WEB" ? "Solicitud de la página" : "App de escritorio"}</strong></div>
+                <div><span>Elaboró</span><strong>${esc(c.elaboradaPor)}</strong></div>
+                ${c.folioPedido ? `<div><span>Pedido</span><strong>#${esc(c.folioPedido)}</strong></div>` : ""}
             </div>
 
             <h4 class="cot-detalle-titulo">Conceptos</h4>
             <div class="cot-conceptos">${conceptos}</div>
 
             <div class="cot-totales">
-                <div><span>Subtotal</span><span>${dinero(subtotal)}</span></div>
-                <div><span>IVA (16%)</span><span>${dinero(iva)}</span></div>
-                <div class="cot-total-final"><span>Total</span><span>${dinero(total)}</span></div>
+                <div><span>Subtotal</span><span>${dinero(c.subtotal)}</span></div>
+                <div><span>IVA (16%)</span><span>${dinero(c.iva)}</span></div>
+                <div class="cot-total-final"><span>Total</span><span>${dinero(c.total)}</span></div>
             </div>
 
             <div class="cl-modal-actions">
                 <button class="cl-btn cl-btn-outline" type="button" data-accion="cerrar">Cerrar</button>
-                ${
-                    c.pdfUrl
-                        ? `<button class="cl-btn cl-btn-outline" type="button" data-accion="pdf" data-id="${esc(c.id)}">Ver PDF</button>`
-                        : ""
-                }
                 ${acciones}
             </div>`;
 
         modalDetalle.classList.remove("hidden");
     }
 
-    function cambiarEstado(id: string, nuevo: Estado): void {
+    async function cambiarEstado(id: string, nuevo: Estado): Promise<void> {
         const c = COTIZACIONES.find((x) => x.id === id);
-        if (!c) return;
+        if (!c || ocupado) return;
 
-        c.estado = nuevo;
-        modalDetalle.classList.add("hidden");
-        avisar(`Cotización #${c.folio} marcada como "${ESTADOS[nuevo].texto.toLowerCase()}".`);
-        recargar();
+        ocupado = true;
+
+        try {
+            await api(`/cotizaciones/${encodeURIComponent(id)}/estado`, {
+                method: "PATCH",
+                body: JSON.stringify({ estado: nuevo, idUsuario: idUsuario() }),
+            });
+
+            modalDetalle.classList.add("hidden");
+            avisar(`Cotización #${c.folio} marcada como "${ESTADOS[nuevo].texto.toLowerCase()}".`);
+        } catch (error) {
+            avisar(mensajeDe(error), true);
+        } finally {
+            ocupado = false;
+        }
+
+        await recargar();
     }
 
-    function convertirEnPedido(id: string): void {
+    async function convertirEnPedido(id: string): Promise<void> {
         const c = COTIZACIONES.find((x) => x.id === id);
-        if (!c) return;
+        if (!c || ocupado) return;
 
-        modalDetalle.classList.add("hidden");
-        // Aquí irá la llamada a la API: POST /cotizaciones/:id/convertir
-        avisar(`Se creará el pedido de la cotización #${c.folio} cuando se conecte la API.`);
+        if (!window.confirm(`¿Crear el pedido de la cotización #${c.folio} por ${dinero(c.total)}?`)) {
+            return;
+        }
+
+        ocupado = true;
+
+        try {
+            const pedido = await api<{ folio: string }>(
+                `/cotizaciones/${encodeURIComponent(id)}/pedido`,
+                { method: "POST", body: JSON.stringify({ idUsuario: idUsuario() }) }
+            );
+
+            modalDetalle.classList.add("hidden");
+            avisar(`Se creó el pedido #${pedido.folio}. Ya aparece en Pedidos y en Finanzas.`);
+        } catch (error) {
+            avisar(mensajeDe(error), true);
+        } finally {
+            ocupado = false;
+        }
+
+        await recargar();
     }
 
     // Formulario: nueva cotización
-    function lineaHtml(): string {
+    function lineaHtml(concepto?: Concepto): string {
         return `
-            <div class="cot-linea">
-                <input type="text" class="cot-l-nombre" placeholder="Producto o servicio" maxlength="120" autocomplete="off">
-                <input type="number" class="cot-l-cantidad" min="1" step="1" value="1">
-                <input type="number" class="cot-l-precio" min="0" step="0.01" placeholder="0.00">
+            <div class="cot-linea" data-id-producto="${esc(concepto?.idProducto ?? "")}" data-medidas="${esc(concepto?.medidas ?? "")}">
+                <input type="text" class="cot-l-nombre" placeholder="Producto o servicio" maxlength="120" autocomplete="off" value="${esc(concepto?.nombre ?? "")}">
+                <input type="number" class="cot-l-cantidad" min="1" step="1" value="${concepto?.cantidad ?? 1}">
+                <input type="number" class="cot-l-precio" min="0" step="0.01" placeholder="0.00" value="${concepto?.precio ?? ""}">
                 <button type="button" class="cot-quitar" data-accion="quitar" aria-label="Quitar concepto">×</button>
             </div>`;
     }
@@ -427,7 +490,13 @@
             const precio = Number(linea.querySelector<HTMLInputElement>(".cot-l-precio")?.value);
 
             if (nombre !== "" && cantidad > 0 && precio > 0) {
-                conceptos.push({ nombre, cantidad, precio });
+                conceptos.push({
+                    nombre,
+                    cantidad,
+                    precio,
+                    idProducto: linea.dataset.idProducto || null,
+                    medidas: linea.dataset.medidas || null,
+                });
             }
         });
 
@@ -456,19 +525,87 @@
         errores[campo].parentElement?.classList.add("has-error");
     }
 
-    function abrirFormulario(): void {
+    function clienteElegido(): ClienteOpcion | undefined {
+        return CLIENTES.find((c) => c.id === campos.cliente.value);
+    }
+
+    // Al elegir cliente se muestran sus solicitudes abiertas
+    function pintarSolicitudes(): void {
+        const cliente = clienteElegido();
+        const solicitudes = cliente?.solicitudes ?? [];
+
+        campos.solicitud.innerHTML =
+            '<option value="">Sin solicitud (cotización directa)</option>' +
+            solicitudes
+                .map((s) => {
+                    const origen = s.origen === "WEB" ? "Página" : "Escritorio";
+                    const productos = s.productos.map((p) => p.nombre).join(", ");
+                    return `<option value="${esc(s.id)}">${origen} · ${fecha(s.creadoEn)}${
+                        productos ? ` · ${esc(productos)}` : ""
+                    }</option>`;
+                })
+                .join("");
+
+        campos.solicitud.disabled = solicitudes.length === 0;
+
+        // Si el cliente pidió algo desde la página, se propone esa solicitud
+        if (solicitudes.length > 0) {
+            campos.solicitud.value = solicitudes[0].id;
+        }
+        llenarDesdeSolicitud();
+    }
+
+    // Los productos de la solicitud se pasan como conceptos (se pueden editar)
+    function llenarDesdeSolicitud(): void {
+        const solicitud = clienteElegido()?.solicitudes.find((s) => s.id === campos.solicitud.value);
+
+        if (solicitud && solicitud.productos.length > 0) {
+            contLineas.innerHTML = solicitud.productos
+                .map((p) =>
+                    lineaHtml({
+                        nombre: p.nombre,
+                        cantidad: p.cantidad,
+                        precio: p.precio,
+                        idProducto: p.idProducto,
+                        medidas: p.medidas,
+                    })
+                )
+                .join("");
+        } else if (leerConceptos().length === 0) {
+            contLineas.innerHTML = lineaHtml();
+        }
+
+        actualizarTotales();
+    }
+
+    async function abrirFormulario(): Promise<void> {
         form.reset();
         limpiarErrores();
 
-        campos.cliente.innerHTML =
-            '<option value="">Selecciona un cliente</option>' +
-            CLIENTES.map((c, i) => `<option value="${i}">${esc(c.nombre)}</option>`).join("");
-
         campos.vigencia.min = hoy();
         contLineas.innerHTML = lineaHtml();
+        campos.cliente.innerHTML = '<option value="">Cargando clientes…</option>';
+        campos.solicitud.disabled = true;
         actualizarTotales();
 
         modal.classList.remove("hidden");
+
+        try {
+            const datos = await api<{ clientes: ClienteOpcion[] }>("/cotizaciones/opciones");
+            CLIENTES = datos.clientes;
+        } catch (error) {
+            CLIENTES = [];
+            formError.textContent = mensajeDe(error);
+            formError.classList.remove("hidden");
+        }
+
+        campos.cliente.innerHTML =
+            '<option value="">Selecciona un cliente</option>' +
+            CLIENTES.map((c) => {
+                const pendientes = c.solicitudes.length > 0 ? ` (${c.solicitudes.length} solicitud${c.solicitudes.length === 1 ? "" : "es"})` : "";
+                return `<option value="${esc(c.id)}">${esc(c.nombre)}${pendientes}</option>`;
+            }).join("");
+
         campos.cliente.focus();
     }
 
@@ -476,17 +613,18 @@
         modal.classList.add("hidden");
     }
 
-    function guardarCotizacion(): void {
+    async function guardarCotizacion(): Promise<void> {
+        if (ocupado) return;
         limpiarErrores();
         let ok = true;
 
-        const cliente = CLIENTES[Number(campos.cliente.value)];
+        const cliente = clienteElegido();
         const conceptos = leerConceptos();
         const { total } = calcular(conceptos);
         const anticipo =
             campos.anticipo.value.trim() === "" ? null : redondear(Number(campos.anticipo.value));
 
-        if (campos.cliente.value === "" || !cliente) {
+        if (!cliente) {
             mostrarError("cliente", "Selecciona un cliente.");
             ok = false;
         }
@@ -511,34 +649,41 @@
 
         if (!ok || !cliente) return;
 
-        // Aquí irá la llamada a la API: POST /cotizaciones
-        const siguiente = Math.max(0, ...COTIZACIONES.map((c) => Number(c.folio))) + 1;
+        ocupado = true;
+        botonGuardar.disabled = true;
 
-        COTIZACIONES.unshift({
-            id: `c${Date.now()}`,
-            folio: String(siguiente).padStart(4, "0"),
-            cliente: cliente.nombre,
-            telefono: cliente.telefono,
-            estado: "BORRADOR",
-            conceptos,
-            anticipoRequerido: anticipo,
-            vigenciaHasta: campos.vigencia.value || null,
-            creadoEn: hoy(),
-            pdfUrl: null,
-        });
+        try {
+            const creada = await api<Cotizacion>("/cotizaciones", {
+                method: "POST",
+                body: JSON.stringify({
+                    idCliente: cliente.id,
+                    idSolicitud: campos.solicitud.value || null,
+                    conceptos,
+                    anticipoRequerido: anticipo,
+                    vigenciaHasta: campos.vigencia.value || null,
+                    idUsuario: idUsuario(),
+                }),
+            });
 
-        cerrarFormulario();
-        avisar("Cotización guardada como borrador.");
-        recargar();
+            cerrarFormulario();
+            avisar(`Cotización #${creada.folio} guardada como borrador.`);
+            await recargar();
+        } catch (error) {
+            formError.textContent = mensajeDe(error);
+            formError.classList.remove("hidden");
+        } finally {
+            ocupado = false;
+            botonGuardar.disabled = false;
+        }
     }
 
     // Eventos
-    // Al entrar a la sección Cotizaciones se pinta la pantalla
+    // Al entrar a la sección Cotizaciones se cargan los datos
     document
         .querySelector<HTMLButtonElement>('.menu-item[data-section="cotizaciones"]')
-        ?.addEventListener("click", recargar);
+        ?.addEventListener("click", () => void recargar());
 
-    el("cot-nueva").addEventListener("click", abrirFormulario);
+    el("cot-nueva").addEventListener("click", () => void abrirFormulario());
 
     let temporizadorBusqueda: number | undefined;
 
@@ -577,7 +722,7 @@
         const id = boton.dataset.id ?? "";
 
         if (boton.dataset.accion === "detalle") abrirDetalle(id);
-        if (boton.dataset.accion === "convertir") convertirEnPedido(id);
+        if (boton.dataset.accion === "convertir") void convertirEnPedido(id);
     });
 
     modalDetalle.addEventListener("click", (evento) => {
@@ -595,14 +740,14 @@
         const id = boton.dataset.id ?? "";
 
         if (boton.dataset.accion === "cerrar") modalDetalle.classList.add("hidden");
-        if (boton.dataset.accion === "cambiar") cambiarEstado(id, boton.dataset.nuevo as Estado);
-        if (boton.dataset.accion === "convertir") convertirEnPedido(id);
-        if (boton.dataset.accion === "pdf") {
-            avisar("El PDF se abrirá cuando se conecte la API.");
-        }
+        if (boton.dataset.accion === "cambiar") void cambiarEstado(id, boton.dataset.nuevo as Estado);
+        if (boton.dataset.accion === "convertir") void convertirEnPedido(id);
     });
 
     // Formulario
+    campos.cliente.addEventListener("change", pintarSolicitudes);
+    campos.solicitud.addEventListener("change", llenarDesdeSolicitud);
+
     el("cot-agregar-linea").addEventListener("click", () => {
         contLineas.insertAdjacentHTML("beforeend", lineaHtml());
     });
@@ -625,7 +770,7 @@
 
     form.addEventListener("submit", (evento) => {
         evento.preventDefault();
-        guardarCotizacion();
+        void guardarCotizacion();
     });
 
     // Escape cierra el cuadro abierto

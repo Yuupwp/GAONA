@@ -8,6 +8,8 @@ import { empleadosRouter } from "./empleado";
 import { productosRouter } from "./catalogo";
 import { finanzasRouter } from "./finanzas";
 import { authRouter, cuentaRouter } from "./cuenta";
+import { cotizacionesRouter } from "./cotizaciones";
+import { pedidosRouter } from "./pedidos";
 
 const app = express();
 app.use(cors());
@@ -18,6 +20,8 @@ app.use("/empleados", empleadosRouter);
 app.use("/productos", productosRouter)
 app.use("/auth", authRouter);
 app.use("/cuenta", cuentaRouter);
+app.use("/cotizaciones", cotizacionesRouter);
+app.use("/pedidos", pedidosRouter);
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });
@@ -107,5 +111,6 @@ app.post("/solicitudes", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT ?? 3000;
+// La API de escritorio usa el 3001; el 3000 es de la API pública de la página.
+const PORT = process.env.PORT ?? 3001;
 app.listen(PORT, () => console.log(`API en http://localhost:${PORT}`));
