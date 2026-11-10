@@ -6,4 +6,4 @@ En cada entrada anoto qué hice, por qué lo hice y cómo comprobé que funciona
 
 | Fecha | Resumen |
 |---|---|
-| [2026-11-10](2026-11-10.md) | Traje los cambios del equipo, instalé Node 24, arranqué la página y revisé lo que falta. Separé los puertos de las dos APIs, conecté Cotizaciones y Pedidos a la base de datos, agregué el PDF y el correo de las cotizaciones, y armé la lista de solicitudes por cotizar. |
+| [2026-11-10](2026-11-10.md) | Traje los cambios del equipo, instalé Node 24, arranqué la página y revisé lo que falta. Separé los puertos de las dos APIs, conecté Cotizaciones y Pedidos a la base de datos, agregué el PDF y el correo de las cotizaciones, armé la lista de solicitudes por cotizar y conecté la Agenda. |
