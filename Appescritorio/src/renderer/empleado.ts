@@ -756,6 +756,94 @@ async function ActualizarEmpleado(empleado: Empleado) {
 
 }
 
+
+async function enviarRestablecimientoContrasena(): Promise<void> {
+    if (!empleadoEnEdicionId || !btnRestablecerContrasena) {
+        return;
+    }
+
+    const empleado = empleados.find(
+        (elemento) => elemento.id === empleadoEnEdicionId
+    );
+
+    if (!empleado) {
+        mostrarErrorFormulario("No se encontró el empleado seleccionado.");
+        return;
+    }
+
+    if (!empleado.activo) {
+        mostrarErrorFormulario(
+            "No puedes restablecer la contraseña de una cuenta desactivada."
+        );
+        return;
+    }
+
+    if (!empleado.correo) {
+        mostrarErrorFormulario(
+            "El empleado no tiene un correo registrado."
+        );
+        return;
+    }
+
+    const token = window.gaonaSesion.token();
+
+    if (!token) {
+        mostrarErrorFormulario(
+            "Tu sesión ha expirado. Inicia sesión nuevamente."
+        );
+        return;
+    }
+
+    const confirmar = window.confirm(
+        `¿Deseas enviar un correo de restablecimiento a ${empleado.correo}?`
+    );
+
+    if (!confirmar) return;
+
+    btnRestablecerContrasena.textContent = "Enviando correo...";
+
+    try {
+        const respuesta = await fetch(
+            `http://localhost:3001/empleados/${encodeURIComponent(empleado.id)}/restablecer-contrasena`,
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        const resultado = await respuesta.json().catch(() => null);
+
+        if (!respuesta.ok) {
+            throw new Error(
+                resultado?.error ||
+                resultado?.mensaje ||
+                "No se pudo enviar el correo de restablecimiento."
+            );
+        }
+
+        mostrarMensaje(
+            `Se envió el correo de restablecimiento a ${empleado.correo}.`
+        );
+
+    } catch (error) {
+        console.error("Error al enviar el restablecimiento:", error);
+
+        mostrarErrorFormulario(
+            error instanceof Error
+                ? error.message
+                : "Ocurrió un error al enviar el correo."
+        );
+
+    } finally {
+        btnRestablecerContrasena.textContent =
+            "Enviar correo para restablecer contraseña";
+    }
+}
+
+
 // Eventos de la interfaz
 btnNuevoEmpleado?.addEventListener("click", abrirModalEmpleado);
 btnCerrarEmp?.addEventListener("click", cerrarModalEmpleado);
@@ -777,6 +865,11 @@ empForm?.addEventListener("submit", (event) => {
         void crearEmpleado(event);
     }
 });
+
+btnRestablecerContrasena?.addEventListener(
+    "click",
+    enviarRestablecimientoContrasena
+);
 
 btnCancelarEliminar?.addEventListener("click", cerrarConfirmacionEliminar);
 empEliminarConfirmar?.addEventListener("click", eliminarEmpleadoConfirmado);

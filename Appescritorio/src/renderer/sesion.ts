@@ -24,6 +24,7 @@ interface GaonaUsuario {
 interface GaonaSesion {
     iniciar: (usuario: string, contrasena: string) => Promise<GaonaUsuario>;
     actual: () => GaonaUsuario | null;
+    token: () => string | null;
     inicioDeSesion: () => Date | null;
     actualizar: (usuario: GaonaUsuario) => void;
     cerrar: () => void;
@@ -38,6 +39,7 @@ interface Window {
     const API_URL = "http://localhost:3001";
 
     let usuarioActual: GaonaUsuario | null = null;
+    let tokenActual: string | null = null;
     let horaDeInicio: Date | null = null;
 
     const NOMBRES_ROL: Record<string, string> = {
@@ -130,7 +132,14 @@ interface Window {
             throw new Error(datos?.error ?? "No se pudo iniciar sesión.");
         }
 
-        usuarioActual = datos as GaonaUsuario;
+        if (!datos?.usuario || typeof datos.token !== "string") {
+            throw new Error("La API devolvió una respuesta de inicio de sesión inválida.");
+        }
+
+        const usuarioAutenticado: GaonaUsuario = datos.usuario;
+
+        usuarioActual = usuarioAutenticado;
+        tokenActual = datos.token;
         horaDeInicio = new Date();
 
         pintarCabecera();
@@ -138,7 +147,7 @@ interface Window {
         irAPrimeraSeccion();
         avisarCambio();
 
-        return usuarioActual;
+        return usuarioAutenticado;
     }
 
     // Se usa cuando la persona edita sus datos en "Mi cuenta"
@@ -150,6 +159,7 @@ interface Window {
 
     function cerrar(): void {
         usuarioActual = null;
+        tokenActual = null;
         horaDeInicio = null;
 
         // Se vuelve a mostrar todo el menú; se ajusta de nuevo al iniciar sesión
@@ -176,6 +186,7 @@ interface Window {
         iniciar,
         actual: () => usuarioActual,
         inicioDeSesion: () => horaDeInicio,
+        token: () => tokenActual,
         actualizar,
         cerrar,
         puede,

@@ -2,7 +2,9 @@ import { Router } from "express";
 import { prisma } from "./lib/prisma";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { error } from "node:console";
+import { randomBytes, createHash } from "node:crypto";
+import { autenticar, soloAdministrador } from "./middleware/autenticacion";
+import { enviarCorreo } from "./correo";
 
 export const empleadosRouter = Router();
 empleadosRouter.get("/", async (_req, res) => {
@@ -412,3 +414,138 @@ empleadosRouter.patch("/:id/estado", async (req, res) => {
             });
     }
 });
+
+
+empleadosRouter.post(
+    "/:id/restablecer-contrasena",
+    autenticar,
+    soloAdministrador,
+    async (req, res) => {
+        try {
+            const id = Array.isArray(req.params.id)
+                ? req.params.id[0]
+                : req.params.id;
+
+            // Buscar al empleado
+            const empleado = await prisma.usuario.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    nombre: true,
+                    apellido: true,
+                    correo: true,
+                    activo: true,
+                },
+            });
+
+            if (!empleado) {
+                res.status(404).json({
+                    error: "No se encontró el empleado.",
+                });
+                return;
+            }
+
+            if (!empleado.correo) {
+                res.status(400).json({
+                    error: "El empleado no tiene un correo registrado.",
+                });
+                return;
+            }
+
+            if (!empleado.activo) {
+                res.status(400).json({
+                    error: "No se puede restablecer la contraseña de una cuenta desactivada.",
+                });
+                return;
+            }
+
+            // Generar un token aleatorio y su hash
+            const token = randomBytes(32).toString("hex");
+
+            const tokenHash = createHash("sha256")
+                .update(token)
+                .digest("hex");
+
+            const expiraEn = new Date(Date.now() + 30 * 60 * 1000);
+
+            // Invalidar solicitudes anteriores y crear una nueva
+            await prisma.$transaction([
+                prisma.tokenRestablecimiento.updateMany({
+                    where: {
+                        idUsuario: empleado.id,
+                        utilizadoEn: null,
+                    },
+                    data: {
+                        utilizadoEn: new Date(),
+                    },
+                }),
+
+                prisma.tokenRestablecimiento.create({
+                    data: {
+                        idUsuario: empleado.id,
+                        tokenHash,
+                        expiraEn,
+                    },
+                }),
+            ]);
+
+            // Construir el enlace
+            const urlBase = process.env.RESET_PASSWORD_URL;
+
+            if (!urlBase) {
+                throw new Error("Falta configurar RESET_PASSWORD_URL.");
+            }
+
+            const enlace = `${urlBase}?token=${encodeURIComponent(token)}`;
+
+            const nombre = `${empleado.nombre} ${empleado.apellido}`;
+
+            // Escapar el nombre para evitar insertar HTML no confiable
+            const nombreSeguro = nombre.replace(
+                /[&<>"']/g,
+                (caracter) => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;",
+                })[caracter]!
+            );
+
+            try {
+                await enviarCorreo(
+                    empleado.correo,
+                    "Restablecimiento de contraseña - GAONA",
+                    `
+                    <h2>Restablecimiento de contraseña</h2>
+                    <p>Hola, ${nombreSeguro}.</p>
+                    <p>Se ha solicitado restablecer la contraseña de tu cuenta de GAONA.</p>
+                    <p>Para establecer una nueva contraseña, utiliza el siguiente enlace:</p>
+                    <p><a href="${enlace}">Restablecer mi contraseña</a></p>
+                    <p>Este enlace tiene una vigencia de 30 minutos y solo puede utilizarse una vez.</p>
+                    <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+                    `
+                );
+            } catch (error) {
+                // Invalidar el token si no se pudo enviar el correo
+                await prisma.tokenRestablecimiento.updateMany({
+                    where: { tokenHash },
+                    data: { utilizadoEn: new Date() },
+                });
+
+                throw error;
+            }
+
+            res.json({
+                mensaje: "Se envió el correo de restablecimiento correctamente.",
+            });
+
+        } catch (error) {
+            console.error("Error al solicitar restablecimiento:", error);
+
+            res.status(500).json({
+                error: "No se pudo enviar el correo de restablecimiento.",
+            });
+        }
+    }
+);

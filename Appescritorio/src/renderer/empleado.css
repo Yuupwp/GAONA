@@ -541,3 +541,89 @@
 [hidden] {
     display: none !important;
 }
+
+
+.emp-accion-editar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    padding: 7px 12px;
+    margin-right: 8px;
+
+    border: 1px solid #d6d3cd;
+    border-radius: 6px;
+    background-color: #f3f2ef;
+    color: #55534f;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.emp-accion-editar::before {
+    content: "✎";
+    font-size: 13px;
+}
+
+.emp-accion-editar:hover {
+    background-color: #e8e6e1;
+    border-color: #c9c5bd;
+    transform: translateY(-1px);
+}
+
+.emp-accion-editar:active {
+    transform: scale(0.97);
+}
+
+/* BOTÓN RESTABLECER CONTRASEÑA */
+
+.emp-btn-restablecer {
+    width: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 11px 16px;
+    border: 1px solid #e8c69f;
+    border-radius: 9px;
+    background: #fff8ef;
+    color: #a96116;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.emp-btn-restablecer::before {
+    content: "✉";
+    font-size: 17px;
+}
+
+.emp-btn-restablecer:hover:not(:disabled) {
+    background: #fff0dc;
+    border-color: #c47720;
+    box-shadow: 0 3px 10px rgba(196, 119, 32, 0.10);
+}
+
+.emp-btn-restablecer:active:not(:disabled) {
+    transform: scale(0.99);
+}
+
+.emp-btn-restablecer:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.emp-btn-restablecer:focus-visible {
+    outline: 3px solid rgba(196, 119, 32, 0.2);
+    outline-offset: 2px;
+}
+

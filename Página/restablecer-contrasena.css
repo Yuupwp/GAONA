@@ -1,0 +1,235 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', sans-serif;
+    background: #f7f6f3;
+    color: #292929;
+}
+
+/* HEADER */
+
+.header {
+    width: 100%;
+    padding: 22px 8%;
+    background: #ffffff;
+    border-bottom: 1px solid #eae8e3;
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #292929;
+    text-decoration: none;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #c47720;
+    color: #ffffff;
+    font-size: 21px;
+}
+
+/* CONTENEDOR */
+
+.reset-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 45px 20px;
+}
+
+.reset-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 42px;
+    background: #ffffff;
+    border: 1px solid #eae8e3;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.reset-icon {
+    width: 65px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 22px;
+    border-radius: 18px;
+    background: #fff3e4;
+    font-size: 29px;
+}
+
+.reset-etiqueta {
+    display: block;
+    margin-bottom: 12px;
+    color: #c47720;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.reset-card h1 {
+    margin-bottom: 12px;
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.reset-descripcion {
+    margin-bottom: 30px;
+    color: #777777;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* FORMULARIO */
+
+#reset-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 9px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form-group input {
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid #dedbd5;
+    border-radius: 9px;
+    outline: none;
+    background: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #c47720;
+    box-shadow: 0 0 0 3px rgba(196, 119, 32, 0.12);
+}
+
+.password-help {
+    margin-top: -7px;
+    margin-bottom: 20px;
+    color: #858585;
+    font-size: 11px;
+}
+
+/* MENSAJES */
+
+.reset-mensaje {
+    display: none;
+    margin-bottom: 18px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.reset-mensaje.error {
+    display: block;
+    color: #a52b2b;
+    background: #fff0f0;
+    border: 1px solid #f2cccc;
+}
+
+.reset-mensaje.exito {
+    display: block;
+    color: #237447;
+    background: #edfff3;
+    border: 1px solid #c8ebd3;
+}
+
+/* BOTÓN */
+
+#btn-restablecer {
+    width: 100%;
+    height: 49px;
+    border: none;
+    border-radius: 9px;
+    background: #c47720;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+#btn-restablecer:hover {
+    background: #a96116;
+    transform: translateY(-1px);
+}
+
+#btn-restablecer:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.volver-inicio {
+    display: inline-block;
+    margin-top: 25px;
+    color: #777777;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.volver-inicio:hover {
+    color: #c47720;
+}
+
+/* FOOTER */
+
+.footer {
+    padding: 22px;
+    border-top: 1px solid #eae8e3;
+    color: #858585;
+    text-align: center;
+    font-size: 11px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 500px) {
+    .header {
+        padding: 18px 6%;
+    }
+
+    .reset-card {
+        padding: 30px 22px;
+    }
+
+    .reset-card h1 {
+        font-size: 22px;
+    }
+}

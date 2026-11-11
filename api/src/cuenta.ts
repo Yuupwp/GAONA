@@ -2,6 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "./lib/prisma";
+import jwt from "jsonwebtoken";
+import { createHash } from "node:crypto";
 
 // /auth/login  -> inicio de sesión
 // /cuenta/:id  -> datos personales y contraseña del usuario que inició sesión
@@ -41,6 +43,13 @@ const HASH_FALSO =
   "$2b$12$2BF4YfU1J5X8zZaUBvlPre4n8smeHXzpfSEFI4B8DKXvTLudG218m";
 
 const COSTO_HASH = 12; // el mismo que usa el módulo de Empleados
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("Falta configurar JWT_SECRET en el archivo .env");
+}
+
+const DURACION_TOKEN = "8h";
 
 const PERFIL = {
   id: true,
@@ -155,7 +164,24 @@ authRouter.post("/login", async (req, res) => {
 
     const { passwordHash: _omitido, ...perfil } = encontrado;
 
-    res.json({ ...perfil, permisos: permisosDe(perfil.rol.nombre) });
+    const token = jwt.sign(
+      {
+        id: perfil.id,
+        rol: perfil.rol.nombre,
+      },
+      JWT_SECRET,
+      {
+        expiresIn: DURACION_TOKEN,
+      }
+    );
+
+    res.json({
+      usuario: {
+        ...perfil,
+        permisos: permisosDe(perfil.rol.nombre),
+      },
+      token,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "No se pudo iniciar sesión." });
@@ -353,5 +379,116 @@ cuentaRouter.patch("/:id/contrasena", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "No se pudo cambiar la contraseña." });
+  }
+});
+
+
+// ---------------------------------------------------------------------
+// POST /auth/restablecer-contrasena
+// ---------------------------------------------------------------------
+
+const restablecerContrasenaSchema = z.object({
+  token: z.string().length(64),
+  contrasena: z.string().min(8).max(72),
+  confirmarContrasena: z.string().min(8).max(72),
+}).refine(
+  (datos) => datos.contrasena === datos.confirmarContrasena,
+  {
+    message: "Las contraseñas no coinciden.",
+    path: ["confirmarContrasena"],
+  }
+);
+
+authRouter.post("/restablecer-contrasena", async (req, res) => {
+  const resultado = restablecerContrasenaSchema.safeParse(req.body);
+
+  if (!resultado.success) {
+    res.status(400).json({
+      error: resultado.error.issues[0]?.message ?? "Los datos no son válidos.",
+    });
+    return;
+  }
+
+  try {
+    const { token, contrasena } = resultado.data;
+
+    // Obtener el hash del token recibido
+    const tokenHash = createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    // Preparar la nueva contraseña
+    const passwordHash = await bcrypt.hash(contrasena, 12);
+
+    // Comprobar y consumir el token dentro de una transacción
+    const actualizado = await prisma.$transaction(async (tx) => {
+      const registro = await tx.tokenRestablecimiento.findFirst({
+        where: {
+          tokenHash,
+          utilizadoEn: null,
+          expiraEn: { gt: new Date() },
+        },
+        select: {
+          id: true,
+          idUsuario: true,
+        },
+      });
+
+      if (!registro) {
+        return false;
+      }
+
+      // Evitar que dos solicitudes utilicen el mismo token
+      const consumo = await tx.tokenRestablecimiento.updateMany({
+        where: {
+          id: registro.id,
+          utilizadoEn: null,
+          expiraEn: { gt: new Date() },
+        },
+        data: {
+          utilizadoEn: new Date(),
+        },
+      });
+
+      if (consumo.count !== 1) {
+        return false;
+      }
+
+      await tx.usuario.update({
+        where: { id: registro.idUsuario },
+        data: { passwordHash },
+      });
+
+      // Invalidar cualquier otro token pendiente del usuario
+      await tx.tokenRestablecimiento.updateMany({
+        where: {
+          idUsuario: registro.idUsuario,
+          utilizadoEn: null,
+        },
+        data: {
+          utilizadoEn: new Date(),
+        },
+      });
+
+      return true;
+    });
+
+    if (!actualizado) {
+      res.status(400).json({
+        error: "El enlace es inválido, ya fue utilizado o ha expirado.",
+      });
+      return;
+    }
+
+    res.json({
+      mensaje: "Tu contraseña se restableció correctamente.",
+    });
+
+  } catch (error) {
+    console.error("Error al restablecer contraseña:", error);
+
+    res.status(500).json({
+      error: "No se pudo restablecer la contraseña.",
+    });
   }
 });
