@@ -4,7 +4,7 @@
 // y cierre de sesión de quien inició sesión
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3000";
+    const API_URL = "http://localhost:3001";
 
     class ApiError extends Error {
         status: number;

@@ -3,7 +3,7 @@
 // Anticipos, pagos y saldos pendientes de cada pedido
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3000";
+    const API_URL = "http://localhost:3001";
 
     // Tipos de lo que responde la API
     type Filtro = "todos" | "saldo" | "sinAnticipo" | "liquidados";

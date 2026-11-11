@@ -69,7 +69,7 @@ let productos: Producto[] = []
 async function cargarCatalogo(): Promise<void> {
     try {
         const respuesta = await fetch(
-            "http://localhost:3000/productos"
+            "http://localhost:3001/productos"
         );
         if (!respuesta.ok) {
             throw new Error(
@@ -278,7 +278,7 @@ async function crearProducto(event: SubmitEvent): Promise<void> {
     }
 
     try {
-        const respuesta = await fetch("http://localhost:3000/productos", {
+        const respuesta = await fetch("http://localhost:3001/productos", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -410,7 +410,7 @@ async function ActualizarProducto(producto: Producto) {
     }
 
     try {
-        const respuesta = await fetch(`http://localhost:3000/productos/${producto.id}`,
+        const respuesta = await fetch(`http://localhost:3001/productos/${producto.id}`,
             {
                 method: "PATCH",
                 headers: {

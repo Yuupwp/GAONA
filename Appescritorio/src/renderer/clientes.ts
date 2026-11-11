@@ -2,7 +2,7 @@
 // Módulo de clientes (app de escritorio)
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3000";
+    const API_URL = "http://localhost:3001";
 
     // Tipos de lo que responde la API
     type Filtro = "todos" | "nueva" | "saldo" | "pedido";

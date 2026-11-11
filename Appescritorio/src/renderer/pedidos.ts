@@ -1,10 +1,11 @@
 // ========================================
 // Módulo de pedidos (app de escritorio)
-// DISEÑO CON DATOS DE EJEMPLO: aún no se conecta a la API.
-// Cuando existan las rutas, solo hay que cambiar
-// la constante PEDIDOS por una llamada a la API.
+// Lee los pedidos de la API (/pedidos) y guarda los cambios de estado.
+// Los pedidos se crean desde Cotizaciones ("Crear pedido").
 // ========================================
 (() => {
+    const API_URL = "http://localhost:3001";
+
     type Estado =
         | "EN_PROCESO"
         | "LISTO_PARA_INSTALAR"
@@ -27,6 +28,11 @@
         folioCotizacion: string;
     }
 
+    interface PedidoDetalle extends Pedido {
+        conceptos: { nombre: string; cantidad: number; subtotal: number }[];
+        historial: { estadoAnterior: Estado | null; estadoNuevo: Estado; fecha: string; usuario: string }[];
+    }
+
     // Mismos textos y colores que usa Finanzas
     const ESTADOS: Record<Estado, { texto: string; clase: string }> = {
         EN_PROCESO: { texto: "En proceso", clase: "cl-badge-gray" },
@@ -37,19 +43,13 @@
         CANCELADO: { texto: "Cancelado", clase: "cl-badge-red" },
     };
 
-    // ---------- DATOS DE EJEMPLO (borrar al conectar la API) ----------
-    const PEDIDOS: Pedido[] = [
-        { id: "p1", folio: "0001", cliente: "Roberto Garza Treviño", telefono: "81 5550 0101", estado: "EN_PROCESO", total: 18500, pagado: 9250, creadoEn: "2026-10-02", folioCotizacion: "0001" },
-        { id: "p2", folio: "0002", cliente: "María Fernanda López", telefono: "81 5550 0102", estado: "LISTO_PARA_INSTALAR", total: 42300, pagado: 21150, creadoEn: "2026-10-05", folioCotizacion: "0003" },
-        { id: "p3", folio: "0003", cliente: "Carlos Treviño Salinas", telefono: "81 5550 0103", estado: "ENTREGADO", total: 12800, pagado: 12800, creadoEn: "2026-10-08", folioCotizacion: "0004" },
-        { id: "p4", folio: "0004", cliente: "Ana Sofía Martínez", telefono: "81 5550 0104", estado: "EN_PROCESO", total: 27600, pagado: 0, creadoEn: "2026-10-12", folioCotizacion: "0006" },
-        { id: "p5", folio: "0005", cliente: "Jorge Ramírez Cantú", telefono: "81 5550 0105", estado: "FACTURADO", total: 9900, pagado: 9900, creadoEn: "2026-10-15", folioCotizacion: "0007" },
-        { id: "p6", folio: "0006", cliente: "Laura Elizondo", telefono: "81 5550 0106", estado: "CANCELADO", total: 15400, pagado: 0, creadoEn: "2026-10-18", folioCotizacion: "0008" },
-        { id: "p7", folio: "0007", cliente: "Héctor Villarreal", telefono: "81 5550 0107", estado: "LISTO_PARA_INSTALAR", total: 33200, pagado: 33200, creadoEn: "2026-10-21", folioCotizacion: "0010" },
-        { id: "p8", folio: "0008", cliente: "Patricia Guerra", telefono: "81 5550 0108", estado: "EN_PROCESO", total: 21750, pagado: 10875, creadoEn: "2026-10-25", folioCotizacion: "0011" },
-        { id: "p9", folio: "0009", cliente: "Eduardo Salazar", telefono: "81 5550 0109", estado: "ENTREGADO", total: 8600, pagado: 8600, creadoEn: "2026-10-28", folioCotizacion: "0012" },
-        { id: "p10", folio: "0010", cliente: "Daniela Cavazos", telefono: "81 5550 0110", estado: "EN_PROCESO", total: 19900, pagado: 5000, creadoEn: "2026-11-02", folioCotizacion: "0014" },
-    ];
+    // Un pedido cerrado o cancelado ya no cambia de estado
+    const FINALES: Estado[] = ["CERRADO", "CANCELADO"];
+
+    // Datos cargados de la API
+    let PEDIDOS: Pedido[] = [];
+    let cargando = false;
+    let ocupado = false; // evita doble clic mientras se guarda
 
     // Estado del módulo
     const estado = {
@@ -101,6 +101,16 @@
         });
     }
 
+    function fechaHora(valor: string): string {
+        return new Date(valor).toLocaleString("es-MX", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }
+
     function iniciales(nombreCompleto: string): string {
         const partes = nombreCompleto.trim().split(/\s+/);
         return ((partes[0]?.charAt(0) ?? "") + (partes[1]?.charAt(0) ?? "")).toUpperCase();
@@ -119,6 +129,34 @@
         }, 4500);
     }
 
+    // Llamadas a la API
+    async function api<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
+        let respuesta: Response;
+
+        try {
+            respuesta = await fetch(`${API_URL}${ruta}`, {
+                ...opciones,
+                headers: opciones.body ? { "Content-Type": "application/json" } : undefined,
+            });
+        } catch {
+            throw new Error(
+                "No se pudo conectar con la API. Revisa que esté encendida (npm run dev dentro de la carpeta api)."
+            );
+        }
+
+        const datos = await respuesta.json().catch(() => null);
+
+        if (!respuesta.ok) {
+            throw new Error(datos?.error ?? "Ocurrió un error inesperado.");
+        }
+
+        return datos as T;
+    }
+
+    function mensajeDe(error: unknown): string {
+        return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+    }
+
     // Resumen (tarjetas de arriba)
     function pintarResumen(): void {
         const contar = (e: Estado) => PEDIDOS.filter((p) => p.estado === e).length;
@@ -131,20 +169,27 @@
 
     // Lista
     function filtrar(): Pedido[] {
-        const texto = estado.busqueda.toLowerCase();
+        const texto = estado.busqueda.toLowerCase().replace(/^#/, "");
 
         return PEDIDOS.filter((p) => {
             const coincideEstado = estado.filtro === "todos" || p.estado === estado.filtro;
             const coincideTexto =
                 texto === "" ||
                 p.cliente.toLowerCase().includes(texto) ||
-                p.folio.includes(texto);
+                p.folio.toLowerCase().includes(texto);
 
             return coincideEstado && coincideTexto;
         });
     }
 
     function pintarLista(): void {
+        if (cargando && PEDIDOS.length === 0) {
+            filas.innerHTML = `<div class="cl-vacio">Cargando pedidos…</div>`;
+            contador.textContent = "";
+            paginacion.innerHTML = "";
+            return;
+        }
+
         const resultado = filtrar();
         const totalPaginas = Math.max(1, Math.ceil(resultado.length / estado.limite));
         estado.pagina = Math.min(estado.pagina, totalPaginas);
@@ -152,11 +197,10 @@
         if (resultado.length === 0) {
             const hayFiltros = estado.busqueda !== "" || estado.filtro !== "todos";
 
-            filas.innerHTML = `<div class="cl-vacio">${
-                hayFiltros
+            filas.innerHTML = `<div class="cl-vacio">${hayFiltros
                     ? "No se encontraron pedidos con esos criterios."
                     : "Aún no hay pedidos. Cuando una cotización sea aprobada y se convierta en pedido, aparecerá aquí."
-            }</div>`;
+                }</div>`;
             contador.textContent = "";
             paginacion.innerHTML = "";
             return;
@@ -213,35 +257,79 @@
             return;
         }
 
-        let botones = `<button class="ped-page" type="button" data-pagina="${estado.pagina - 1}" ${
-            estado.pagina <= 1 ? "disabled" : ""
-        } aria-label="Anterior">‹</button>`;
+        let botones = `<button class="ped-page" type="button" data-pagina="${estado.pagina - 1}" ${estado.pagina <= 1 ? "disabled" : ""
+            } aria-label="Anterior">‹</button>`;
 
         for (let n = 1; n <= totalPaginas; n++) {
-            botones += `<button class="ped-page${
-                n === estado.pagina ? " active" : ""
-            }" type="button" data-pagina="${n}">${n}</button>`;
+            botones += `<button class="ped-page${n === estado.pagina ? " active" : ""
+                }" type="button" data-pagina="${n}">${n}</button>`;
         }
 
-        botones += `<button class="ped-page" type="button" data-pagina="${estado.pagina + 1}" ${
-            estado.pagina >= totalPaginas ? "disabled" : ""
-        } aria-label="Siguiente">›</button>`;
+        botones += `<button class="ped-page" type="button" data-pagina="${estado.pagina + 1}" ${estado.pagina >= totalPaginas ? "disabled" : ""
+            } aria-label="Siguiente">›</button>`;
 
         paginacion.innerHTML = botones;
     }
 
+    async function recargar(): Promise<void> {
+        cargando = true;
+        pintarLista();
+
+        try {
+            const datos = await api<{ items: Pedido[] }>("/pedidos");
+            PEDIDOS = datos.items;
+        } catch (error) {
+            avisar(mensajeDe(error), true);
+        } finally {
+            cargando = false;
+        }
+
+        pintarResumen();
+        pintarLista();
+    }
+
     // Detalle de un pedido
-    function abrirDetalle(id: string): void {
-        const p = PEDIDOS.find((x) => x.id === id);
-        if (!p) return;
+    async function abrirDetalle(id: string): Promise<void> {
+        let p: PedidoDetalle;
+
+        try {
+            p = await api<PedidoDetalle>(`/pedidos/${encodeURIComponent(id)}`);
+        } catch (error) {
+            avisar(mensajeDe(error), true);
+            return;
+        }
 
         const info = ESTADOS[p.estado];
         const saldo = Math.max(0, p.total - p.pagado);
+        const esFinal = FINALES.includes(p.estado);
 
         const opciones = (Object.keys(ESTADOS) as Estado[])
             .map(
                 (e) =>
                     `<option value="${e}"${e === p.estado ? " selected" : ""}>${esc(ESTADOS[e].texto)}</option>`
+            )
+            .join("");
+
+        const conceptos = p.conceptos
+            .map(
+                (c) => `
+                <div class="cot-concepto">
+                    <div><strong>${esc(c.nombre)}</strong><span class="cot-sub">Cantidad: ${c.cantidad}</span></div>
+                    <strong>${dinero(c.subtotal)}</strong>
+                </div>`
+            )
+            .join("");
+
+        const historial = p.historial
+            .map(
+                (h) => `
+                <div class="cot-concepto">
+                    <div>
+                        <strong>${h.estadoAnterior ? `${esc(ESTADOS[h.estadoAnterior].texto)} → ` : "Pedido creado · "}${esc(ESTADOS[h.estadoNuevo].texto)}</strong>
+                        <span class="cot-sub">${esc(h.usuario)}</span>
+                    </div>
+                    <span class="cot-sub">${fechaHora(h.fecha)}</span>
+                </div>`
             )
             .join("");
 
@@ -266,40 +354,74 @@
                 <div><span>Fecha del pedido</span><strong>${fecha(p.creadoEn)}</strong></div>
             </div>
 
-            <div class="cl-field">
-                <label for="ped-f-estado">Cambiar estado</label>
-                <select id="ped-f-estado">${opciones}</select>
-            </div>
+            ${conceptos ? `<h4 class="cot-detalle-titulo">Conceptos (antes de IVA)</h4><div class="cot-conceptos">${conceptos}</div>` : ""}
+
+            ${historial ? `<h4 class="cot-detalle-titulo">Historial</h4><div class="cot-conceptos">${historial}</div>` : ""}
+
+            ${esFinal
+                ? `<p class="ped-subtitulo">Este pedido está ${p.estado === "CERRADO" ? "cerrado" : "cancelado"} y ya no cambia de estado.</p>`
+                : `<div class="cl-field">
+                        <label for="ped-f-estado">Cambiar estado</label>
+                        <select id="ped-f-estado">${opciones}</select>
+                    </div>`
+            }
 
             <div class="cl-modal-actions">
                 <button class="cl-btn cl-btn-outline" type="button" data-accion="cerrar">Cerrar</button>
-                <button class="cl-btn cl-btn-primary" type="button" data-accion="guardar-estado" data-id="${esc(p.id)}">Guardar estado</button>
+                ${esFinal
+                ? ""
+                : `<button class="cl-btn cl-btn-primary" type="button" data-accion="guardar-estado" data-id="${esc(p.id)}">Guardar estado</button>`
+            }
             </div>`;
 
         modalDetalle.classList.remove("hidden");
     }
 
-    function guardarEstado(id: string): void {
+    async function guardarEstado(id: string): Promise<void> {
         const p = PEDIDOS.find((x) => x.id === id);
         const selector = document.getElementById("ped-f-estado") as HTMLSelectElement | null;
-        if (!p || !selector) return;
+        if (!p || !selector || ocupado) return;
 
-        p.estado = selector.value as Estado;
+        const nuevo = selector.value as Estado;
 
-        modalDetalle.classList.add("hidden");
-        avisar(`Pedido #${p.folio} actualizado a "${ESTADOS[p.estado].texto}".`);
-        pintarResumen();
-        pintarLista();
+        if (nuevo === p.estado) {
+            avisar("El pedido ya está en ese estado.", true);
+            return;
+        }
+
+        if (
+            FINALES.includes(nuevo) &&
+            !window.confirm(
+                `Un pedido ${nuevo === "CERRADO" ? "cerrado" : "cancelado"} ya no se puede cambiar. ¿Continuar?`
+            )
+        ) {
+            return;
+        }
+
+        ocupado = true;
+
+        try {
+            await api(`/pedidos/${encodeURIComponent(id)}/estado`, {
+                method: "PATCH",
+                body: JSON.stringify({ estado: nuevo, idUsuario: window.gaonaSesion?.actual()?.id }),
+            });
+
+            modalDetalle.classList.add("hidden");
+            avisar(`Pedido #${p.folio} actualizado a "${ESTADOS[nuevo].texto}".`);
+        } catch (error) {
+            avisar(mensajeDe(error), true);
+        } finally {
+            ocupado = false;
+        }
+
+        await recargar();
     }
 
     // Eventos
-    // Al entrar a la sección Pedidos se pinta la pantalla
+    // Al entrar a la sección Pedidos se cargan los datos
     document
         .querySelector<HTMLButtonElement>('.menu-item[data-section="pedidos"]')
-        ?.addEventListener("click", () => {
-            pintarResumen();
-            pintarLista();
-        });
+        ?.addEventListener("click", () => void recargar());
 
     let temporizadorBusqueda: number | undefined;
 
@@ -335,7 +457,7 @@
         const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>("[data-accion]");
         if (!boton) return;
 
-        if (boton.dataset.accion === "detalle") abrirDetalle(boton.dataset.id ?? "");
+        if (boton.dataset.accion === "detalle") void abrirDetalle(boton.dataset.id ?? "");
     });
 
     modalDetalle.addEventListener("click", (evento) => {
@@ -351,7 +473,7 @@
         if (!boton) return;
 
         if (boton.dataset.accion === "cerrar") modalDetalle.classList.add("hidden");
-        if (boton.dataset.accion === "guardar-estado") guardarEstado(boton.dataset.id ?? "");
+        if (boton.dataset.accion === "guardar-estado") void guardarEstado(boton.dataset.id ?? "");
     });
 
     // Escape cierra el cuadro abierto

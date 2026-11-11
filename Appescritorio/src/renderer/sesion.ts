@@ -35,7 +35,7 @@ interface Window {
 }
 
 (() => {
-    const API_URL = "http://localhost:3000";
+    const API_URL = "http://localhost:3001";
 
     let usuarioActual: GaonaUsuario | null = null;
     let horaDeInicio: Date | null = null;

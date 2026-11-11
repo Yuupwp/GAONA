@@ -71,7 +71,7 @@ let empleados: Empleado[] = [];
 async function cargarEmpleados(): Promise<void> {
     try {
         const respuesta = await fetch(
-            "http://localhost:3000/empleados"
+            "http://localhost:3001/empleados"
         );
         if (!respuesta.ok) {
             throw new Error(
@@ -254,7 +254,7 @@ function dibujarEmpleados(): void {
 
             try {
                 const respuesta = await fetch(
-                    `http://localhost:3000/empleados/${encodeURIComponent(empleado.id)}/rol`,
+                    `http://localhost:3001/empleados/${encodeURIComponent(empleado.id)}/rol`,
                     {
                         method: "PATCH",
                         headers: {
@@ -425,7 +425,7 @@ async function crearEmpleado(event: SubmitEvent): Promise<void> {
     }
 
     try {
-        const respuesta = await fetch("http://localhost:3000/empleados", {
+        const respuesta = await fetch("http://localhost:3001/empleados", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -520,7 +520,7 @@ async function eliminarEmpleadoConfirmado(): Promise<void> {
 
     try {
         const respuesta = await fetch(
-            `http://localhost:3000/empleados/${encodeURIComponent(empleado.id)}/estado`,
+            `http://localhost:3001/empleados/${encodeURIComponent(empleado.id)}/estado`,
             {
                 method: "PATCH",
                 headers: {
