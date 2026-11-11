@@ -238,6 +238,8 @@ function dibujarEmpleados(): void {
             selectorRol.append(opcion);
         });
 
+
+
         selectorRol.addEventListener("change", async () => {
             const nuevoRol = selectorRol.value;
             const rolAnterior = empleado.rol;
