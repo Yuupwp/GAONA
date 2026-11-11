@@ -747,9 +747,6 @@
 
                 </section>
 
-
-
-
                 <section id="finanzas-section" class="empty-section finanzas-section hidden">
 
                     <div class="fin-head">
@@ -941,7 +938,6 @@
 
                 </section>
 
-
                 <section id="pedidos-section" class="empty-section ped-section hidden">
 
                     <div class="ped-head">
@@ -1021,8 +1017,6 @@
                     <div id="ped-toast" class="cl-toast hidden" role="status"></div>
 
                 </section>
-
-
 
                 <section id="agenda-section" class="empty-section hidden agenda-section">
 
@@ -1181,9 +1175,6 @@
                     <div id="ag-toast" class="cl-toast hidden" role="status"></div>
 
                 </section>
-
-
-
 
                 <section id="inventario-section" class="empty-section hidden agenda-section">
 
@@ -1415,7 +1406,7 @@
                             <div>
                                 <span class="empleados-etiqueta">CUENTA DE USUARIO</span>
                                 <h2 id="emp-modal-titulo">Nuevo empleado</h2>
-                                <p>Completa los datos para registrar una cuenta.</p>
+                                <p id="emp-modal-descricpion">Completa los datos para registrar una cuenta.</p>
                             </div>
 
                             <button type="button" id="emp-cerrar" class="emp-cerrar" aria-label="Cerrar">×</button>
@@ -1461,19 +1452,27 @@
                                 </select>
                             </div>
 
-                            <div class="emp-campo">
-                                <label for="emp-contrasena">Contraseña *</label>
-                                <input type="password" id="emp-contrasena" minlength="8"
-                                    placeholder="Mínimo 8 caracteres" autocomplete="new-password" required>
+                            <div id="emp-campos-contrasena">
+                                <div class="emp-campo">
+                                    <label for="emp-contrasena">Contraseña *</label>
+                                    <input type="password" id="emp-contrasena" minlength="8"
+                                        placeholder="Mínimo 8 caracteres" autocomplete="new-password" required>
+                                </div>
+
+                                <div class="emp-campo">
+                                    <label for="emp-confirmar-contrasena">Confirmar contraseña *</label>
+                                    <input type="password" id="emp-confirmar-contrasena" minlength="8"
+                                        placeholder="Vuelve a escribir la contraseña" autocomplete="new-password"
+                                        required>
+                                </div>
+
+                                <p id="emp-error" class="emp-error" role="alert" hidden></p>
                             </div>
 
-                            <div class="emp-campo">
-                                <label for="emp-confirmar-contrasena">Confirmar contraseña *</label>
-                                <input type="password" id="emp-confirmar-contrasena" minlength="8"
-                                    placeholder="Vuelve a escribir la contraseña" autocomplete="new-password" required>
-                            </div>
-
-                            <p id="emp-error" class="emp-error" role="alert" hidden></p>
+                            <button type="button" id="emp-restablecer-contrasena" class="emp-btn-secundario"
+                                hidden=True>
+                                Enviar correo para restablecer contraseña
+                            </button>
 
                             <div class="emp-modal-acciones">
                                 <button type="button" id="emp-cancelar" class="emp-btn-secundario">

@@ -12,7 +12,9 @@ empleadosRouter.get("/", async (_req, res) => {
                 id: true,
                 nombre: true,
                 apellido: true,
+                usuario: true,
                 correo: true,
+                telefono: true,
                 activo: true,
                 rol: {
                     select: {
@@ -144,6 +146,141 @@ empleadosRouter.post("/", async (req, res) => {
         });
     }
 });
+
+
+empleadosRouter.patch("/:id", async (req, res) => {
+    try {
+        const actualizarEmpleadosSchema = z.object({
+            nombre: z.string().trim().min(1).max(100).optional(),
+            apellido: z.string().trim().min(1).max(100).optional(),
+            usuario: z.string().trim().min(3).max(80).optional(),
+            correo: z.string().trim().email().max(150).optional(),
+            telefono: z.string().trim().max(20).nullable().optional(),
+            idRol: z.string().uuid().optional(),
+        });
+
+        const { id } = req.params;
+
+        // Validar los datos recibidos
+        const resultado = actualizarEmpleadosSchema.safeParse(req.body);
+
+        if (!resultado.success) {
+            return res.status(400).json({
+                error: "Los datos del empleado no son válidos.",
+                detalles: resultado.error.issues
+            });
+        }
+
+        // Comprobar que se envíe al menos un campo
+        if (Object.keys(resultado.data).length === 0) {
+            return res.status(400).json({
+                error: "Debes proporcionar al menos un campo para actualizar."
+            });
+        }
+
+        // Buscar al empleado
+        const empleadoExistente = await prisma.usuario.findUnique({
+            where: { id }
+        });
+
+        if (!empleadoExistente) {
+            return res.status(404).json({
+                error: "El empleado no existe."
+            });
+        }
+
+        // Comprobar que el usuario no esté ocupado por otra cuenta
+        const { usuario, correo, idRol } = resultado.data;
+
+        if (usuario !== undefined) {
+            const usuarioExistente = await prisma.usuario.findFirst({
+                where: {
+                    usuario,
+                    NOT: { id }
+                }
+            });
+
+            if (usuarioExistente) {
+                return res.status(409).json({
+                    error: "El nombre de usuario ya está registrado."
+                });
+            }
+        }
+
+        // Comprobar que el correo no esté ocupado por otra cuenta
+        if (correo !== undefined) {
+            const correoExistente = await prisma.usuario.findFirst({
+                where: {
+                    correo,
+                    NOT: { id }
+                }
+            });
+
+            if (correoExistente) {
+                return res.status(409).json({
+                    error: "El correo ya está registrado."
+                });
+            }
+        }
+
+        // Validar que el rol exista
+        if (idRol !== undefined) {
+            const rolExistente = await prisma.rol.findUnique({
+                where: { id: idRol }
+            });
+
+            if (!rolExistente) {
+                return res.status(400).json({
+                    error: "El rol seleccionado no existe."
+                });
+            }
+        }
+
+        // Actualizar empleado
+        const empleadoActualizado = await prisma.usuario.update({
+            where: { id },
+            data: {
+                ...(resultado.data.nombre !== undefined && {
+                    nombre: resultado.data.nombre
+                }),
+
+                ...(resultado.data.apellido !== undefined && {
+                    apellido: resultado.data.apellido
+                }),
+
+                ...(usuario !== undefined && { usuario }),
+
+                ...(correo !== undefined && { correo }),
+
+                ...(resultado.data.telefono !== undefined && {
+                    telefono: resultado.data.telefono
+                }),
+
+                ...(idRol !== undefined && {
+                    rol: {
+                        connect: { id: idRol }
+                    }
+                })
+            },
+            include: {
+                rol: true
+            }
+        });
+
+        return res.status(200).json({
+            mensaje: "Usuario actualizado correctamente.",
+            usuario: empleadoActualizado
+        });
+
+    } catch (error) {
+        console.error("Error al actualizar el usuario:", error);
+
+        return res.status(500).json({
+            error: "No se pudo actualizar el usuario."
+        });
+    }
+});
+
 
 empleadosRouter.patch("/:id/rol", async (req, res) => {
     try {

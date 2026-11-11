@@ -1,4 +1,3 @@
-
 "use strict";
 
 import { electron } from "process";
@@ -9,6 +8,7 @@ interface EmpleadoAPI {
     apellido: string;
     usuario: string;
     correo: string;
+    telefono: string | null;
     activo: boolean;
     rol: {
         id: string;
@@ -19,7 +19,10 @@ interface EmpleadoAPI {
 interface Empleado {
     id: string;
     nombre: string;
+    apellido: string;
+    usuario: string;
     correo: string;
+    telefono: string;
     rol: string;
     activo: boolean;
 }
@@ -56,6 +59,12 @@ const btnCancelarEmp = document.getElementById("emp-cancelar");
 const btnCancelarEliminar = document.getElementById("emp-eliminar-cancelar");
 const empConfirmarTitulo = document.getElementById("emp-confirmar-titulo");
 
+const modalTitulo = document.getElementById("emp-modal-titulo");
+const modalDescripcion = document.getElementById("emp-modal-descricpion");
+const empCamposContrasena = document.getElementById("emp-campos-contrasena");
+const btnRestablecerContrasena = document.getElementById("emp-restablecer-contrasena");
+const btnGuardarEmpleado = document.getElementById("emp-guardar");
+
 const rolesEmpleados = [
     "Administrador",
     "Empleado",
@@ -66,6 +75,7 @@ const idsRoles: Record<string, string> = {
     "EMPLEADO": "60d79c65-a6b1-459f-9d51-ad8fe161eeaf"
 }
 
+let empleadoEnEdicionId: string | null = null;
 let empleados: Empleado[] = [];
 
 async function cargarEmpleados(): Promise<void> {
@@ -81,15 +91,20 @@ async function cargarEmpleados(): Promise<void> {
 
         const datos: EmpleadoAPI[] = await respuesta.json();
 
+
         empleados = datos.map((empleado) => ({
             id: empleado.id,
-            nombre: `${empleado.nombre} ${empleado.apellido}`.trim(),
+            nombre: empleado.nombre,
+            apellido: empleado.apellido,
+            usuario: empleado.usuario,
             correo: empleado.correo,
+            telefono: empleado.telefono || "",
             rol: empleado.rol.nombre === "ADMINISTRADOR"
                 ? "Administrador"
                 : "Empleado",
             activo: empleado.activo
         }));
+
 
         dibujarEmpleados();
 
@@ -303,8 +318,38 @@ function dibujarEmpleados(): void {
         celdaRol.append(selectorRol);
 
         // Acción para eliminar
+
+        // Acciones del empleado
         const celdaAcciones = document.createElement("td");
+
+        // Botón editar
+        const btnEditar = document.createElement("button");
+        btnEditar.type = "button";
+        btnEditar.className = "emp-accion-editar";
+        btnEditar.textContent = "Editar";
+
+        btnEditar.addEventListener("click", () => {
+            abrirModalEdicion(empleado);
+        });
+
+        // Botón activar/desactivar
         const btnEstado = document.createElement("button");
+        btnEstado.type = "button";
+        btnEstado.className = empleado.activo
+            ? "emp-accion-eliminar"
+            : "emp-accion-activar";
+
+        btnEstado.textContent = empleado.activo
+            ? "Desactivar"
+            : "Activar";
+
+        btnEstado.addEventListener("click", () => {
+            solicitarCambioEstado(empleado);
+        });
+
+        // Agregar ambos botones
+        celdaAcciones.append(btnEditar, btnEstado);
+
         btnEstado.type = "button";
         btnEstado.className = empleado.activo
             ? "emp-accion-eliminar"
@@ -334,6 +379,7 @@ function dibujarEmpleados(): void {
 }
 
 function abrirModalEmpleado(): void {
+    empleadoEnEdicionId = null;
     if (!empModal || !empForm || !empError) return;
 
     empForm.reset();
@@ -341,6 +387,34 @@ function abrirModalEmpleado(): void {
     empError.textContent = "";
     empModal.hidden = false;
     empNombre?.focus();
+
+    if (modalTitulo) {
+        modalTitulo.textContent = "Nuevo Empleado"
+    }
+
+    if (modalDescripcion) {
+        modalDescripcion.textContent = "Completa los datos para registrar una cuenta."
+    }
+
+    if (empCamposContrasena) {
+        empCamposContrasena.hidden = false;
+    }
+
+    if (btnRestablecerContrasena) {
+        btnRestablecerContrasena.hidden = true;
+    }
+
+    if (btnGuardarEmpleado) {
+        btnGuardarEmpleado.textContent = "Crear Cuenta"
+    }
+
+    if (empContrasena) {
+        empContrasena.required = true;
+    }
+
+    if (empConfirmarContrasena) {
+        empConfirmarContrasena.required = true;
+    }
 }
 
 function cerrarModalEmpleado(): void {
@@ -350,6 +424,8 @@ function cerrarModalEmpleado(): void {
     empForm.reset();
     empError.hidden = true;
     empError.textContent = "";
+
+    empleadoEnEdicionId = null;
 }
 
 function mostrarErrorFormulario(texto: string): void {
@@ -558,13 +634,149 @@ async function eliminarEmpleadoConfirmado(): Promise<void> {
     }
 }
 
+function abrirModalEdicion(empleado: Empleado): void {
+    abrirModalEmpleado();
+
+    empleadoEnEdicionId = empleado.id;
+
+    if (modalTitulo) {
+        modalTitulo.textContent = "Editar Empleado"
+    }
+
+    if (modalDescripcion) {
+        modalDescripcion.textContent = "Modifica la información del Empleado."
+    }
+
+    if (btnGuardarEmpleado) {
+        btnGuardarEmpleado.textContent = "Editar Cuenta"
+    }
+
+    if (empNombre) empNombre.value = empleado.nombre;
+    if (empApellido) empApellido.value = empleado.apellido;
+    if (empUsuario) empUsuario.value = empleado.usuario;
+    if (empCorreo) empCorreo.value = empleado.correo;
+    if (empTelefono) empTelefono.value = empleado.telefono;
+
+    if (empRol) {
+        empRol.value = empleado.rol === "Administrador"
+            ? "ADMINISTRADOR"
+            : "EMPLEADO";
+    }
+
+    if (empCamposContrasena) {
+        empCamposContrasena.hidden = true;
+    }
+
+    if (btnRestablecerContrasena) {
+        btnRestablecerContrasena.hidden = false;
+    }
+
+    if (empContrasena) {
+        empContrasena.required = false;
+    }
+
+    if (empConfirmarContrasena) {
+        empConfirmarContrasena.required = false;
+    }
+}
+
+async function ActualizarEmpleado(empleado: Empleado) {
+    const nuevonombre = empNombre?.value.trim();
+    const nuevoapellido = empApellido?.value.trim();
+    const nuevousuario = empUsuario?.value.trim();
+    const nuevocorreo = empCorreo?.value.trim();
+    const nuevotelefono = empTelefono?.value.trim();
+    const nuevorol = empRol?.value;
+    const idRol = nuevorol ? idsRoles[nuevorol] : undefined;
+    const roloriginal = Object.entries(idsRoles).find(([id, nombre]) => nombre === empleado.rol)?.[0];
+
+    if (
+        nuevonombre === empleado.nombre &&
+        nuevoapellido === empleado.apellido &&
+        nuevousuario === empleado.usuario &&
+        nuevocorreo === empleado.correo &&
+        nuevotelefono === empleado.telefono &&
+        nuevorol === (empleado.rol === "Administrador"
+            ? "ADMINISTRADOR"
+            : "EMPLEADO"
+        )
+    ) {
+        mostrarErrorFormulario("No has modificado ningún dato del empleado.")
+        return;
+    }
+
+    if (
+        !nuevonombre ||
+        !nuevoapellido ||
+        !nuevousuario ||
+        !nuevocorreo ||
+        !nuevorol
+    ) {
+        mostrarErrorFormulario("Completa los campos obligatorios.")
+        return;
+    }
+    try {
+        const respuesta = await fetch(`http://localhost:3001/empleados/${empleado.id}`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    nombre: nuevonombre,
+                    apellido: nuevoapellido,
+                    usuario: nuevousuario,
+                    correo: nuevocorreo,
+                    telefono: nuevotelefono || null,
+                    idRol
+                })
+            });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(
+                resultado.mensaje ||
+                resultado.error ||
+                "No se pudo editar el empleado."
+            );
+        }
+        await cargarEmpleados();
+        cerrarModalEmpleado();
+
+        mostrarMensaje(`El empleado ${nuevonombre} se edito correctamente.`)
+    } catch (error) {
+        console.error("Error al editar el usuario: ", error);
+
+        mostrarErrorFormulario(
+            error instanceof Error
+                ? error.message
+                : "Ocurrió un error al editar el empleado."
+        );
+    }
+
+}
+
 // Eventos de la interfaz
 btnNuevoEmpleado?.addEventListener("click", abrirModalEmpleado);
 btnCerrarEmp?.addEventListener("click", cerrarModalEmpleado);
 btnCancelarEmp?.addEventListener("click", cerrarModalEmpleado);
 
 empBuscar?.addEventListener("input", dibujarEmpleados);
-empForm?.addEventListener("submit", crearEmpleado);
+empForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    if (empleadoEnEdicionId) {
+        const empleado = empleados.find(
+            (elemento) => elemento.id === empleadoEnEdicionId
+        );
+
+        if (!empleado) return;
+
+        void ActualizarEmpleado(empleado);
+    } else {
+        void crearEmpleado(event);
+    }
+});
 
 btnCancelarEliminar?.addEventListener("click", cerrarConfirmacionEliminar);
 empEliminarConfirmar?.addEventListener("click", eliminarEmpleadoConfirmado);
