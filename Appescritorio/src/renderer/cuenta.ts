@@ -4,7 +4,7 @@
 // y cierre de sesión de quien inició sesión
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3001";
+    const API_URL = "http://127.0.0.1:3001";
 
     class ApiError extends Error {
         status: number;
@@ -122,7 +122,7 @@
         let respuesta: Response;
 
         try {
-            respuesta = await fetch(`${API_URL}${ruta}`, {
+            respuesta = await window.gaonaApiFetch(`${API_URL}${ruta}`, {
                 ...opciones,
                 headers: opciones.body
                     ? { "Content-Type": "application/json" }

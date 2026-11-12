@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { prisma } from "./lib/prisma";
 import { z } from "zod";
-import { autenticar } from "./middleware/autenticacion";
 
 export const inventarioRouter = Router();
 inventarioRouter.get("/", async (_req, res) => {
@@ -31,7 +30,7 @@ inventarioRouter.get("/", async (_req, res) => {
         res.json(inventarios);
 
     } catch (error) {
-        console.error("Error al consultar inventarios: ", error);
+        console.error("Error en operación de escritorio");
 
         res.status(500).json({
             error: "No se pudieron obtener los inventarios"
@@ -39,7 +38,7 @@ inventarioRouter.get("/", async (_req, res) => {
     }
 });
 
-inventarioRouter.patch("/:id/", autenticar, async (req, res) => {
+inventarioRouter.patch("/:id/", async (req, res) => {
     try {
         const actualizarInventarioSchema = z.object({
             existencia: z.number().int().min(0).optional(),
@@ -133,7 +132,7 @@ inventarioRouter.patch("/:id/", autenticar, async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error al actualizar el inventario: ", error);
+        console.error("Error en operación de escritorio");
 
         res.status(500).json({
             error: "No se pudo actualizar el inventario."

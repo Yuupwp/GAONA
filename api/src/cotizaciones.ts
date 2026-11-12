@@ -42,22 +42,14 @@ export class ErrorNegocio extends Error {
   }
 }
 
-// Usuario que hace la acción. Si la app no lo manda, se usa el primer
-// administrador activo (el mismo criterio que usa Finanzas).
+// La identidad siempre procede del JWT validado; no hay administrador de respaldo.
 export async function usuarioQueRegistra(
   tx: Prisma.TransactionClient,
-  idUsuario: string | undefined
+  idUsuario: string
 ): Promise<string> {
-  const usuario = idUsuario
-    ? await tx.usuario.findFirst({
-        where: { id: idUsuario, activo: true },
-        select: { id: true },
-      })
-    : await tx.usuario.findFirst({
-        where: { activo: true, rol: { nombre: "ADMINISTRADOR" } },
-        orderBy: { creadoEn: "asc" },
-        select: { id: true },
-      });
+  const usuario = await tx.usuario.findFirst({
+    where: { id: idUsuario, activo: true }, select: { id: true },
+  });
 
   if (!usuario) {
     throw new ErrorNegocio(
@@ -74,7 +66,7 @@ function responderError(res: import("express").Response, error: unknown, mensaje
     res.status(error.estado).json({ error: error.message });
     return;
   }
-  console.error(error);
+  console.error("Error en operación de escritorio");
   res.status(500).json({ error: mensaje });
 }
 
@@ -192,14 +184,12 @@ const nuevaSchema = z.object({
   conceptos: z.array(conceptoSchema).min(1, "Agrega al menos un concepto.").max(100),
   anticipoRequerido: z.number().min(0, "Escribe un anticipo válido.").nullable().optional(),
   vigenciaHasta: fechaTexto.nullable().optional(),
-  idUsuario: z.string().trim().min(1).optional(),
 });
 
 const estadoSchema = z.object({
   estado: z.enum(["ENVIADA", "APROBADA", "RECHAZADA"], {
     error: "Estado no válido.",
   }),
-  idUsuario: z.string().trim().min(1).optional(),
 });
 
 // A qué estados puede pasar cada uno
@@ -342,7 +332,7 @@ cotizacionesRouter.post("/", async (req, res) => {
       });
       if (!cliente) throw new ErrorNegocio(404, "El cliente no existe.");
 
-      const idUsuario = await usuarioQueRegistra(tx, datos.idUsuario);
+      const idUsuario = await usuarioQueRegistra(tx, req.usuario!.id);
 
       // Con solicitud: se cotiza la que pidió el cliente (por ejemplo, desde la página).
       // Sin solicitud: se crea una de escritorio para dejar el registro.
@@ -473,10 +463,7 @@ cotizacionesRouter.patch("/:id/estado", async (req, res) => {
 // ---------------------------------------------------------------------
 
 cotizacionesRouter.post("/:id/pedido", async (req, res) => {
-  const idUsuario =
-    typeof req.body?.idUsuario === "string" && req.body.idUsuario.trim() !== ""
-      ? req.body.idUsuario.trim()
-      : undefined;
+  const idUsuario = req.usuario!.id;
 
   try {
     const pedido = await prisma.$transaction(async (tx) => {
@@ -599,7 +586,6 @@ const ESPERA_ENTRE_ENVIOS = 60 * 1000;
 
 const envioSchema = z.object({
   correo: correoValido,
-  idUsuario: z.string().trim().min(1).optional(),
 });
 
 // POST /cotizaciones/:id/enviar  ->  manda el PDF por correo al cliente.
@@ -659,7 +645,7 @@ cotizacionesRouter.post("/:id/enviar", async (req, res) => {
     try {
       await enviarCotizacion(encontrada.datos, destinatario, pdf, process.env, opcionesCorreo.fabrica);
     } catch (error) {
-      console.error("No se pudo enviar la cotización por correo:", (error as Error)?.message);
+      console.error("Error en operación de escritorio");
       res.status(502).json({
         error: "El servidor de correo no aceptó el mensaje. Revisa el correo del cliente e inténtalo de nuevo.",
       });

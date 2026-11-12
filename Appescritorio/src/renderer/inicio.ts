@@ -2,7 +2,7 @@
 // Pantalla de Inicio (app de escritorio)
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3001";
+    const API_URL = "http://127.0.0.1:3001";
 
     type EstadoPedido = "EN_PROCESO" | "LISTO_PARA_INSTALAR";
     type TipoCita = "MEDICION" | "ENTREGA" | "INSTALACION";
@@ -118,9 +118,16 @@
             .join("");
     }
 
+    function limpiar(): void {
+        for (const elemento of [statSolicitudes, statCitas, statPedidos, statCobrado]) elemento!.textContent = "—";
+        listaPedidos!.replaceChildren();
+        listaCitas!.replaceChildren();
+    }
+
     async function recargar(): Promise<void> {
+        if (!window.gaonaSesion.puede("inicio")) { limpiar(); return; }
         try {
-            const respuesta = await fetch(`${API_URL}/inicio/resumen`);
+            const respuesta = await window.gaonaApiFetch(`${API_URL}/inicio/resumen`);
             const datos = await respuesta.json().catch(() => null);
 
             if (!respuesta.ok) {
@@ -162,5 +169,8 @@
         }).observe(pantallaPrincipal, { attributes: true, attributeFilter: ["class"] });
     }
 
+    document.addEventListener("gaona:sesion", () => {
+        if (!window.gaonaSesion.puede("inicio")) limpiar();
+    });
     void recargar();
 })();

@@ -35,7 +35,7 @@ productosRouter.get("/", async (_req, res) => {
         });
         res.json(productos);
     } catch (error) {
-        console.error("Error al consultar producto: ", error);
+        console.error("Error en operación de escritorio");
         res.status(500).json({
             error: "No se pudieron obtener los productos",
         });
@@ -135,7 +135,7 @@ productosRouter.post("/", async (req, res) => {
             producto,
         });
     } catch (error) {
-        console.error("Error al crear el producto: ", error);
+        console.error("Error en operación de escritorio");
 
         res.status(500).json({
             error: "No se pudo crear el producto."
@@ -233,7 +233,7 @@ productosRouter.patch("/:id/", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error al actualizar el producto: ", error);
+        console.error("Error en operación de escritorio");
 
         res.status(500).json({
             error: "No se pudo actualizar el producto."

@@ -104,7 +104,7 @@ inicioRouter.get("/resumen", async (_req, res) => {
       }),
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo cargar el resumen de Inicio." });
   }
 });

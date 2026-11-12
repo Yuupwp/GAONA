@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { fileURLToPath } from "url";
 import path from "path";
+import { crearVisorPdf } from "./visor-pdf.js";
+
+const visorPdf = crearVisorPdf(url => shell.openPath(url));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,10 +23,7 @@ function createWindow() {
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        // El PDF de una cotización se abre en el navegador (ahí se imprime o se guarda)
-        const esPdfCotizacion = /^http:\/\/localhost:3001\/cotizaciones\/[\w-]+\/pdf$/.test(url);
-
-        if (url.startsWith("https://wa.me/") || esPdfCotizacion) {
+        if (url.startsWith("https://wa.me/")) {
             shell.openExternal(url);
         }
         return { action: "deny" };
@@ -31,15 +31,17 @@ function createWindow() {
     mainWindow.loadFile(
         path.join(__dirname, "../src/renderer/index.html")
     );
-    mainWindow.webContents.openDevTools({ mode: "detach" });
-
-    mainWindow.webContents.on("console-message", (_event, _level, message) => {
-        console.log("CONSOLA DE GAONA:", message);
-    });
 }
 
 app.whenReady().then(() => {
     createWindow();
+
+    ipcMain.handle("abrir-pdf", async (event, datos: unknown) => {
+        if (event.sender !== mainWindow.webContents || event.senderFrame !== mainWindow.webContents.mainFrame) {
+            throw new Error("Origen no permitido");
+        }
+        await visorPdf.abrir(datos);
+    });
 
     ipcMain.on("maximize-window", () => {
         mainWindow.maximize();
@@ -57,3 +59,4 @@ app.on("window-all-closed", () => {
         app.quit();
     }
 });
+app.on("will-quit", () => visorPdf.limpiar());

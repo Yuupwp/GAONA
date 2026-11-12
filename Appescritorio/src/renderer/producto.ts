@@ -147,8 +147,8 @@ let productos: Producto[] = []
 //Cargar productos
 async function cargarCatalogo(): Promise<void> {
     try {
-        const respuesta = await fetch(
-            "http://localhost:3001/productos"
+        const respuesta = await window.gaonaApiFetch(
+            "http://127.0.0.1:3001/productos"
         );
         if (!respuesta.ok) {
             throw new Error(
@@ -356,7 +356,7 @@ async function crearProducto(event: SubmitEvent): Promise<void> {
     }
 
     try {
-        const respuesta = await fetch("http://localhost:3001/productos", {
+        const respuesta = await window.gaonaApiFetch("http://127.0.0.1:3001/productos", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -508,8 +508,8 @@ async function ActualizarProducto(producto: Producto): Promise<void> {
     }
 
     try {
-        const respuesta = await fetch(
-            `http://localhost:3001/productos/${producto.id}`,
+        const respuesta = await window.gaonaApiFetch(
+            `http://127.0.0.1:3001/productos/${producto.id}`,
             {
                 method: "PATCH",
                 headers: {
@@ -640,8 +640,8 @@ function limpiarErrorFormulario(): void {
 let inventarios: Inventario[] = []
 async function cargarInventario(): Promise<void> {
     try {
-        const respuesta = await fetch(
-            "http://localhost:3001/inventario"
+        const respuesta = await window.gaonaApiFetch(
+            "http://127.0.0.1:3001/inventario"
         );
         if (!respuesta.ok) {
             throw new Error(
@@ -873,13 +873,12 @@ async function ajustarExistencias(): Promise<void> {
             btnGuardarExistencia.textContent = "Guardando...";
         }
 
-        const respuesta = await fetch(
-            `http://localhost:3001/inventario/${inventarioSeleccionado.id}`,
+        const respuesta = await window.gaonaApiFetch(
+            `http://127.0.0.1:3001/inventario/${inventarioSeleccionado.id}`,
             {
                 method: "PATCH",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     existencia: nuevaExistencia,
@@ -932,8 +931,8 @@ async function ajustarExistencias(): Promise<void> {
 let movimientos: Movimiento[] = []
 async function cargarMovimientos(): Promise<void> {
     try {
-        const respuesta = await fetch(
-            "http://localhost:3001/movimientos_inventario"
+        const respuesta = await window.gaonaApiFetch(
+            "http://127.0.0.1:3001/movimientos_inventario"
         );
         if (!respuesta.ok) {
             throw new Error(
@@ -953,10 +952,6 @@ async function cargarMovimientos(): Promise<void> {
 
         dibujarMovimientos();
 
-        console.log(
-            "Movimientos cargados desde la API: ",
-            movimientos
-        );
     } catch (error) {
         console.error("Error al cargar los movimientos: ", error)
     }
@@ -1177,9 +1172,28 @@ modalExistencia?.addEventListener("click", (event) => {
 // Inicialización
 if (validarElementosProductos()) {
     cargarCategorias();
-    cargarCatalogo();
-    cargarInventario();
-    cargarMovimientos();
+    if (window.gaonaSesion.puede("inventario")) {
+        void cargarCatalogo();
+        void cargarInventario();
+        void cargarMovimientos();
+    }
 }
+
+// Cargar existencias y movimientos con la sesión ya disponible.
+document.addEventListener("gaona:sesion", () => {
+    productos = [];
+    inventarios = [];
+    movimientos = [];
+    dibujarProductos();
+    dibujarInventario();
+    dibujarMovimientos();
+    cerrarModalProducto();
+    cerrarModalExistencia();
+    if (window.gaonaSesion.puede("inventario")) {
+        void cargarCatalogo();
+        void cargarInventario();
+        void cargarMovimientos();
+    }
+});
 
 

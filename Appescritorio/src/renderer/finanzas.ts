@@ -3,7 +3,7 @@
 // Anticipos, pagos y saldos pendientes de cada pedido
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3001";
+    const API_URL = "http://127.0.0.1:3001";
 
     // Tipos de lo que responde la API
     type Filtro = "todos" | "saldo" | "sinAnticipo" | "liquidados";
@@ -245,7 +245,7 @@
         let respuesta: Response;
 
         try {
-            respuesta = await fetch(`${API_URL}${ruta}`, {
+            respuesta = await window.gaonaApiFetch(`${API_URL}${ruta}`, {
                 ...opciones,
                 headers: opciones.body
                     ? { "Content-Type": "application/json" }
@@ -681,7 +681,6 @@
                     referencia: campos.referencia.value.trim() || undefined,
                     fecha: campos.fecha.value,
                     // Quien inició sesión es quien registra el pago
-                    idUsuario: window.gaonaSesion.actual()?.id,
                 }),
             });
 

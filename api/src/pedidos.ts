@@ -21,7 +21,6 @@ const estadoSchema = z.object({
     ["EN_PROCESO", "LISTO_PARA_INSTALAR", "ENTREGADO", "FACTURADO", "CERRADO", "CANCELADO"],
     { error: "Estado no válido." }
   ),
-  idUsuario: z.string().trim().min(1).optional(),
 });
 
 // ---------------------------------------------------------------------
@@ -57,7 +56,7 @@ pedidosRouter.get("/", async (_req, res) => {
       })),
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudieron cargar los pedidos." });
   }
 });
@@ -123,7 +122,7 @@ pedidosRouter.get("/:id", async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo cargar el pedido." });
   }
 });
@@ -140,7 +139,7 @@ pedidosRouter.patch("/:id/estado", async (req, res) => {
     return;
   }
 
-  const { estado: nuevo, idUsuario } = resultado.data;
+  const { estado: nuevo } = resultado.data;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -158,7 +157,7 @@ pedidosRouter.patch("/:id/estado", async (req, res) => {
         );
       }
 
-      const usuario = await usuarioQueRegistra(tx, idUsuario);
+      const usuario = await usuarioQueRegistra(tx, req.usuario!.id);
 
       // Solo cambia si sigue en el estado que se leyó (evita que dos equipos choquen)
       const cambio = await tx.pedido.updateMany({
@@ -185,7 +184,7 @@ pedidosRouter.patch("/:id/estado", async (req, res) => {
       res.status(error.estado).json({ error: error.message });
       return;
     }
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo cambiar el estado del pedido." });
   }
 });

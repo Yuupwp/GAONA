@@ -80,8 +80,8 @@ let empleados: Empleado[] = [];
 
 async function cargarEmpleados(): Promise<void> {
     try {
-        const respuesta = await fetch(
-            "http://localhost:3001/empleados"
+        const respuesta = await window.gaonaApiFetch(
+            "http://127.0.0.1:3001/empleados"
         );
         if (!respuesta.ok) {
             throw new Error(
@@ -108,10 +108,6 @@ async function cargarEmpleados(): Promise<void> {
 
         dibujarEmpleados();
 
-        console.log(
-            "Empleados cargados desde la API: ",
-            empleados
-        );
     } catch (error) {
         console.error(
             "Error al cargar los empleados: ",
@@ -268,8 +264,8 @@ function dibujarEmpleados(): void {
             selectorRol.disabled = true;
 
             try {
-                const respuesta = await fetch(
-                    `http://localhost:3001/empleados/${encodeURIComponent(empleado.id)}/rol`,
+                const respuesta = await window.gaonaApiFetch(
+                    `http://127.0.0.1:3001/empleados/${encodeURIComponent(empleado.id)}/rol`,
                     {
                         method: "PATCH",
                         headers: {
@@ -501,7 +497,7 @@ async function crearEmpleado(event: SubmitEvent): Promise<void> {
     }
 
     try {
-        const respuesta = await fetch("http://localhost:3001/empleados", {
+        const respuesta = await window.gaonaApiFetch("http://127.0.0.1:3001/empleados", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -528,7 +524,6 @@ async function crearEmpleado(event: SubmitEvent): Promise<void> {
         }
 
         await cargarEmpleados();
-        console.log("Empleados después de recargar:", empleados);
         cerrarModalEmpleado();
 
         mostrarMensaje(
@@ -595,8 +590,8 @@ async function eliminarEmpleadoConfirmado(): Promise<void> {
     const nuevoEstado = !empleado.activo;
 
     try {
-        const respuesta = await fetch(
-            `http://localhost:3001/empleados/${encodeURIComponent(empleado.id)}/estado`,
+        const respuesta = await window.gaonaApiFetch(
+            `http://127.0.0.1:3001/empleados/${encodeURIComponent(empleado.id)}/estado`,
             {
                 method: "PATCH",
                 headers: {
@@ -716,7 +711,7 @@ async function ActualizarEmpleado(empleado: Empleado) {
         return;
     }
     try {
-        const respuesta = await fetch(`http://localhost:3001/empleados/${empleado.id}`,
+        const respuesta = await window.gaonaApiFetch(`http://127.0.0.1:3001/empleados/${empleado.id}`,
             {
                 method: "PATCH",
                 headers: {
@@ -803,12 +798,11 @@ async function enviarRestablecimientoContrasena(): Promise<void> {
     btnRestablecerContrasena.textContent = "Enviando correo...";
 
     try {
-        const respuesta = await fetch(
-            `http://localhost:3001/empleados/${encodeURIComponent(empleado.id)}/restablecer-contrasena`,
+        const respuesta = await window.gaonaApiFetch(
+            `http://127.0.0.1:3001/empleados/${encodeURIComponent(empleado.id)}/restablecer-contrasena`,
             {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 }
             }
@@ -885,7 +879,9 @@ empConfirmarModal?.addEventListener("click", (event) => {
 
 // Inicialización
 if (validarEmpleados()) {
-    void cargarEmpleados();
-
-    console.log("Empleados: interfaz inicializada correctamente.");
+    if (window.gaonaSesion.puede("empleados")) void cargarEmpleados();
 }
+document.addEventListener("gaona:sesion", () => {
+    empleados = [];
+    if (window.gaonaSesion.puede("empleados")) void cargarEmpleados();
+});

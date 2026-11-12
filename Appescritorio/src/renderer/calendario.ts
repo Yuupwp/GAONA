@@ -4,7 +4,7 @@
 // visitas para medir, instalaciones y entregas.
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3001";
+    const API_URL = "http://127.0.0.1:3001";
 
     type TipoCita = "MEDICION" | "INSTALACION" | "ENTREGA";
     type EstadoCita = "PROGRAMADA" | "REPROGRAMADA" | "REALIZADA" | "CANCELADA";
@@ -119,7 +119,7 @@
         let respuesta: Response;
 
         try {
-            respuesta = await fetch(`${API_URL}${ruta}`, {
+            respuesta = await window.gaonaApiFetch(`${API_URL}${ruta}`, {
                 ...opciones,
                 headers: opciones.body ? { "Content-Type": "application/json" } : undefined,
             });

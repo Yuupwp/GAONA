@@ -72,8 +72,6 @@ const pagoSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha no es válida.")
     .optional(),
-  // Opcional: cuando exista el login real, la app mandará el usuario que registra
-  idUsuario: z.string().trim().min(1).optional(),
 });
 
 // ---------------------------------------------------------------------
@@ -116,7 +114,7 @@ finanzasRouter.get("/resumen", async (_req, res) => {
       pedidosConSaldo: conSaldo,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo cargar el resumen financiero." });
   }
 });
@@ -200,7 +198,7 @@ finanzasRouter.get("/cuentas", async (req, res) => {
       totalPaginas,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudieron cargar las cuentas por cobrar." });
   }
 });
@@ -238,7 +236,7 @@ finanzasRouter.get("/pedidos-pendientes", async (_req, res) => {
 
     res.json({ items });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudieron cargar los pedidos." });
   }
 });
@@ -306,7 +304,7 @@ finanzasRouter.get("/pagos", async (req, res) => {
       totalPaginas,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo cargar el historial de pagos." });
   }
 });
@@ -380,7 +378,7 @@ finanzasRouter.get("/pedidos/:id", async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo cargar el detalle del pedido." });
   }
 });
@@ -462,18 +460,10 @@ finanzasRouter.post("/pagos", async (req, res) => {
         );
       }
 
-      // Usuario que registra el pago. Mientras el login de la app sea simulado,
-      // se usa el primer administrador activo.
-      const usuario = datos.idUsuario
-        ? await tx.usuario.findFirst({
-            where: { id: datos.idUsuario, activo: true },
-            select: { id: true },
-          })
-        : await tx.usuario.findFirst({
-            where: { activo: true, rol: { nombre: "ADMINISTRADOR" } },
-            orderBy: { creadoEn: "asc" },
-            select: { id: true },
-          });
+      // La identidad del pago procede exclusivamente del JWT validado.
+      const usuario = await tx.usuario.findFirst({
+        where: { id: req.usuario!.id, activo: true }, select: { id: true },
+      });
 
       if (!usuario) {
         throw new ErrorNegocio(
@@ -504,7 +494,7 @@ finanzasRouter.post("/pagos", async (req, res) => {
       return;
     }
 
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo registrar el pago." });
   }
 });

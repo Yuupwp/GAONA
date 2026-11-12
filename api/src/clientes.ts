@@ -213,7 +213,7 @@ clientesRouter.get("/", async (req, res) => {
       resumen,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudieron obtener los clientes." });
   }
 });
@@ -353,7 +353,7 @@ clientesRouter.get("/:id", async (req, res) => {
       citas,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo obtener el cliente." });
   }
 });
@@ -386,7 +386,7 @@ clientesRouter.post("/", async (req, res) => {
 
     res.status(201).json(cliente);
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo guardar el cliente." });
   }
 });
@@ -425,7 +425,7 @@ clientesRouter.put("/:id", async (req, res) => {
       res.status(404).json({ error: "El cliente no existe." });
       return;
     }
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo actualizar el cliente." });
   }
 });
@@ -473,7 +473,7 @@ clientesRouter.delete("/:id", async (req, res) => {
 
     res.json({ ok: true });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de escritorio");
     res.status(500).json({ error: "No se pudo eliminar el cliente." });
   }
 });

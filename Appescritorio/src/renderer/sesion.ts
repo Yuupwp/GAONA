@@ -33,14 +33,33 @@ interface GaonaSesion {
 
 interface Window {
     gaonaSesion: GaonaSesion;
+    gaonaApiFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 (() => {
-    const API_URL = "http://localhost:3001";
+    const API_URL = "http://127.0.0.1:3001";
 
     let usuarioActual: GaonaUsuario | null = null;
     let tokenActual: string | null = null;
     let horaDeInicio: Date | null = null;
+
+    // Un único punto de salida: el token solo viaja al backend de escritorio.
+    window.gaonaApiFetch = async (input, init = {}) => {
+        const url = new URL(input instanceof Request ? input.url : String(input));
+        if (url.origin !== API_URL || url.username || url.password) {
+            throw new Error("Destino de API no permitido.");
+        }
+        const headers = new Headers(init.headers ?? (input instanceof Request ? input.headers : undefined));
+        headers.delete("Authorization");
+        if (tokenActual) headers.set("Authorization", `Bearer ${tokenActual}`);
+        const respuesta = await fetch(input, { ...init, headers, redirect: "error" });
+        if (respuesta.status === 401 && tokenActual) {
+            const datos = await respuesta.clone().json().catch(() => null);
+            // Una contraseña actual incorrecta también da 401, pero no invalida el JWT.
+            if (datos?.codigo === "SESION_INVALIDA") cerrar();
+        }
+        return respuesta;
+    };
 
     const NOMBRES_ROL: Record<string, string> = {
         ADMINISTRADOR: "Administrador",
@@ -115,7 +134,7 @@ interface Window {
         let respuesta: Response;
 
         try {
-            respuesta = await fetch(`${API_URL}/auth/login`, {
+            respuesta = await window.gaonaApiFetch(`${API_URL}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ usuario, contrasena }),

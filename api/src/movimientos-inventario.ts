@@ -36,7 +36,7 @@ movimientosInRouter.get("/", async (_req, res) => {
         });
         res.json(movimientosIn);
     } catch (error) {
-        console.error("Error al consultar los movimientos del inventario: ", error);
+        console.error("Error en operación de escritorio");
         res.status(500).json({
             error: "No se pudieron obtener los movimientos"
         })
