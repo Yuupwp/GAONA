@@ -215,7 +215,7 @@
 
 
 
-                <section id="inicio-section" class="dashboard-section">
+                               <section id="inicio-section" class="dashboard-section">
 
                     <!-- Bienvenida -->
                     <div class="home-welcome">
@@ -230,38 +230,38 @@
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Clientes registrados</span>
-                                <div class="home-stat-icon">👥</div>
+                                <span>Solicitudes nuevas</span>
+                                <div class="home-stat-icon">📨</div>
                             </div>
-                            <h3>48</h3>
-                            <p>Clientes en el sistema</p>
+                            <h3 id="inicio-stat-solicitudes">0</h3>
+                            <p>De la página, por atender</p>
                         </div>
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Cotizaciones</span>
-                                <div class="home-stat-icon">📄</div>
+                                <span>Citas de hoy</span>
+                                <div class="home-stat-icon">📅</div>
                             </div>
-                            <h3>24</h3>
-                            <p>Cotizaciones registradas</p>
+                            <h3 id="inicio-stat-citas">0</h3>
+                            <p>Programadas para hoy</p>
                         </div>
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Pedidos activos</span>
+                                <span>Pedidos pendientes</span>
                                 <div class="home-stat-icon">📦</div>
                             </div>
-                            <h3>16</h3>
-                            <p>Pedidos en seguimiento</p>
+                            <h3 id="inicio-stat-pedidos">0</h3>
+                            <p>En proceso o listos para instalar</p>
                         </div>
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Ingresos registrados</span>
+                                <span>Cobrado del mes</span>
                                 <div class="home-stat-icon">💰</div>
                             </div>
-                            <h3>$85,400</h3>
-                            <p>Importe de referencia</p>
+                            <h3 id="inicio-stat-cobrado">$0.00</h3>
+                            <p>Pagos registrados este mes</p>
                         </div>
 
                     </div>
@@ -278,7 +278,7 @@
                                     <p>Pedidos que requieren atención.</p>
                                 </div>
 
-                                <button class="home-link-button">
+                                <button id="inicio-ver-pedidos" class="home-link-button">
                                     Ver todos →
                                 </button>
                             </div>
@@ -293,91 +293,30 @@
                                         <span>Estado</span>
                                     </div>
 
-                                    <div class="home-order-row">
-                                        <span class="home-order-number">#PED-0001</span>
-                                        <span>Cliente de ejemplo</span>
-                                        <span>05/11/2026</span>
-                                        <span>
-                                            <span class="home-status pending">
-                                                Pendiente
-                                            </span>
-                                        </span>
-                                    </div>
-
-                                    <div class="home-order-row">
-                                        <span class="home-order-number">#PED-0002</span>
-                                        <span>Cliente de ejemplo</span>
-                                        <span>04/11/2026</span>
-                                        <span>
-                                            <span class="home-status processing">
-                                                En proceso
-                                            </span>
-                                        </span>
-                                    </div>
-
-                                    <div class="home-order-row">
-                                        <span class="home-order-number">#PED-0003</span>
-                                        <span>Cliente de ejemplo</span>
-                                        <span>03/11/2026</span>
-                                        <span>
-                                            <span class="home-status pending">
-                                                Pendiente
-                                            </span>
-                                        </span>
-                                    </div>
+                                    <div id="inicio-pedidos-lista"></div>
 
                                 </div>
                             </div>
 
                         </div>
 
-                        <!-- Actividad reciente -->
+                        <!-- Citas de hoy -->
                         <div class="home-panel home-activity-panel">
 
                             <div class="home-panel-heading">
                                 <div>
-                                    <h3>Actividad reciente</h3>
-                                    <p>Últimos movimientos del sistema.</p>
+                                    <h3>Citas de hoy</h3>
+                                    <p>Mediciones, entregas e instalaciones.</p>
                                 </div>
                             </div>
 
-                            <div class="home-activity-list">
-
-                                <div class="home-activity-item">
-                                    <div class="activity-indicator quote-indicator"></div>
-                                    <div class="home-activity-info">
-                                        <strong>Nueva cotización</strong>
-                                        <p>Se registró una nueva cotización.</p>
-                                        <span>Hace 20 minutos</span>
-                                    </div>
-                                </div>
-
-                                <div class="home-activity-item">
-                                    <div class="activity-indicator order-indicator"></div>
-                                    <div class="home-activity-info">
-                                        <strong>Pedido actualizado</strong>
-                                        <p>Un pedido cambió a en proceso.</p>
-                                        <span>Hace 1 hora</span>
-                                    </div>
-                                </div>
-
-                                <div class="home-activity-item">
-                                    <div class="activity-indicator client-indicator"></div>
-                                    <div class="home-activity-info">
-                                        <strong>Nuevo cliente</strong>
-                                        <p>Se agregó un cliente al sistema.</p>
-                                        <span>Hace 3 horas</span>
-                                    </div>
-                                </div>
-
-                            </div>
+                            <div id="inicio-citas-lista" class="home-activity-list"></div>
 
                         </div>
 
                     </div>
 
                 </section>
-
 
 
                 <!-- SECCIONES TEMPORALES -->
@@ -1728,6 +1667,7 @@
 
     <script src="../../dist/renderer/sesion.js"></script>
     <script src="../../dist/renderer/renderer.js"></script>
+    <script src="../../dist/renderer/inicio.js"></script>
     <script src="../../dist/renderer/clientes.js"></script>
     <script src="../../dist/renderer/calendario.js"></script>
     <script type="module" src="../../dist/renderer/producto.js"></script>
