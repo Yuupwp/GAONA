@@ -537,6 +537,48 @@ function limpiarErrorFormulario(): void {
     productoError.hidden = true;
 }
 
+
+// =====================================
+// NAVEGACIÓN DE INVENTARIO
+// =====================================
+
+const inventarioTabs = document.querySelectorAll<HTMLButtonElement>(
+    ".inventario-tab"
+);
+
+const inventarioPanels = document.querySelectorAll<HTMLElement>(
+    ".inventario-panel"
+);
+
+inventarioTabs.forEach(tab => {
+
+    tab.addEventListener("click", () => {
+
+        const destino = tab.dataset.tab;
+
+        // Desactivar pestañas
+        inventarioTabs.forEach(t => t.classList.remove("activa"));
+
+        // Ocultar paneles
+        inventarioPanels.forEach(panel => {
+            panel.classList.remove("activa");
+        });
+
+        // Activar pestaña seleccionada
+        tab.classList.add("activa");
+
+        // Mostrar panel correspondiente
+        const panelDestino = document.getElementById(
+            `inventario-${destino}`
+        );
+
+        panelDestino?.classList.add("activa");
+
+    });
+
+});
+
+
 // Eventos
 buscarProducto?.addEventListener("input", dibujarProductos);
 btnAgregarProducto?.addEventListener("click", abrirModalProducto);

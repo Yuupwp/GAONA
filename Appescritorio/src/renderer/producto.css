@@ -525,3 +525,200 @@
         gap: 0;
     }
 }
+
+
+/* =====================================
+   NAVEGACIÓN DE INVENTARIO
+===================================== */
+
+.inventario-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #e8e5df;
+    margin-bottom: 25px;
+    overflow-x: auto;
+}
+
+.inventario-tab {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 13px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: #777;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s;
+}
+
+.inventario-tab:hover {
+    color: #c47720;
+    background: #faf8f4;
+}
+
+.inventario-tab.activa {
+    color: #c47720;
+    border-bottom-color: #c47720;
+}
+
+.inventario-tab span {
+    font-size: 17px;
+}
+
+/* =====================================
+   PANELES
+===================================== */
+
+.inventario-panel {
+    display: none;
+}
+
+.inventario-panel.activa {
+    display: block;
+}
+
+.inventario-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+}
+
+.inventario-panel-header h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    color: #252525;
+}
+
+.inventario-panel-header p {
+    margin: 0;
+    color: #858585;
+    font-size: 13px;
+}
+
+/* =====================================
+   RESUMEN DE EXISTENCIAS
+===================================== */
+
+.inventario-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 25px;
+}
+
+.inventario-resumen-card {
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #eeeae3;
+    border-radius: 12px;
+}
+
+.inventario-resumen-card span {
+    display: block;
+    color: #858585;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.inventario-resumen-card strong {
+    color: #292929;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+/* =====================================
+   TABLAS
+===================================== */
+
+.inventario-tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid #eeeae3;
+    border-radius: 12px;
+}
+
+.inventario-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+    text-align: left;
+}
+
+.inventario-tabla th {
+    padding: 15px 18px;
+    background: #faf9f6;
+    color: #777;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.inventario-tabla td {
+    padding: 16px 18px;
+    border-top: 1px solid #f0eee9;
+    color: #444;
+    font-size: 13px;
+}
+
+.inventario-tabla tbody tr:hover {
+    background: #fdfcf9;
+}
+
+/* =====================================
+   FILTROS
+===================================== */
+
+.inventario-filtros {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.inventario-filtros select,
+.inventario-filtros input[type="date"] {
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid #e5e1da;
+    border-radius: 8px;
+    background: #fff;
+    color: #555;
+    outline: none;
+}
+
+.inventario-filtros .productos-busqueda {
+    flex: 1;
+}
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 700px) {
+
+    .inventario-resumen {
+        grid-template-columns: 1fr;
+    }
+
+    .inventario-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .inventario-filtros {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .inventario-filtros > * {
+        width: 100%;
+    }
+}
