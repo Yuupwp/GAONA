@@ -1,0 +1,285 @@
+/*
+  GAONA · Refinamiento visual de la sección Clientes
+  Se carga después de clientes.css. Usa las variables de style.css.
+  Solo cambia apariencia: no toca clases, IDs ni estructura del HTML.
+*/
+
+/* ---------- Encabezado de la sección ---------- */
+
+.clientes-section h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+}
+
+.cl-head {
+    margin-bottom: 26px;
+}
+
+/* ---------- Botones: radio único, sin sombras ---------- */
+
+.cl-btn {
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.cl-btn-small {
+    font-size: 11px;
+}
+
+/* ---------- Aviso de solicitudes: barra lateral en vez de fondo tintado ---------- */
+
+.cl-banner {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--orange);
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+/* ---------- Resumen: una sola banda con divisores ---------- */
+
+.cl-stats {
+    gap: 0;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 22px;
+}
+
+.cl-stats .cl-stat {
+    padding: 20px 22px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+}
+
+.cl-stats .cl-stat + .cl-stat {
+    border-left: 1px solid var(--border);
+}
+
+.cl-stats .cl-stat span {
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.cl-stats .cl-stat strong {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Buscador y filtros: pestañas de texto, no pastillas ---------- */
+
+.cl-search {
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+.cl-chips {
+    gap: 4px;
+    padding: 0;
+}
+
+.cl-chip {
+    padding: 8px 12px;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray);
+}
+
+.cl-chip:hover {
+    border-color: transparent;
+    color: var(--black);
+}
+
+.cl-chip.active {
+    background: none;
+    border-color: transparent;
+    border-bottom-color: var(--orange);
+    color: var(--orange);
+    font-weight: 600;
+}
+
+/* ---------- Tabla: hairlines, sin sombra ni encabezado en mayúsculas ---------- */
+
+.cl-card {
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.cl-row {
+    padding: 14px 22px;
+    font-size: 12px;
+}
+
+.cl-row-head {
+    background: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.cl-row:not(.cl-row-head):hover {
+    background: #fcfbf9;
+}
+
+.cl-nombre {
+    font-weight: 600;
+}
+
+.cl-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--gray-light);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.cl-origen {
+    font-size: 11px;
+}
+
+.cl-saldo {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.cl-footer {
+    font-size: 12px;
+}
+
+.cl-page {
+    border-radius: 8px;
+}
+
+/* ---------- Badges: punto de color en vez de pastillas ---------- */
+
+.cl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.cl-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.cl-badge-gray {
+    background: none;
+    color: var(--gray);
+}
+
+.cl-badge-green {
+    background: none;
+    color: #2e7d50;
+}
+
+.cl-badge-red {
+    background: none;
+    color: #b33a3a;
+}
+
+/* ---------- Detalle del cliente ---------- */
+
+.cl-panel {
+    border-radius: 10px;
+}
+
+.cl-perfil .cl-avatar {
+    border-radius: 12px;
+}
+
+.cl-dato span {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.cl-dato strong {
+    font-size: 13px;
+}
+
+.cl-finanzas {
+    margin-bottom: 22px;
+}
+
+.cl-tabs {
+    gap: 22px;
+}
+
+.cl-tab {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.cl-item-titulo {
+    font-size: 13px;
+}
+
+/* ---------- Modales y avisos: radio único ---------- */
+
+.cl-modal {
+    border-radius: 12px;
+}
+
+.cl-field label {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cl-field input,
+.cl-field textarea {
+    font-size: 13px;
+    border-radius: 8px;
+}
+
+.cl-toast {
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 800px) {
+    .cl-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .cl-stats .cl-stat + .cl-stat {
+        border-left: 0;
+        border-top: 1px solid var(--border);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}

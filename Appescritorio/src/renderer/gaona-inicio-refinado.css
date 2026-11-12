@@ -1,0 +1,199 @@
+/*
+  GAONA · Refinamiento visual del panel de inicio
+  Se carga al final de index.html (después de style.css).
+  Usa las variables de style.css. No modifica sidebar, header, IDs ni JS.
+*/
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
+/* ---------- Tipografía general ---------- */
+
+body {
+    font-family: "IBM Plex Sans", Arial, sans-serif;
+}
+
+.main-header h1 {
+    font-weight: 600;
+    letter-spacing: -0.3px;
+}
+
+/* ---------- Bienvenida ---------- */
+
+.home-welcome h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+}
+
+/* ---------- Indicadores: una sola banda con divisores ---------- */
+
+.home-stats {
+    gap: 0;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 26px;
+    overflow: hidden;
+}
+
+.home-stat-card {
+    padding: 22px 24px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    transition: none;
+}
+
+.home-stat-card + .home-stat-card {
+    border-left: 1px solid var(--border);
+}
+
+.home-stat-card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.home-stat-icon {
+    display: none;
+}
+
+.home-stat-top > span {
+    font-size: 12px;
+}
+
+.home-stat-card h3 {
+    margin: 14px 0 6px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Paneles ---------- */
+
+.home-panel {
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.home-panel-heading {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.home-panel-heading h3 {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* Enlace "Ver todos": subrayado en lugar de flecha */
+
+.home-link-button {
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+}
+
+.home-link-button:hover {
+    text-decoration-thickness: 2px;
+}
+
+.home-link-button:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+}
+
+/* ---------- Tabla de pedidos ---------- */
+
+.home-orders-header {
+    background: none;
+    border-top: 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.home-order-row {
+    min-height: 60px;
+    font-size: 12px;
+}
+
+.home-order-row:hover {
+    background: none;
+}
+
+.home-order-number {
+    font-weight: 600;
+}
+
+/* Estado: texto con punto, sin pastillas */
+
+.home-status,
+.home-status.pending,
+.home-status.processing {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.home-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+/* ---------- Actividad reciente ---------- */
+
+.home-activity-info strong {
+    font-weight: 600;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1100px) {
+    .home-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-stat-card:nth-child(3) {
+        border-left: 0;
+    }
+
+    .home-stat-card:nth-child(n + 3) {
+        border-top: 1px solid var(--border);
+    }
+}
+
+@media (max-width: 650px) {
+    .home-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .home-stat-card + .home-stat-card {
+        border-left: 0;
+        border-top: 1px solid var(--border);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
