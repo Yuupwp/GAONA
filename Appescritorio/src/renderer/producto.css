@@ -1134,3 +1134,88 @@
     background: #fff4dc;
     color: #9b701b;
 }
+
+/* =====================================
+   PRODUCTOS INACTIVOS
+===================================== */
+
+.producto-card-inactivo {
+    position: relative;
+    background: #f1f1f1;
+    border: 1px dashed #b8b8b8;
+    box-shadow: none;
+}
+
+/* Franja lateral de identificación */
+.producto-card-inactivo::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: #b94b4b;
+}
+
+/* Nombre */
+.producto-card-inactivo .producto-nombre {
+    color: #777;
+}
+
+/* Descripción */
+.producto-card-inactivo .producto-descripcion {
+    color: #999;
+}
+
+/* Precio */
+.producto-card-inactivo .producto-precio {
+    color: #898989;
+}
+
+/* Tipo y categoría */
+.producto-card-inactivo .producto-tipo,
+.producto-card-inactivo .producto-categoria {
+    opacity: 0.55;
+}
+
+/* Etiqueta de estado */
+.producto-card-inactivo .producto-inactivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 7px 12px;
+    border-radius: 6px;
+
+    background: #fce7e7;
+    border: 1px solid #efc2c2;
+    color: #a12f2f;
+
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Indicador */
+.producto-card-inactivo .producto-inactivo::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #b94040;
+}
+
+/* Botón de edición: permanece disponible */
+.producto-card-inactivo .btn-editar-producto {
+    opacity: 1;
+    background: #c47720;
+    color: #ffffff;
+    border-color: #c47720;
+}
+
+.producto-card-inactivo .btn-editar-producto:hover {
+    background: #a96116;
+    border-color: #a96116;
+}

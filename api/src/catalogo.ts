@@ -48,7 +48,7 @@ productosRouter.post("/", async (req, res) => {
         tipo: z.enum(["PRODUCTO", "MATERIAL", "HERRAMIENTA"]),
         descripcion: z.string().trim().min(1).max(200),
         precioDesde: z.number().min(10),
-        imagenUrl: z.string().trim().optional(),
+        imagenUrl: z.string().trim().nullable().optional(),
         idcategoria: z.string().uuid(),
     });
     try {
@@ -145,31 +145,34 @@ productosRouter.post("/", async (req, res) => {
 
 productosRouter.patch("/:id/", async (req, res) => {
     try {
-        const actualizarProductoschema = z.object({
+        const actualizarProductoSchema = z.object({
             nombre: z.string().trim().min(1).max(100).optional(),
             tipo: z.enum(["PRODUCTO", "MATERIAL", "HERRAMIENTA"]).optional(),
-            descripcion: z.string().trim().min(1).max(200).optional(),
+            descripcion: z.string().trim().max(500).optional(),
             precioDesde: z.number().min(10).optional(),
-            imagenUrl: z.string().trim().optional(),
+            imagenUrl: z.string().trim().nullable().optional(),
             idcategoria: z.string().uuid().optional(),
+            activo: z.boolean().optional()
         });
 
         const { id } = req.params;
 
-        const resultado = actualizarProductoschema.safeParse(req.body);
+        const resultado = actualizarProductoSchema.safeParse(req.body);
 
         if (!resultado.success) {
             res.status(400).json({
                 error: "Los datos del producto no son válidos.",
                 detalles: resultado.error.issues
-            }); return;
+            });
+            return;
         }
 
         if (Object.keys(resultado.data).length === 0) {
             res.status(400).json({
                 error: "Debes proporcionar al menos un campo para actualizar."
-            }); return;
-        };
+            });
+            return;
+        }
 
         const productoExistente = await prisma.producto.findUnique({
             where: { id }
@@ -178,27 +181,32 @@ productosRouter.patch("/:id/", async (req, res) => {
         if (!productoExistente) {
             res.status(404).json({
                 error: "El producto no existe."
-            }); return;
-        };
+            });
+            return;
+        }
 
         const { idcategoria } = resultado.data;
 
         if (idcategoria !== undefined) {
             const categoria = await prisma.categoria.findUnique({
                 where: { id: idcategoria }
-            }); if (!categoria) {
+            });
+
+            if (!categoria) {
                 res.status(400).json({
                     error: "La categoría seleccionada no existe.",
-                }); return;
+                });
+                return;
             }
-        };
+        }
 
         const {
             nombre,
             tipo,
             descripcion,
             precioDesde,
-            imagenUrl
+            imagenUrl,
+            activo
         } = resultado.data;
 
         const productoActualizado = await prisma.producto.update({
@@ -209,6 +217,7 @@ productosRouter.patch("/:id/", async (req, res) => {
                 ...(descripcion !== undefined && { descripcion }),
                 ...(precioDesde !== undefined && { precioDesde }),
                 ...(imagenUrl !== undefined && { imagenUrl }),
+                ...(activo !== undefined && { activo }),
 
                 ...(idcategoria !== undefined && {
                     categoria: {
@@ -217,6 +226,7 @@ productosRouter.patch("/:id/", async (req, res) => {
                 })
             }
         });
+
         res.status(200).json({
             mensaje: "Producto actualizado correctamente.",
             producto: productoActualizado,

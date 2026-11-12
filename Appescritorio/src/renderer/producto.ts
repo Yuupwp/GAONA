@@ -37,7 +37,7 @@ interface ProductoAPI {
     nombre: string;
     tipo: TipoProducto;
     descripcion: string;
-    precioDesde: number;
+    precioDesde: number | string;
     imagenUrl: string;
     activo: boolean;
     categoria: {
@@ -162,18 +162,14 @@ async function cargarCatalogo(): Promise<void> {
             nombre: producto.nombre.trim(),
             tipo: producto.tipo,
             descripcion: producto.descripcion,
-            precioDesde: producto.precioDesde,
-            imagenUrl: producto.imagenUrl,
+            precioDesde: Number(producto.precioDesde), imagenUrl: producto.imagenUrl,
             activo: producto.activo,
             categoria: producto.categoria.nombre
         }));
 
         dibujarProductos();
 
-        console.log(
-            "Productos cargados desde la API: ",
-            productos
-        );
+        //console.log("Productos cargados desde la API: ",productos);
     } catch (error) {
         console.error(
             "Error al cargar los productos: ",
@@ -233,6 +229,10 @@ function dibujarProductos(): void {
 
         const tarjeta = document.createElement("article");
         tarjeta.className = "producto-card";
+
+        if (!producto.activo) {
+            tarjeta.classList.add("producto-card-inactivo");
+        }
 
         const contenido = document.createElement("div");
         contenido.className = "producto-card-contenido";
@@ -433,7 +433,7 @@ function editarProducto(producto: Producto): void {
     }
 
     if (productoUrl) {
-        productoUrl.value = producto.imagenUrl || "";
+        productoUrl.value = producto.imagenUrl ?? "";
     }
 
     if (productoDescripcion) {
@@ -452,34 +452,49 @@ function editarProducto(producto: Producto): void {
     }
 }
 
-async function ActualizarProducto(producto: Producto) {
-    const nuevonombre = productoNombre?.value.trim();
-    const nuevodescripcion = productoDescripcion?.value.trim();
-    const nuevoprecioDesde = Number(productoPrecio?.value);
-    const nuevoidcategoria = productoCategoria?.value;
-    const nuevotipo = productoTipo?.value as TipoProducto;
-    const nuevoimagenUrl = productoUrl?.value.trim() || "";
-    const nuevoactivo = productoActivo?.value === "true";
+async function ActualizarProducto(producto: Producto): Promise<void> {
+
+    if (!productoNombre || !productoPrecio || !productoCategoria ||
+        !productoTipo || !productoActivo) {
+        mostrarErrorFormulario("No se encontraron todos los campos del formulario.");
+        return;
+    }
+
+    const nuevonombre = productoNombre.value.trim();
+    const nuevodescripcion = productoDescripcion?.value.trim() ?? "";
+    const nuevoprecioDesde = Number(productoPrecio.value);
+    const nuevoidcategoria = productoCategoria.value;
+    const nuevotipo = productoTipo.value as TipoProducto;
+
+    // La URL es opcional: si está vacía, se enviará null.
+    const nuevoimagenUrl = productoUrl?.value.trim() || null;
+
+    // Convertir explícitamente el estado a booleano.
+    const nuevoactivo = productoActivo.value === "true";
+
     const categoriaOriginal = Object.entries(idsCategoria)
         .find(([id, nombre]) => nombre === producto.categoria)?.[0];
 
+    // Comprobar si existen modificaciones.
     if (
         nuevonombre === producto.nombre &&
         nuevodescripcion === producto.descripcion &&
         nuevoprecioDesde === producto.precioDesde &&
         nuevoidcategoria === categoriaOriginal &&
         nuevotipo === producto.tipo &&
-        nuevoimagenUrl === (producto.imagenUrl || "") &&
+        nuevoimagenUrl === (producto.imagenUrl || null) &&
         nuevoactivo === producto.activo
     ) {
         mostrarErrorFormulario("No has modificado ningún dato del producto.");
         return;
     }
 
+    // Validar campos obligatorios.
     if (
         !nuevonombre ||
         !nuevoidcategoria ||
         !nuevotipo ||
+        productoPrecio.value.trim() === "" ||
         !Number.isFinite(nuevoprecioDesde) ||
         nuevoprecioDesde < 0
     ) {
@@ -487,8 +502,14 @@ async function ActualizarProducto(producto: Producto) {
         return;
     }
 
+    if (nuevodescripcion.length > 500) {
+        mostrarErrorFormulario("La descripción no puede superar los 500 caracteres.");
+        return;
+    }
+
     try {
-        const respuesta = await fetch(`http://localhost:3001/productos/${producto.id}`,
+        const respuesta = await fetch(
+            `http://localhost:3001/productos/${producto.id}`,
             {
                 method: "PATCH",
                 headers: {
@@ -499,12 +520,12 @@ async function ActualizarProducto(producto: Producto) {
                     tipo: nuevotipo,
                     descripcion: nuevodescripcion,
                     precioDesde: nuevoprecioDesde,
-                    imagenUrl: nuevoimagenUrl || null,
+                    imagenUrl: nuevoimagenUrl,
                     activo: nuevoactivo,
                     idcategoria: nuevoidcategoria
-
                 })
-            });
+            }
+        );
 
         const resultado = await respuesta.json();
 
@@ -518,9 +539,10 @@ async function ActualizarProducto(producto: Producto) {
 
         await cargarCatalogo();
         cerrarModalProducto();
-
         formProducto?.reset();
-        mostrarMensaje(`El producto ${nuevonombre} se edito correctamente.`)
+
+        mostrarMensaje(`El producto ${nuevonombre} se editó correctamente.`);
+
     } catch (error) {
         console.error("Error al editar el producto:", error);
 
