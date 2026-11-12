@@ -11,6 +11,8 @@ import { authRouter, cuentaRouter } from "./cuenta";
 import { cotizacionesRouter } from "./cotizaciones";
 import { pedidosRouter } from "./pedidos";
 import { citasRouter } from "./citas";
+import { inventarioRouter } from "./inventario"
+import { movimientosInRouter } from "./movimientos-inventario";
 
 const app = express();
 app.use(cors());
@@ -24,6 +26,8 @@ app.use("/cuenta", cuentaRouter);
 app.use("/cotizaciones", cotizacionesRouter);
 app.use("/pedidos", pedidosRouter);
 app.use("/citas", citasRouter);
+app.use("/inventario", inventarioRouter)
+app.use("/movimientos_inventario", movimientosInRouter)
 
 app.get("/salud", (_req, res) => {
   res.json({ ok: true });

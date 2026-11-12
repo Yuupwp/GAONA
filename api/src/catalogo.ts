@@ -23,6 +23,12 @@ productosRouter.get("/", async (_req, res) => {
                         nombre: true,
                     },
                 },
+                inventario: {
+                    select: {
+                        existencia: true,
+                        minimo: true,
+                    },
+                },
             }, orderBy: {
                 creadoEn: "asc",
             },
@@ -31,7 +37,7 @@ productosRouter.get("/", async (_req, res) => {
     } catch (error) {
         console.error("Error al consultar producto: ", error);
         res.status(500).json({
-            error: "No se pudieron obtener los empleados",
+            error: "No se pudieron obtener los productos",
         });
     }
 });
@@ -99,6 +105,9 @@ productosRouter.post("/", async (req, res) => {
                 categoria: {
                     connect: { id: categoria.id }
                 },
+                inventario: {
+                    create: { existencia: 0, minimo: 1 }
+                },
             },
             select: {
                 id: true,
@@ -113,6 +122,12 @@ productosRouter.post("/", async (req, res) => {
                         nombre: true,
                     },
                 },
+                inventario: {
+                    select: {
+                        existencia: true,
+                        minimo: true
+                    }
+                }
             },
         });
         res.status(201).json({
