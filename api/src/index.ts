@@ -11,6 +11,7 @@ import { authRouter, cuentaRouter } from "./cuenta";
 import { cotizacionesRouter } from "./cotizaciones";
 import { pedidosRouter } from "./pedidos";
 import { citasRouter } from "./citas";
+import { inicioRouter } from "./inicio";
 import { inventarioRouter } from "./inventario"
 import { movimientosInRouter } from "./movimientos-inventario";
 
@@ -26,6 +27,7 @@ app.use("/cuenta", cuentaRouter);
 app.use("/cotizaciones", cotizacionesRouter);
 app.use("/pedidos", pedidosRouter);
 app.use("/citas", citasRouter);
+app.use("/inicio", inicioRouter);
 app.use("/inventario", inventarioRouter)
 app.use("/movimientos_inventario", movimientosInRouter)
 
