@@ -2024,4 +2024,9 @@ body {
     }
 }
 
-
+/* Mensaje cuando una lista de Inicio está vacía */
+.home-empty {
+    padding: 24px;
+    color: var(--gray);
+    font-size: 12px;
+}
