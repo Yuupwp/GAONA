@@ -1,91 +1,142 @@
 import { Router } from "express";
-import { TipoProducto } from "@prisma/client";
 import { prisma } from "./lib/prisma";
 import { z } from "zod";
-import { error } from "node:console";
-import { isNumberObject } from "node:util/types";
+import { autenticar } from "./middleware/autenticacion";
 
 export const inventarioRouter = Router();
-
-inventarioRouter.patch("/:id/", async (req, res) => {
+inventarioRouter.get("/", async (_req, res) => {
     try {
-        const actualizarInventarioschema = z.object({
+        const inventarios = await prisma.inventario.findMany({
+            select: {
+                id: true,
+                producto: {
+                    select: {
+                        id: true,
+                        nombre: true,
+                        categoria: {
+                            select: {
+                                nombre: true
+                            }
+                        }
+                    },
+                },
+                existencia: true,
+                minimo: true,
+            },
+            orderBy: {
+                actualizadoEn: "asc",
+            }
+        });
+
+        res.json(inventarios);
+
+    } catch (error) {
+        console.error("Error al consultar inventarios: ", error);
+
+        res.status(500).json({
+            error: "No se pudieron obtener los inventarios"
+        });
+    }
+});
+
+inventarioRouter.patch("/:id/", autenticar, async (req, res) => {
+    try {
+        const actualizarInventarioSchema = z.object({
             existencia: z.number().int().min(0).optional(),
             minimo: z.number().int().min(0).optional(),
-            idUsuario: z.string().uuid(),
             motivo: z.string().trim().max(250).optional()
         }).refine(
-            (data) => Object.keys(data).length > 0,
-            { message: "Debes proporcionar al menos un campo para actualizar." }
+            (data) => data.existencia !== undefined || data.minimo !== undefined,
+            {
+                message: "Debes proporcionar al menos un campo para actualizar."
+            }
         );
 
         const { id } = req.params;
-        const resultado = actualizarInventarioschema.safeParse(req.body);
+        const inventarioId = Array.isArray(id) ? id[0] : id;
+
+        if (!inventarioId) {
+            res.status(400).json({
+                error: "Identificador de inventario inválido."
+            });
+            return;
+        }
+
+        const resultado = actualizarInventarioSchema.safeParse(req.body);
 
         if (!resultado.success) {
             res.status(400).json({
                 error: "Los datos del inventario no son válidos.",
                 detalles: resultado.error.issues
-            }); return;
+            });
+            return;
         }
 
-        if (Object.keys(resultado.data).length === 0) {
-            res.status(400).json({
-                error: "Debes proporcionar al menos un campo para actualizar.",
-            }); return;
+        const idUsuario = req.usuario?.id;
+
+        if (!idUsuario) {
+            res.status(401).json({
+                error: "No se pudo identificar al usuario."
+            });
+            return;
         }
+
+        const {
+            existencia,
+            minimo,
+            motivo
+        } = resultado.data;
 
         const inventarioExistente = await prisma.inventario.findUnique({
-            where: { id }
+            where: { id: inventarioId }
         });
 
         if (!inventarioExistente) {
             res.status(404).json({
                 error: "El inventario no existe."
-            }); return;
-        };
+            });
+            return;
+        }
 
-        const {
-            existencia,
-            minimo,
-            idUsuario,
-            motivo
-        } = resultado.data
-
-        const diferencia = existencia != undefined
+        const diferencia = existencia !== undefined
             ? existencia - inventarioExistente.existencia
             : 0;
 
         const inventarioActualizado = await prisma.$transaction(async (tx) => {
 
-            const invetario = await tx.inventario.update({
-                where: { id },
+            const inventario = await tx.inventario.update({
+                where: { id: inventarioId },
                 data: {
                     ...(existencia !== undefined && { existencia }),
-                    ...(minimo != undefined && { minimo })
+                    ...(minimo !== undefined && { minimo })
                 }
             });
+
             if (diferencia !== 0) {
                 await tx.movimientoInventario.create({
                     data: {
-                        idInventario: invetario.id,
+                        idInventario: inventario.id,
                         idUsuario,
                         tipo: diferencia > 0 ? "ENTRADA" : "SALIDA",
                         cantidad: Math.abs(diferencia),
                         motivo: motivo ?? "Ajuste de inventario"
                     },
                 });
-            } return invetario
-        })
+            }
+
+            return inventario;
+        });
+
         res.status(200).json({
             mensaje: "Inventario actualizado con éxito",
             inventario: inventarioActualizado,
         });
+
     } catch (error) {
         console.error("Error al actualizar el inventario: ", error);
 
         res.status(500).json({
             error: "No se pudo actualizar el inventario."
-        })
+        });
     }
-})
+});

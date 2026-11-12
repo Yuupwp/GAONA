@@ -215,7 +215,7 @@
 
 
 
-                               <section id="inicio-section" class="dashboard-section">
+                <section id="inicio-section" class="dashboard-section">
 
                     <!-- Bienvenida -->
                     <div class="home-welcome">
@@ -1163,6 +1163,10 @@
                                 <span id="productos-contador" class="productos-contador">
                                     Cargando productos...
                                 </span>
+
+                                <button type="button" id="btn-agregar-producto" class="btn-principal">
+                                    <span>＋</span> Agregar producto
+                                </button>
                             </div>
 
                             <div id="productos-grid" class="productos-grid"></div>
@@ -1187,10 +1191,6 @@
                                     <h3>Existencias de inventario</h3>
                                     <p>Consulta las cantidades disponibles de tus productos.</p>
                                 </div>
-
-                                <button type="button" id="btn-ajustar-existencia" class="btn-principal">
-                                    ＋ Ajustar existencias
-                                </button>
                             </div>
 
                             <!-- RESUMEN -->
@@ -1259,10 +1259,6 @@
                                     <h3>Movimientos de inventario</h3>
                                     <p>Consulta las entradas, salidas y ajustes realizados.</p>
                                 </div>
-
-                                <button type="button" id="btn-nuevo-movimiento" class="btn-principal">
-                                    ＋ Registrar movimiento
-                                </button>
                             </div>
 
                             <!-- FILTROS -->
@@ -1424,6 +1420,87 @@
                     </div>
 
                 </div>
+
+
+                <!-- Modal para ajustar existencias -->
+                <div id="modal-existencia" class="existencia-overlay" hidden>
+                    <div class="existencia-modal" role="dialog" aria-modal="true"
+                        aria-labelledby="existencia-modal-titulo">
+
+                        <div class="existencia-modal-header">
+                            <div>
+                                <span class="existencia-etiqueta">CONTROL DE INVENTARIO</span>
+                                <h2 id="existencia-modal-titulo">Ajustar existencias</h2>
+                                <p>Modifica las cantidades disponibles del producto.</p>
+                            </div>
+
+                            <button type="button" id="btn-cerrar-existencia" class="existencia-cerrar"
+                                aria-label="Cerrar">
+                                &times;
+                            </button>
+                        </div>
+
+                        <div class="existencia-modal-body">
+
+                            <!-- Información del producto -->
+                            <div class="existencia-producto-info">
+                                <div class="existencia-producto-icono">▦</div>
+                                <div>
+                                    <span>PRODUCTO SELECCIONADO</span>
+                                    <h3 id="existencia-producto-nombre">Nombre del producto</h3>
+                                    <p id="existencia-producto-categoria">Categoría</p>
+                                </div>
+                            </div>
+
+                            <!-- Cantidades -->
+                            <div class="existencia-campos">
+
+                                <div class="existencia-campo">
+                                    <label for="existencia-actual">Existencias actuales</label>
+                                    <input type="number" id="existencia-actual" readonly>
+                                    <small>Cantidad registrada actualmente.</small>
+                                </div>
+
+                                <div class="existencia-campo">
+                                    <label for="existencia-nueva">Nueva existencia</label>
+                                    <input type="number" id="existencia-nueva" min="0" step="1" placeholder="Ej. 25">
+                                    <small>Unidades disponibles después del ajuste.</small>
+                                </div>
+
+                                <div class="existencia-campo">
+                                    <label for="existencia-minima">Existencia mínima</label>
+                                    <input type="number" id="existencia-minima" min="0" step="1" placeholder="Ej. 5">
+                                    <small>Umbral para identificar existencias bajas.</small>
+                                </div>
+
+                            </div>
+
+                            <!-- Motivo -->
+                            <div class="existencia-campo existencia-motivo">
+                                <label for="existencia-motivo">Motivo del ajuste</label>
+                                <textarea id="existencia-motivo" rows="3" maxlength="250"
+                                    placeholder="Describe brevemente el motivo del cambio..."></textarea>
+                                <small>Máximo 250 caracteres.</small>
+                            </div>
+
+                            <p id="existencia-error" class="existencia-error" hidden></p>
+
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="existencia-modal-footer">
+                            <button type="button" id="btn-cancelar-existencia" class="btn-cancelar-existencia">
+                                Cancelar
+                            </button>
+
+                            <button type="button" id="btn-guardar-existencia" class="btn-guardar-existencia">
+                                Guardar cambios
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
 
                 <!--SECCIÓN DE CRUD DE EMPLEADOS-->
                 <section id="empleados-section" class="empty-section hidden">

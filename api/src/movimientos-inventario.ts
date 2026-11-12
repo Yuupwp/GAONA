@@ -11,8 +11,20 @@ movimientosInRouter.get("/", async (_req, res) => {
         const movimientosIn = await prisma.movimientoInventario.findMany({
             select: {
                 id: true,
-                idInventario: true,
-                idUsuario: true,
+                inventario: {
+                    select: {
+                        producto: {
+                            select: {
+                                nombre: true,
+                            }
+                        }
+                    }
+                },
+                usuario: {
+                    select: {
+                        usuario: true
+                    }
+                },
                 idPedido: true,
                 tipo: true,
                 cantidad: true,
