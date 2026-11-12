@@ -37,7 +37,10 @@ function createWindow() {
     mainWindow.loadFile(
         path.join(__dirname, "../src/renderer/index.html")
     );
+    
+    if (!app.isPackaged) {
     mainWindow.webContents.openDevTools({ mode: "detach" });
+}
 
     mainWindow.webContents.on("console-message", (_event, _level, message) => {
         console.log("CONSOLA DE GAONA:", message);
