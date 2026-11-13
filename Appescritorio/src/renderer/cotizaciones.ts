@@ -3,7 +3,7 @@
 // Lee y guarda las cotizaciones en la API (/cotizaciones).
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3001";
+    const API_URL = "http://127.0.0.1:3001";
 
     type Estado = "BORRADOR" | "ENVIADA" | "APROBADA" | "RECHAZADA" | "VENCIDA";
     type Filtro = "todos" | Estado;
@@ -203,7 +203,7 @@
         let respuesta: Response;
 
         try {
-            respuesta = await fetch(`${API_URL}${ruta}`, {
+            respuesta = await window.gaonaApiFetch(`${API_URL}${ruta}`, {
                 ...opciones,
                 headers: opciones.body ? { "Content-Type": "application/json" } : undefined,
             });
@@ -224,10 +224,6 @@
 
     function mensajeDe(error: unknown): string {
         return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
-    }
-
-    function idUsuario(): string | undefined {
-        return window.gaonaSesion?.actual()?.id;
     }
 
     // Resumen (tarjetas de arriba)
@@ -564,7 +560,7 @@
         try {
             const r = await api<{ enviadoA: string }>(`/cotizaciones/${encodeURIComponent(id)}/enviar`, {
                 method: "POST",
-                body: JSON.stringify({ correo, idUsuario: idUsuario() }),
+                body: JSON.stringify({ correo }),
             });
 
             modalDetalle.classList.add("hidden");
@@ -580,9 +576,16 @@
         }
     }
 
-    // El PDF se abre en el navegador, donde se puede imprimir o guardar
-    function verPdf(id: string): void {
-        window.open(`${API_URL}/cotizaciones/${encodeURIComponent(id)}/pdf`, "_blank");
+    // Descargar con Bearer y abrir una copia local; nunca enviar tokens por URL.
+    async function verPdf(id: string): Promise<void> {
+        try {
+            const respuesta = await window.gaonaApiFetch(`${API_URL}/cotizaciones/${encodeURIComponent(id)}/pdf`);
+            if (!respuesta.ok) {
+                const datos = await respuesta.json().catch(() => null);
+                throw new Error(datos?.error ?? "No se pudo descargar el PDF.");
+            }
+            await window.electronAPI.abrirPdf(await respuesta.arrayBuffer());
+        } catch (error) { avisar(mensajeDe(error), true); }
     }
 
     async function cambiarEstado(id: string, nuevo: Estado): Promise<void> {
@@ -594,7 +597,7 @@
         try {
             await api(`/cotizaciones/${encodeURIComponent(id)}/estado`, {
                 method: "PATCH",
-                body: JSON.stringify({ estado: nuevo, idUsuario: idUsuario() }),
+                body: JSON.stringify({ estado: nuevo }),
             });
 
             modalDetalle.classList.add("hidden");
@@ -621,7 +624,7 @@
         try {
             const pedido = await api<{ folio: string }>(
                 `/cotizaciones/${encodeURIComponent(id)}/pedido`,
-                { method: "POST", body: JSON.stringify({ idUsuario: idUsuario() }) }
+                { method: "POST", body: JSON.stringify({}) }
             );
 
             modalDetalle.classList.add("hidden");
@@ -839,7 +842,6 @@
                     conceptos,
                     anticipoRequerido: anticipo,
                     vigenciaHasta: campos.vigencia.value || null,
-                    idUsuario: idUsuario(),
                 }),
             });
 

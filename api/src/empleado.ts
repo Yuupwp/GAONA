@@ -3,7 +3,7 @@ import { prisma } from "./lib/prisma";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "node:crypto";
-import { autenticar, soloAdministrador } from "./middleware/autenticacion";
+import { soloAdministrador } from "./middleware/autenticacion";
 import { enviarCorreo } from "./correo";
 
 export const empleadosRouter = Router();
@@ -31,7 +31,7 @@ empleadosRouter.get("/", async (_req, res) => {
         });
         res.json(empleados);
     } catch (error) {
-        console.error("Error al consultar empleador: ", error);
+        console.error("Error en operación de escritorio");
         res.status(500).json({
             error: "No se pudieron obtener los empleados",
         });
@@ -141,7 +141,7 @@ empleadosRouter.post("/", async (req, res) => {
             empleado,
         });
     } catch (error) {
-        console.error("Error al crear empleado: ", error);
+        console.error("Error en operación de escritorio");
 
         res.status(500).json({
             error: "No se pudo crear el empleado",
@@ -275,7 +275,7 @@ empleadosRouter.patch("/:id", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error al actualizar el usuario:", error);
+        console.error("Error en operación de escritorio");
 
         return res.status(500).json({
             error: "No se pudo actualizar el usuario."
@@ -348,7 +348,7 @@ empleadosRouter.patch("/:id/rol", async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error al cambiar el rol: ", error);
+        console.error("Error en operación de escritorio");
 
         res.status(500).json({
             error: "No se pudo actualizar el rol",
@@ -407,18 +407,13 @@ empleadosRouter.patch("/:id/estado", async (req, res) => {
             empleado: empleadoActualizado,
         });
     } catch (error) {
-        console.error("Error al cambiar el estado: ", error),
-
-            res.status(500).json({
-                error: "No se pudo actualizar el estado de la cuenta",
-            });
+        console.error("Error en operación de escritorio");
     }
 });
 
 
 empleadosRouter.post(
     "/:id/restablecer-contrasena",
-    autenticar,
     soloAdministrador,
     async (req, res) => {
         try {
@@ -541,7 +536,7 @@ empleadosRouter.post(
             });
 
         } catch (error) {
-            console.error("Error al solicitar restablecimiento:", error);
+            console.error("Error en operación de escritorio");
 
             res.status(500).json({
                 error: "No se pudo enviar el correo de restablecimiento.",

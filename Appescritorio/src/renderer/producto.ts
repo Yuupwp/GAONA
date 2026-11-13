@@ -1,7 +1,6 @@
 
 "use strict";
 
-import { error } from "console";
 const modalProducto = document.getElementById("modal-producto");
 const modalProductoTitulo = document.getElementById("modal-producto-titulo");
 const modalProductoDescripcion = document.getElementById("modal-producto-descripcion");
@@ -23,6 +22,7 @@ const btnCancelarProducto = document.getElementById("btn-cancelar-producto");
 const btnGuardarProducto = document.getElementById("btn-guardar-producto");
 
 type TipoProducto = "PRODUCTO" | "MATERIAL" | "HERRAMIENTA";
+type TipoMovimiento = "ENTRADA" | "SALIDA" | "AJUSTE";
 const idsCategoria: Record<string, string> = {
     "05629c44-d415-40ad-a8d8-8d431e219c44": "Accesorios",
     "089df661-3cef-4edd-9301-6ecf1a86c2c7": "Chapas",
@@ -37,13 +37,50 @@ interface ProductoAPI {
     nombre: string;
     tipo: TipoProducto;
     descripcion: string;
-    precioDesde: number;
+    precioDesde: number | string;
     imagenUrl: string;
     activo: boolean;
     categoria: {
         id: string;
         nombre: string;
     }
+}
+
+interface InventarioAPI {
+    id: string;
+    producto: {
+        id: string;
+        nombre: string;
+        categoria: {
+            nombre: string;
+        };
+    };
+    existencia: number;
+    minimo: number;
+}
+
+interface MovimientoAPI {
+    id: string;
+    tipo: TipoMovimiento;
+    cantidad: number;
+    motivo: string | null;
+    fecha: string;
+    inventario: {
+        producto: {
+            nombre: string;
+        };
+    };
+    usuario: {
+        usuario: string;
+    };
+}
+
+interface Inventario {
+    id: string;
+    producto: string;
+    categoria: string;
+    existencia: number;
+    minimo: number;
 }
 
 interface Producto {
@@ -57,6 +94,16 @@ interface Producto {
     categoria: string
 }
 
+interface Movimiento {
+    id: string;
+    producto: string;
+    tipo: TipoMovimiento;
+    cantidad: number;
+    motivo: string;
+    fecha: string;
+    responsable: string;
+}
+
 // Elementos HTML
 const productosGrid = document.getElementById("productos-grid");
 const productosContador = document.getElementById("productos-contador");
@@ -64,12 +111,44 @@ const productosVacio = document.getElementById("productos-vacio");
 const buscarProducto = document.getElementById("buscar-producto") as HTMLInputElement | null;
 const btnAgregarProducto = document.getElementById("btn-agregar-producto");
 
+const existenciasTabla = document.getElementById("existencias-tabla");
+const existenciasVacio = document.getElementById("existencias-vacio");
+
+const totalProductos = document.getElementById("existencias-total-productos");
+const totalUnidades = document.getElementById("existencias-total-unidades");
+const totalBajas = document.getElementById("existencias-bajas");
+
+const buscarExistencia = document.getElementById("buscar-existencia") as HTMLInputElement | null;
+
+
+const movimientosTabla = document.getElementById("movimientos-tabla");
+const movimientosVacio = document.getElementById("movimientos-vacio");
+
+const buscarMovimiento = document.getElementById("buscar-movimiento") as HTMLInputElement | null;
+const filtroTipoMovimiento = document.getElementById("filtro-tipo-movimiento") as HTMLSelectElement | null;
+const filtroFechaMovimiento = document.getElementById("filtro-fecha-movimiento") as HTMLInputElement | null;
+
+
+const modalExistencia = document.getElementById("modal-existencia");
+const nombreExistencia = document.getElementById("existencia-producto-nombre");
+const categoriaExistencia = document.getElementById("existencia-producto-categoria");
+
+const existenciaActual = document.getElementById("existencia-actual") as HTMLInputElement | null;
+const existenciaNueva = document.getElementById("existencia-nueva") as HTMLInputElement | null;
+const existenciaMinima = document.getElementById("existencia-minima") as HTMLInputElement | null;
+const motivoExistencia = document.getElementById("existencia-motivo") as HTMLTextAreaElement | null;
+
+const existenciaError = document.getElementById("existencia-error");
+
+const btnCerrarExistencia = document.getElementById("btn-cerrar-existencia");
+const btnCancelarExistencia = document.getElementById("btn-cancelar-existencia");
+const btnGuardarExistencia = document.getElementById("btn-guardar-existencia") as HTMLButtonElement | null;
 let productos: Producto[] = []
 //Cargar productos
 async function cargarCatalogo(): Promise<void> {
     try {
-        const respuesta = await fetch(
-            "http://localhost:3001/productos"
+        const respuesta = await window.gaonaApiFetch(
+            "http://127.0.0.1:3001/productos"
         );
         if (!respuesta.ok) {
             throw new Error(
@@ -83,26 +162,21 @@ async function cargarCatalogo(): Promise<void> {
             nombre: producto.nombre.trim(),
             tipo: producto.tipo,
             descripcion: producto.descripcion,
-            precioDesde: producto.precioDesde,
-            imagenUrl: producto.imagenUrl,
+            precioDesde: Number(producto.precioDesde), imagenUrl: producto.imagenUrl,
             activo: producto.activo,
             categoria: producto.categoria.nombre
         }));
 
         dibujarProductos();
 
-        console.log(
-            "Productos cargados desde la API: ",
-            productos
-        );
+        //console.log("Productos cargados desde la API: ",productos);
     } catch (error) {
         console.error(
-            "Error al cargar los empleados: ",
+            "Error al cargar los productos: ",
             error
         );
     }
 }
-
 
 // Comprobar que los elementos HTML existen.
 function validarElementosProductos(): boolean {
@@ -155,6 +229,10 @@ function dibujarProductos(): void {
 
         const tarjeta = document.createElement("article");
         tarjeta.className = "producto-card";
+
+        if (!producto.activo) {
+            tarjeta.classList.add("producto-card-inactivo");
+        }
 
         const contenido = document.createElement("div");
         contenido.className = "producto-card-contenido";
@@ -278,7 +356,7 @@ async function crearProducto(event: SubmitEvent): Promise<void> {
     }
 
     try {
-        const respuesta = await fetch("http://localhost:3001/productos", {
+        const respuesta = await window.gaonaApiFetch("http://127.0.0.1:3001/productos", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -355,7 +433,7 @@ function editarProducto(producto: Producto): void {
     }
 
     if (productoUrl) {
-        productoUrl.value = producto.imagenUrl || "";
+        productoUrl.value = producto.imagenUrl ?? "";
     }
 
     if (productoDescripcion) {
@@ -374,34 +452,49 @@ function editarProducto(producto: Producto): void {
     }
 }
 
-async function ActualizarProducto(producto: Producto) {
-    const nuevonombre = productoNombre?.value.trim();
-    const nuevodescripcion = productoDescripcion?.value.trim();
-    const nuevoprecioDesde = Number(productoPrecio?.value);
-    const nuevoidcategoria = productoCategoria?.value;
-    const nuevotipo = productoTipo?.value as TipoProducto;
-    const nuevoimagenUrl = productoUrl?.value.trim() || "";
-    const nuevoactivo = productoActivo?.value === "true";
+async function ActualizarProducto(producto: Producto): Promise<void> {
+
+    if (!productoNombre || !productoPrecio || !productoCategoria ||
+        !productoTipo || !productoActivo) {
+        mostrarErrorFormulario("No se encontraron todos los campos del formulario.");
+        return;
+    }
+
+    const nuevonombre = productoNombre.value.trim();
+    const nuevodescripcion = productoDescripcion?.value.trim() ?? "";
+    const nuevoprecioDesde = Number(productoPrecio.value);
+    const nuevoidcategoria = productoCategoria.value;
+    const nuevotipo = productoTipo.value as TipoProducto;
+
+    // La URL es opcional: si está vacía, se enviará null.
+    const nuevoimagenUrl = productoUrl?.value.trim() || null;
+
+    // Convertir explícitamente el estado a booleano.
+    const nuevoactivo = productoActivo.value === "true";
+
     const categoriaOriginal = Object.entries(idsCategoria)
         .find(([id, nombre]) => nombre === producto.categoria)?.[0];
 
+    // Comprobar si existen modificaciones.
     if (
         nuevonombre === producto.nombre &&
         nuevodescripcion === producto.descripcion &&
         nuevoprecioDesde === producto.precioDesde &&
         nuevoidcategoria === categoriaOriginal &&
         nuevotipo === producto.tipo &&
-        nuevoimagenUrl === (producto.imagenUrl || "") &&
+        nuevoimagenUrl === (producto.imagenUrl || null) &&
         nuevoactivo === producto.activo
     ) {
         mostrarErrorFormulario("No has modificado ningún dato del producto.");
         return;
     }
 
+    // Validar campos obligatorios.
     if (
         !nuevonombre ||
         !nuevoidcategoria ||
         !nuevotipo ||
+        productoPrecio.value.trim() === "" ||
         !Number.isFinite(nuevoprecioDesde) ||
         nuevoprecioDesde < 0
     ) {
@@ -409,8 +502,14 @@ async function ActualizarProducto(producto: Producto) {
         return;
     }
 
+    if (nuevodescripcion.length > 500) {
+        mostrarErrorFormulario("La descripción no puede superar los 500 caracteres.");
+        return;
+    }
+
     try {
-        const respuesta = await fetch(`http://localhost:3001/productos/${producto.id}`,
+        const respuesta = await window.gaonaApiFetch(
+            `http://127.0.0.1:3001/productos/${producto.id}`,
             {
                 method: "PATCH",
                 headers: {
@@ -421,12 +520,12 @@ async function ActualizarProducto(producto: Producto) {
                     tipo: nuevotipo,
                     descripcion: nuevodescripcion,
                     precioDesde: nuevoprecioDesde,
-                    imagenUrl: nuevoimagenUrl || null,
+                    imagenUrl: nuevoimagenUrl,
                     activo: nuevoactivo,
                     idcategoria: nuevoidcategoria
-
                 })
-            });
+            }
+        );
 
         const resultado = await respuesta.json();
 
@@ -440,9 +539,10 @@ async function ActualizarProducto(producto: Producto) {
 
         await cargarCatalogo();
         cerrarModalProducto();
-
         formProducto?.reset();
-        mostrarMensaje(`El producto ${nuevonombre} se edito correctamente.`)
+
+        mostrarMensaje(`El producto ${nuevonombre} se editó correctamente.`);
+
     } catch (error) {
         console.error("Error al editar el producto:", error);
 
@@ -537,6 +637,477 @@ function limpiarErrorFormulario(): void {
     productoError.hidden = true;
 }
 
+let inventarios: Inventario[] = []
+async function cargarInventario(): Promise<void> {
+    try {
+        const respuesta = await window.gaonaApiFetch(
+            "http://127.0.0.1:3001/inventario"
+        );
+        if (!respuesta.ok) {
+            throw new Error(
+                `Error HTTP: ${respuesta.status}`
+            );
+        }
+        const datos: InventarioAPI[] = await respuesta.json();
+        inventarios = datos.map((inventario) => ({
+            id: inventario.id,
+            producto: inventario.producto.nombre,
+            categoria: inventario.producto.categoria.nombre,
+            existencia: inventario.existencia,
+            minimo: inventario.minimo
+        }));
+
+        dibujarInventario();
+
+        console.log(
+            "Inventarios cargados desde la API: ",
+            inventarios
+        );
+    } catch (error) {
+        console.error("Error al cargar el inventario: ", error);
+    }
+}
+
+function dibujarInventario(): void {
+
+    if (!existenciasTabla || !existenciasVacio) {
+        console.error("No se encontraron los elementos HTML del inventario.");
+        return;
+    }
+
+    // Obtener búsqueda.
+    const busqueda = buscarExistencia?.value.trim().toLowerCase() || "";
+
+    // Filtrar registros.
+    const filtrados = inventarios.filter((item) =>
+        item.producto.toLowerCase().includes(busqueda) ||
+        item.categoria.toLowerCase().includes(busqueda)
+    );
+
+    // Limpiar tabla.
+    existenciasTabla.replaceChildren();
+
+    // Actualizar resumen general.
+    if (totalProductos) {
+        totalProductos.textContent = String(inventarios.length);
+    }
+
+    if (totalUnidades) {
+        const unidades = inventarios.reduce(
+            (total, item) => total + item.existencia, 0
+        );
+
+        totalUnidades.textContent = String(unidades);
+    }
+
+    if (totalBajas) {
+        const bajas = inventarios.filter(
+            (item) => item.existencia <= item.minimo
+        ).length;
+
+        totalBajas.textContent = String(bajas);
+    }
+
+    // Mostrar mensaje si no hay resultados.
+    existenciasVacio.hidden = filtrados.length > 0;
+
+    // Dibujar filas.
+    filtrados.forEach((item) => {
+
+        const fila = document.createElement("tr");
+
+        // Producto.
+        const nombre = document.createElement("td");
+        nombre.textContent = item.producto;
+
+        // Categoría.
+        const categoria = document.createElement("td");
+        categoria.textContent = item.categoria;
+
+        // Existencias.
+        const existencia = document.createElement("td");
+        existencia.textContent = String(item.existencia);
+
+        // Estado.
+        const estado = document.createElement("td");
+        const estadoEtiqueta = document.createElement("span");
+
+        const existenciaBaja = item.existencia <= item.minimo;
+
+        estadoEtiqueta.className = existenciaBaja
+            ? "inventario-estado bajo"
+            : "inventario-estado disponible";
+
+        estadoEtiqueta.textContent = existenciaBaja
+            ? "Existencias bajas"
+            : "Disponible";
+
+        estado.append(estadoEtiqueta);
+
+        // Acciones.
+        const acciones = document.createElement("td");
+        const btnAjustar = document.createElement("button");
+
+        btnAjustar.type = "button";
+        btnAjustar.className = "btn-ajustar-existencia";
+        btnAjustar.textContent = "Ajustar";
+        btnAjustar.dataset.inventarioId = item.id;
+
+        acciones.append(btnAjustar);
+        btnAjustar.addEventListener("click", () => {
+            abrirModalExistencia(item);
+        });
+
+        // Agregar celdas.
+        fila.append(
+            nombre,
+            categoria,
+            existencia,
+            estado,
+            acciones
+        );
+
+        existenciasTabla.append(fila);
+    });
+}
+
+let inventarioSeleccionado: Inventario | null = null;
+function abrirModalExistencia(inventario: Inventario): void {
+    if (!modalExistencia) return;
+    inventarioSeleccionado = inventario;
+
+    if (nombreExistencia) {
+        nombreExistencia.textContent = inventario.producto;
+    }
+    if (categoriaExistencia) {
+        categoriaExistencia.textContent = inventario.categoria;
+    }
+    if (existenciaActual) {
+        existenciaActual.value = String(inventario.existencia)
+    }
+    if (existenciaNueva) {
+        existenciaNueva.value = String(inventario.existencia)
+    }
+    if (existenciaMinima) {
+        existenciaMinima.value = String(inventario.minimo)
+    }
+    if (motivoExistencia) {
+        motivoExistencia.value = "";
+    }
+    if (existenciaError) {
+        existenciaError.textContent = "";
+        existenciaError.hidden = true;
+    }
+
+    modalExistencia.hidden = false
+}
+
+function cerrarModalExistencia(): void {
+    if (!modalExistencia) return;
+
+    modalExistencia.hidden = true;
+    inventarioSeleccionado = null;
+}
+
+async function ajustarExistencias(): Promise<void> {
+
+    if (
+        !inventarioSeleccionado ||
+        !existenciaNueva ||
+        !existenciaMinima
+    ) {
+        return;
+    }
+
+    // Obtener el token de la sesión actual.
+    const token = window.gaonaSesion.token();
+
+    if (!token) {
+        if (existenciaError) {
+            existenciaError.textContent = "Tu sesión ha expirado. Inicia sesión nuevamente.";
+            existenciaError.hidden = false;
+        }
+        return;
+    }
+
+    // Obtener los valores del formulario.
+    const valorExistencia = existenciaNueva.value.trim();
+    const valorMinimo = existenciaMinima.value.trim();
+
+    const nuevaExistencia = Number(valorExistencia);
+    const nuevoMinimo = Number(valorMinimo);
+
+    // Validar cantidades.
+    if (
+        valorExistencia === "" ||
+        valorMinimo === "" ||
+        !Number.isInteger(nuevaExistencia) ||
+        !Number.isInteger(nuevoMinimo) ||
+        nuevaExistencia < 0 ||
+        nuevoMinimo < 0
+    ) {
+        if (existenciaError) {
+            existenciaError.textContent = "Ingresa cantidades enteras mayores o iguales a cero.";
+            existenciaError.hidden = false;
+        }
+        return;
+    }
+
+    // Comprobar que haya cambios.
+    if (
+        nuevaExistencia === inventarioSeleccionado.existencia &&
+        nuevoMinimo === inventarioSeleccionado.minimo
+    ) {
+        if (existenciaError) {
+            existenciaError.textContent = "No has modificado ningún dato del inventario.";
+            existenciaError.hidden = false;
+        }
+        return;
+    }
+
+    const motivo = motivoExistencia?.value.trim() || "Ajuste de inventario";
+
+    try {
+        if (btnGuardarExistencia) {
+            btnGuardarExistencia.disabled = true;
+            btnGuardarExistencia.textContent = "Guardando...";
+        }
+
+        const respuesta = await window.gaonaApiFetch(
+            `http://127.0.0.1:3001/inventario/${inventarioSeleccionado.id}`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    existencia: nuevaExistencia,
+                    minimo: nuevoMinimo,
+                    motivo
+                })
+            }
+        );
+
+        const resultado = await respuesta.json().catch(() => null);
+
+        if (!respuesta.ok) {
+            throw new Error(
+                resultado?.error ||
+                resultado?.mensaje ||
+                "No se pudieron actualizar las existencias."
+            );
+        }
+
+        // Actualizar las tablas con los datos de la API.
+        await cargarInventario();
+        await cargarMovimientos();
+
+        cerrarModalExistencia();
+
+        mostrarMensaje(
+            resultado?.mensaje || "Las existencias se actualizaron correctamente."
+        );
+
+    } catch (error) {
+        console.error("Error al ajustar las existencias:", error);
+
+        if (existenciaError) {
+            existenciaError.textContent =
+                error instanceof Error
+                    ? error.message
+                    : "Ocurrió un error al actualizar las existencias.";
+
+            existenciaError.hidden = false;
+        }
+
+    } finally {
+        if (btnGuardarExistencia) {
+            btnGuardarExistencia.disabled = false;
+            btnGuardarExistencia.textContent = "Guardar cambios";
+        }
+    }
+}
+
+let movimientos: Movimiento[] = []
+async function cargarMovimientos(): Promise<void> {
+    try {
+        const respuesta = await window.gaonaApiFetch(
+            "http://127.0.0.1:3001/movimientos_inventario"
+        );
+        if (!respuesta.ok) {
+            throw new Error(
+                `Error HTTP: ${respuesta.status}`
+            );
+        }
+        const datos: MovimientoAPI[] = await respuesta.json();
+        movimientos = datos.map((movimiento) => ({
+            id: movimiento.id,
+            producto: movimiento.inventario.producto.nombre,
+            tipo: movimiento.tipo,
+            cantidad: movimiento.cantidad,
+            motivo: movimiento.motivo || "Sin observaciones",
+            fecha: movimiento.fecha,
+            responsable: movimiento.usuario.usuario
+        }));
+
+        dibujarMovimientos();
+
+    } catch (error) {
+        console.error("Error al cargar los movimientos: ", error)
+    }
+}
+
+
+function dibujarMovimientos(): void {
+
+    if (!movimientosTabla || !movimientosVacio) {
+        console.error("No se encontraron los elementos HTML de movimientos.");
+        return;
+    }
+
+    // Obtener los valores de los filtros.
+    const busqueda = buscarMovimiento?.value.trim().toLowerCase() || "";
+    const tipoSeleccionado = filtroTipoMovimiento?.value || "";
+    const fechaSeleccionada = filtroFechaMovimiento?.value || "";
+
+    // Filtrar movimientos.
+    const filtrados = movimientos.filter((movimiento) => {
+
+        const coincideBusqueda =
+            movimiento.producto.toLowerCase().includes(busqueda);
+
+        const coincideTipo =
+            !tipoSeleccionado || movimiento.tipo === tipoSeleccionado;
+
+        // Convertir la fecha del movimiento al formato YYYY-MM-DD.
+        const fecha = new Date(movimiento.fecha);
+        const fechaLocal = [
+            fecha.getFullYear(),
+            String(fecha.getMonth() + 1).padStart(2, "0"),
+            String(fecha.getDate()).padStart(2, "0")
+        ].join("-");
+
+        const coincideFecha =
+            !fechaSeleccionada || fechaLocal === fechaSeleccionada;
+
+        return coincideBusqueda && coincideTipo && coincideFecha;
+    });
+
+    // Limpiar la tabla.
+    movimientosTabla.replaceChildren();
+
+    // Mostrar mensaje si no hay resultados.
+    movimientosVacio.hidden = filtrados.length > 0;
+
+    // Dibujar cada movimiento.
+    filtrados.forEach((movimiento) => {
+
+        const fila = document.createElement("tr");
+
+        // Fecha.
+        const fecha = document.createElement("td");
+        fecha.textContent = new Date(movimiento.fecha).toLocaleString("es-MX", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
+        // Producto.
+        const producto = document.createElement("td");
+        producto.textContent = movimiento.producto;
+
+        // Tipo de movimiento.
+        const tipo = document.createElement("td");
+        const tipoEtiqueta = document.createElement("span");
+
+        tipoEtiqueta.className = `movimiento-tipo ${movimiento.tipo.toLowerCase()}`;
+
+        const nombresTipo: Record<TipoMovimiento, string> = {
+            ENTRADA: "Entrada",
+            SALIDA: "Salida",
+            AJUSTE: "Ajuste"
+        };
+
+        tipoEtiqueta.textContent = nombresTipo[movimiento.tipo];
+        tipo.append(tipoEtiqueta);
+
+        // Cantidad.
+        const cantidad = document.createElement("td");
+
+        if (movimiento.tipo === "ENTRADA") {
+            cantidad.textContent = `+${movimiento.cantidad}`;
+        } else if (movimiento.tipo === "SALIDA") {
+            cantidad.textContent = `-${movimiento.cantidad}`;
+        } else {
+            cantidad.textContent = String(movimiento.cantidad);
+        }
+
+        // Responsable.
+        const responsable = document.createElement("td");
+        responsable.textContent = movimiento.responsable;
+
+        // Observaciones.
+        const observaciones = document.createElement("td");
+        observaciones.textContent = movimiento.motivo;
+
+        // Agregar celdas.
+        fila.append(
+            fecha,
+            producto,
+            tipo,
+            cantidad,
+            responsable,
+            observaciones
+        );
+
+        movimientosTabla.append(fila);
+    });
+}
+
+
+// =====================================
+// NAVEGACIÓN DE INVENTARIO
+// =====================================
+
+const inventarioTabs = document.querySelectorAll<HTMLButtonElement>(
+    ".inventario-tab"
+);
+
+const inventarioPanels = document.querySelectorAll<HTMLElement>(
+    ".inventario-panel"
+);
+
+inventarioTabs.forEach(tab => {
+
+    tab.addEventListener("click", () => {
+
+        const destino = tab.dataset.tab;
+
+        // Desactivar pestañas
+        inventarioTabs.forEach(t => t.classList.remove("activa"));
+
+        // Ocultar paneles
+        inventarioPanels.forEach(panel => {
+            panel.classList.remove("activa");
+        });
+
+        // Activar pestaña seleccionada
+        tab.classList.add("activa");
+
+        // Mostrar panel correspondiente
+        const panelDestino = document.getElementById(
+            `inventario-${destino}`
+        );
+
+        panelDestino?.classList.add("activa");
+
+    });
+
+});
+
+
 // Eventos
 buscarProducto?.addEventListener("input", dibujarProductos);
 btnAgregarProducto?.addEventListener("click", abrirModalProducto);
@@ -575,8 +1146,54 @@ document.addEventListener("keydown", (event: KeyboardEvent) => {
     }
 });
 
+buscarExistencia?.addEventListener("input", dibujarInventario);
+
+buscarMovimiento?.addEventListener("input", dibujarMovimientos);
+
+filtroTipoMovimiento?.addEventListener("change", dibujarMovimientos);
+
+filtroFechaMovimiento?.addEventListener("change", dibujarMovimientos);
+
+// Eventos del modal de existencias.
+btnGuardarExistencia?.addEventListener("click", () => {
+    ajustarExistencias();
+});
+
+btnCerrarExistencia?.addEventListener("click", cerrarModalExistencia);
+
+btnCancelarExistencia?.addEventListener("click", cerrarModalExistencia);
+
+modalExistencia?.addEventListener("click", (event) => {
+    if (event.target === modalExistencia) {
+        cerrarModalExistencia();
+    }
+});
+
 // Inicialización
 if (validarElementosProductos()) {
     cargarCategorias();
-    cargarCatalogo();
+    if (window.gaonaSesion.puede("inventario")) {
+        void cargarCatalogo();
+        void cargarInventario();
+        void cargarMovimientos();
+    }
 }
+
+// Cargar existencias y movimientos con la sesión ya disponible.
+document.addEventListener("gaona:sesion", () => {
+    productos = [];
+    inventarios = [];
+    movimientos = [];
+    dibujarProductos();
+    dibujarInventario();
+    dibujarMovimientos();
+    cerrarModalProducto();
+    cerrarModalExistencia();
+    if (window.gaonaSesion.puede("inventario")) {
+        void cargarCatalogo();
+        void cargarInventario();
+        void cargarMovimientos();
+    }
+});
+
+

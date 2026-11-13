@@ -152,37 +152,34 @@ test('Prisma web exige URL explícita y nunca recurre a DATABASE_URL o DIRECT_UR
     assert.deepEqual(JSON.parse(JSON.stringify(constructors)), [{ datasources: { db: { url } } }]);
 });
 
-test('entrada administrativa conserva routers y contratos locales con base simulada', async () => {
+test('entrada administrativa conserva contratos locales detrás de JWT', async () => {
+    const { crearHarness } = require('./escritorio-harness.cjs');
     const cliente = { id: 'cliente-local-simulado', nombre: 'Cliente', apellido: 'Simulado', telefono: '5555555555', correo: null, direccion: null, solicitudes: [], pedidos: [] };
     const empleado = { id: 'local', nombre: 'Empleado', activo: true, rol: { nombre: 'EMPLEADO' } };
+    const administrador = { id: 'admin', activo: true, rol: { nombre: 'ADMINISTRADOR' } };
     const updates = [];
     const prisma = {
         cliente: { findMany: async () => [cliente] },
         usuario: {
-            findMany: async () => [empleado], findUnique: async () => empleado,
+            findMany: async () => [empleado],
+            findUnique: async ({ where }) => where.id === 'admin' ? administrador : empleado,
             update: async query => { updates.push(query); return { ...empleado, activo: query.data.activo }; }
         }
     };
-    const { transformSync } = apiRequire('esbuild');
-    const cargarRouter = archivo => {
-        const module = { exports: {} };
-        const source = transformSync(readFileSync(path.join(__dirname, '../api/src/', archivo), 'utf8'), { loader: 'ts', format: 'cjs' }).code;
-        vm.runInNewContext(source, { module, exports: module.exports, console, require(name) {
-            if (name === './lib/prisma') return { prisma };
-            return apiRequire(name);
-        } });
-        return module.exports;
-    };
-    await withApi({ entry: 'index.ts', prisma, ...cargarRouter('clientes.ts'), ...cargarRouter('empleado.ts') }, async ({ base, state }) => {
-        const clientes = await (await fetch(base + '/clientes')).json();
+    const { app, token } = crearHarness(prisma);
+    const server = http.createServer(app);
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    try {
+        const base = `http://127.0.0.1:${server.address().port}`;
+        const headers = { Authorization: `Bearer ${token('admin')}`, 'Content-Type': 'application/json' };
+        assert.equal((await fetch(base + '/clientes')).status, 401);
+        const clientes = await (await fetch(base + '/clientes', { headers })).json();
         assert.equal(clientes.items[0].id, cliente.id);
         assert.equal(clientes.total, 1);
-        assert.deepEqual(await (await fetch(base + '/empleados')).json(), [empleado]);
-        const response = await fetch(base + '/empleados/local/estado', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ activo: false }) });
+        assert.deepEqual(await (await fetch(base + '/empleados', { headers })).json(), [empleado]);
+        const response = await fetch(base + '/empleados/local/estado', { method: 'PATCH', headers, body: JSON.stringify({ activo: false }) });
         assert.deepEqual(await response.json(), { mensaje: 'Cuenta desactivada correctamente', empleado: { ...empleado, activo: false } });
         assert.equal(updates.length, 1);
         assert.equal(updates[0].where.id, 'local');
-        assert.equal(state.listenArgs[0], 3000);
-        assert.equal(typeof state.listenArgs[1], 'function');
-    });
+    } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });

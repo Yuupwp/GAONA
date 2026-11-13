@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="finanzas.css">
     <link rel="stylesheet" href="pedidos.css">
     <link rel="stylesheet" href="cotizaciones.css">
-    <link rel="stylesheet" href="gaona-inicio-refinado.css">
 </head>
 
 <body>
@@ -231,56 +230,38 @@
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Clientes registrados</span>
-                                <div class="home-stat-icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-</div>
-                                
+                                <span>Solicitudes nuevas</span>
+                                <div class="home-stat-icon">📨</div>
                             </div>
-                            <h3>48</h3>
-                            <p>Clientes en el sistema</p>
+                            <h3 id="inicio-stat-solicitudes">0</h3>
+                            <p>De la página, por atender</p>
                         </div>
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Cotizaciones</span>
-                                <div class="home-stat-icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>
-    </svg>
-</div>
-                                
+                                <span>Citas de hoy</span>
+                                <div class="home-stat-icon">📅</div>
                             </div>
-                            <h3>24</h3>
-                            <p>Cotizaciones registradas</p>
+                            <h3 id="inicio-stat-citas">0</h3>
+                            <p>Programadas para hoy</p>
                         </div>
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Pedidos activos</span>
-                                <div class="home-stat-icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
-    </svg>
-</div>
+                                <span>Pedidos pendientes</span>
+                                <div class="home-stat-icon">📦</div>
                             </div>
-                            <h3>16</h3>
-                            <p>Pedidos en seguimiento</p>
+                            <h3 id="inicio-stat-pedidos">0</h3>
+                            <p>En proceso o listos para instalar</p>
                         </div>
 
                         <div class="home-stat-card">
                             <div class="home-stat-top">
-                                <span>Ingresos registrados</span>
-                                <div class="home-stat-icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-    </svg>
-</div>
+                                <span>Cobrado del mes</span>
+                                <div class="home-stat-icon">💰</div>
                             </div>
-                            <h3>$85,400</h3>
-                            <p>Importe de referencia</p>
+                            <h3 id="inicio-stat-cobrado">$0.00</h3>
+                            <p>Pagos registrados este mes</p>
                         </div>
 
                     </div>
@@ -297,8 +278,8 @@
                                     <p>Pedidos que requieren atención.</p>
                                 </div>
 
-                                <button class="home-link-button">
-                                    Ver todos
+                                <button id="inicio-ver-pedidos" class="home-link-button">
+                                    Ver todos →
                                 </button>
                             </div>
 
@@ -312,91 +293,30 @@
                                         <span>Estado</span>
                                     </div>
 
-                                    <div class="home-order-row">
-                                        <span class="home-order-number">#PED-0001</span>
-                                        <span>Cliente de ejemplo</span>
-                                        <span>05/11/2026</span>
-                                        <span>
-                                            <span class="home-status pending">
-                                                Pendiente
-                                            </span>
-                                        </span>
-                                    </div>
-
-                                    <div class="home-order-row">
-                                        <span class="home-order-number">#PED-0002</span>
-                                        <span>Cliente de ejemplo</span>
-                                        <span>04/11/2026</span>
-                                        <span>
-                                            <span class="home-status processing">
-                                                En proceso
-                                            </span>
-                                        </span>
-                                    </div>
-
-                                    <div class="home-order-row">
-                                        <span class="home-order-number">#PED-0003</span>
-                                        <span>Cliente de ejemplo</span>
-                                        <span>03/11/2026</span>
-                                        <span>
-                                            <span class="home-status pending">
-                                                Pendiente
-                                            </span>
-                                        </span>
-                                    </div>
+                                    <div id="inicio-pedidos-lista"></div>
 
                                 </div>
                             </div>
 
                         </div>
 
-                        <!-- Actividad reciente -->
+                        <!-- Citas de hoy -->
                         <div class="home-panel home-activity-panel">
 
                             <div class="home-panel-heading">
                                 <div>
-                                    <h3>Actividad reciente</h3>
-                                    <p>Últimos movimientos del sistema.</p>
+                                    <h3>Citas de hoy</h3>
+                                    <p>Mediciones, entregas e instalaciones.</p>
                                 </div>
                             </div>
 
-                            <div class="home-activity-list">
-
-                                <div class="home-activity-item">
-                                    <div class="activity-indicator quote-indicator"></div>
-                                    <div class="home-activity-info">
-                                        <strong>Nueva cotización</strong>
-                                        <p>Se registró una nueva cotización.</p>
-                                        <span>Hace 20 minutos</span>
-                                    </div>
-                                </div>
-
-                                <div class="home-activity-item">
-                                    <div class="activity-indicator order-indicator"></div>
-                                    <div class="home-activity-info">
-                                        <strong>Pedido actualizado</strong>
-                                        <p>Un pedido cambió a en proceso.</p>
-                                        <span>Hace 1 hora</span>
-                                    </div>
-                                </div>
-
-                                <div class="home-activity-item">
-                                    <div class="activity-indicator client-indicator"></div>
-                                    <div class="home-activity-info">
-                                        <strong>Nuevo cliente</strong>
-                                        <p>Se agregó un cliente al sistema.</p>
-                                        <span>Hace 3 horas</span>
-                                    </div>
-                                </div>
-
-                            </div>
+                            <div id="inicio-citas-lista" class="home-activity-list"></div>
 
                         </div>
 
                     </div>
 
                 </section>
-
 
 
                 <!-- SECCIONES TEMPORALES -->
@@ -1195,45 +1115,204 @@
 
                 </section>
 
+
                 <section id="inventario-section" class="empty-section hidden agenda-section">
 
                     <div class="productos-container">
 
+                        <!-- ENCABEZADO -->
                         <div class="productos-header">
                             <div>
                                 <h2>Inventario</h2>
-                                <p>Gestión de inventario.</p>
+                                <p>Administra tus productos, existencias y movimientos.</p>
                             </div>
+                        </div>
 
-                            <button type="button" id="btn-agregar-producto" class="btn-principal">
-                                <span>＋</span> Agregar producto
+                        <!-- NAVEGACIÓN -->
+                        <div class="inventario-tabs">
+
+                            <button type="button" class="inventario-tab activa" data-tab="productos">
+                                <span>▦</span>
+                                Productos
                             </button>
+
+                            <button type="button" class="inventario-tab" data-tab="existencias">
+                                <span>▤</span>
+                                Existencias
+                            </button>
+
+                            <button type="button" class="inventario-tab" data-tab="movimientos">
+                                <span>↔</span>
+                                Movimientos
+                            </button>
+
                         </div>
 
-                        <div class="productos-toolbar">
-                            <div class="productos-busqueda">
-                                <span>⌕</span>
-                                <input type="search" id="buscar-producto" placeholder="Buscar por nombre o código...">
+                        <!-- ================================= -->
+                        <!-- 1. PRODUCTOS -->
+                        <!-- ================================= -->
+                        <div id="inventario-productos" class="inventario-panel activa">
+
+                            <div class="productos-toolbar">
+                                <div class="productos-busqueda">
+                                    <span>⌕</span>
+                                    <input type="search" id="buscar-producto"
+                                        placeholder="Buscar por nombre o código...">
+                                </div>
+
+                                <span id="productos-contador" class="productos-contador">
+                                    Cargando productos...
+                                </span>
+
+                                <button type="button" id="btn-agregar-producto" class="btn-principal">
+                                    <span>＋</span> Agregar producto
+                                </button>
                             </div>
 
-                            <span id="productos-contador" class="productos-contador">
-                                Cargando productos...
-                            </span>
+                            <div id="productos-grid" class="productos-grid"></div>
+
+                            <div id="productos-vacio" class="productos-vacio" hidden>
+                                <div class="productos-vacio-icono">□</div>
+                                <h3>No hay productos para mostrar</h3>
+                                <p>Agrega un producto o modifica tu búsqueda.</p>
+                            </div>
+
+                            <div id="productos-mensaje" class="productos-mensaje" hidden></div>
+
                         </div>
 
-                        <div id="productos-grid" class="productos-grid"></div>
+                        <!-- ================================= -->
+                        <!-- 2. EXISTENCIAS -->
+                        <!-- ================================= -->
+                        <div id="inventario-existencias" class="inventario-panel">
 
-                        <div id="productos-vacio" class="productos-vacio" hidden>
-                            <div class="productos-vacio-icono">□</div>
-                            <h3>No hay productos para mostrar</h3>
-                            <p>Agrega un producto o modifica tu búsqueda.</p>
+                            <div class="inventario-panel-header">
+                                <div>
+                                    <h3>Existencias de inventario</h3>
+                                    <p>Consulta las cantidades disponibles de tus productos.</p>
+                                </div>
+                            </div>
+
+                            <!-- RESUMEN -->
+                            <div class="inventario-resumen">
+
+                                <div class="inventario-resumen-card">
+                                    <span>Productos registrados</span>
+                                    <strong id="existencias-total-productos">0</strong>
+                                </div>
+
+                                <div class="inventario-resumen-card">
+                                    <span>Unidades disponibles</span>
+                                    <strong id="existencias-total-unidades">0</strong>
+                                </div>
+
+                                <div class="inventario-resumen-card">
+                                    <span>Existencias bajas</span>
+                                    <strong id="existencias-bajas">0</strong>
+                                </div>
+
+                            </div>
+
+                            <!-- BÚSQUEDA -->
+                            <div class="productos-toolbar">
+                                <div class="productos-busqueda">
+                                    <span>⌕</span>
+                                    <input type="search" id="buscar-existencia" placeholder="Buscar producto...">
+                                </div>
+                            </div>
+
+                            <!-- TABLA -->
+                            <div class="inventario-tabla-contenedor">
+                                <table class="inventario-tabla">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th>Existencias</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="existencias-tabla">
+                                        <!-- Registros dinámicos -->
+                                    </tbody>
+
+                                </table>
+                            </div>
+
+                            <div id="existencias-vacio" class="productos-vacio" hidden>
+                                <h3>No hay existencias registradas</h3>
+                                <p>Los productos aparecerán aquí cuando tengan registros de inventario.</p>
+                            </div>
+
                         </div>
 
-                        <div id="productos-mensaje" class="productos-mensaje" hidden></div>
+                        <!-- ================================= -->
+                        <!-- 3. MOVIMIENTOS -->
+                        <!-- ================================= -->
+                        <div id="inventario-movimientos" class="inventario-panel">
+
+                            <div class="inventario-panel-header">
+                                <div>
+                                    <h3>Movimientos de inventario</h3>
+                                    <p>Consulta las entradas, salidas y ajustes realizados.</p>
+                                </div>
+                            </div>
+
+                            <!-- FILTROS -->
+                            <div class="inventario-filtros">
+
+                                <div class="productos-busqueda">
+                                    <span>⌕</span>
+                                    <input type="search" id="buscar-movimiento" placeholder="Buscar producto...">
+                                </div>
+
+                                <select id="filtro-tipo-movimiento">
+                                    <option value="">Todos los movimientos</option>
+                                    <option value="ENTRADA">Entradas</option>
+                                    <option value="SALIDA">Salidas</option>
+                                    <option value="AJUSTE">Ajustes</option>
+                                </select>
+
+                                <input type="date" id="filtro-fecha-movimiento">
+
+                            </div>
+
+                            <!-- TABLA -->
+                            <div class="inventario-tabla-contenedor">
+                                <table class="inventario-tabla">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Producto</th>
+                                            <th>Tipo</th>
+                                            <th>Cantidad</th>
+                                            <th>Responsable</th>
+                                            <th>Observaciones</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="movimientos-tabla">
+                                        <!-- Registros dinámicos -->
+                                    </tbody>
+
+                                </table>
+                            </div>
+
+                            <div id="movimientos-vacio" class="productos-vacio" hidden>
+                                <h3>No hay movimientos registrados</h3>
+                                <p>Los movimientos de inventario aparecerán aquí.</p>
+                            </div>
+
+                        </div>
 
                     </div>
 
                 </section>
+
 
                 <!-- MODAL PARA AGREGAR / EDITAR PRODUCTOS -->
                 <div id="modal-producto" class="modal-producto" hidden>
@@ -1304,7 +1383,7 @@
                             <!-- IMAGEN -->
                             <div class="campo-producto">
                                 <label for="producto-imagen">URL de la imagen</label>
-                                <input id="producto-imagen" type="url" placeholder="https://ejemplo.com/imagen.jpg">
+                                <input id="producto-imagen" placeholder="https://ejemplo.com/imagen.jpg">
                             </div>
 
                             <!-- DESCRIPCIÓN -->
@@ -1341,6 +1420,87 @@
                     </div>
 
                 </div>
+
+
+                <!-- Modal para ajustar existencias -->
+                <div id="modal-existencia" class="existencia-overlay" hidden>
+                    <div class="existencia-modal" role="dialog" aria-modal="true"
+                        aria-labelledby="existencia-modal-titulo">
+
+                        <div class="existencia-modal-header">
+                            <div>
+                                <span class="existencia-etiqueta">CONTROL DE INVENTARIO</span>
+                                <h2 id="existencia-modal-titulo">Ajustar existencias</h2>
+                                <p>Modifica las cantidades disponibles del producto.</p>
+                            </div>
+
+                            <button type="button" id="btn-cerrar-existencia" class="existencia-cerrar"
+                                aria-label="Cerrar">
+                                &times;
+                            </button>
+                        </div>
+
+                        <div class="existencia-modal-body">
+
+                            <!-- Información del producto -->
+                            <div class="existencia-producto-info">
+                                <div class="existencia-producto-icono">▦</div>
+                                <div>
+                                    <span>PRODUCTO SELECCIONADO</span>
+                                    <h3 id="existencia-producto-nombre">Nombre del producto</h3>
+                                    <p id="existencia-producto-categoria">Categoría</p>
+                                </div>
+                            </div>
+
+                            <!-- Cantidades -->
+                            <div class="existencia-campos">
+
+                                <div class="existencia-campo">
+                                    <label for="existencia-actual">Existencias actuales</label>
+                                    <input type="number" id="existencia-actual" readonly>
+                                    <small>Cantidad registrada actualmente.</small>
+                                </div>
+
+                                <div class="existencia-campo">
+                                    <label for="existencia-nueva">Nueva existencia</label>
+                                    <input type="number" id="existencia-nueva" min="0" step="1" placeholder="Ej. 25">
+                                    <small>Unidades disponibles después del ajuste.</small>
+                                </div>
+
+                                <div class="existencia-campo">
+                                    <label for="existencia-minima">Existencia mínima</label>
+                                    <input type="number" id="existencia-minima" min="0" step="1" placeholder="Ej. 5">
+                                    <small>Umbral para identificar existencias bajas.</small>
+                                </div>
+
+                            </div>
+
+                            <!-- Motivo -->
+                            <div class="existencia-campo existencia-motivo">
+                                <label for="existencia-motivo">Motivo del ajuste</label>
+                                <textarea id="existencia-motivo" rows="3" maxlength="250"
+                                    placeholder="Describe brevemente el motivo del cambio..."></textarea>
+                                <small>Máximo 250 caracteres.</small>
+                            </div>
+
+                            <p id="existencia-error" class="existencia-error" hidden></p>
+
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="existencia-modal-footer">
+                            <button type="button" id="btn-cancelar-existencia" class="btn-cancelar-existencia">
+                                Cancelar
+                            </button>
+
+                            <button type="button" id="btn-guardar-existencia" class="btn-guardar-existencia">
+                                Guardar cambios
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
 
                 <!--SECCIÓN DE CRUD DE EMPLEADOS-->
                 <section id="empleados-section" class="empty-section hidden">
@@ -1747,6 +1907,7 @@
 
     <script src="../../dist/renderer/sesion.js"></script>
     <script src="../../dist/renderer/renderer.js"></script>
+    <script src="../../dist/renderer/inicio.js"></script>
     <script src="../../dist/renderer/clientes.js"></script>
     <script src="../../dist/renderer/calendario.js"></script>
     <script type="module" src="../../dist/renderer/producto.js"></script>

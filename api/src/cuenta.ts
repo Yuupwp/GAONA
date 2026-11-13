@@ -9,6 +9,17 @@ import { createHash } from "node:crypto";
 // /cuenta/:id  -> datos personales y contraseña del usuario que inició sesión
 export const authRouter = Router();
 export const cuentaRouter = Router();
+// Mi cuenta nunca permite seleccionar a otro usuario, ni siquiera desde Electron.
+cuentaRouter.use("/:id", (req, res, next) => {
+  if (!req.usuario) { res.status(401).json({ error: "No has iniciado sesión." }); return; }
+  if (req.params.id !== req.usuario.id) {
+    res.status(403).json({ error: "Solo puedes acceder a tu propia cuenta." }); return;
+  }
+  if (req.body && ["rol", "idRol", "activo", "passwordHash"].some(campo => campo in req.body)) {
+    res.status(403).json({ error: "No puedes modificar permisos desde tu cuenta." }); return;
+  }
+  next();
+});
 
 // ---------------------------------------------------------------------
 // Permisos por rol: secciones del menú que puede ver cada rol
@@ -154,7 +165,7 @@ authRouter.post("/login", async (req, res) => {
     }
 
     if (!encontrado.activo) {
-      res.status(403).json({
+      res.status(401).json({
         error: "Tu cuenta está desactivada. Contacta a un administrador.",
       });
       return;
@@ -183,7 +194,7 @@ authRouter.post("/login", async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de cuenta");
     res.status(500).json({ error: "No se pudo iniciar sesión." });
   }
 });
@@ -195,7 +206,7 @@ authRouter.post("/login", async (req, res) => {
 cuentaRouter.get("/:id", async (req, res) => {
   try {
     const usuario = await prisma.usuario.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.usuario!.id },
       select: PERFIL,
     });
 
@@ -205,13 +216,13 @@ cuentaRouter.get("/:id", async (req, res) => {
     }
 
     if (!usuario.activo) {
-      res.status(403).json({ error: "Tu cuenta está desactivada." });
+      res.status(401).json({ error: "Tu cuenta está desactivada." });
       return;
     }
 
     res.json({ ...usuario, permisos: permisosDe(usuario.rol.nombre) });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de cuenta");
     res.status(500).json({ error: "No se pudo cargar tu cuenta." });
   }
 });
@@ -248,7 +259,7 @@ cuentaRouter.patch("/:id", async (req, res) => {
 
   try {
     const actual = await prisma.usuario.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.usuario!.id },
       select: { id: true, activo: true },
     });
 
@@ -258,7 +269,7 @@ cuentaRouter.patch("/:id", async (req, res) => {
     }
 
     if (!actual.activo) {
-      res.status(403).json({ error: "Tu cuenta está desactivada." });
+      res.status(401).json({ error: "Tu cuenta está desactivada." });
       return;
     }
 
@@ -299,7 +310,7 @@ cuentaRouter.patch("/:id", async (req, res) => {
 
     res.json({ ...usuario, permisos: permisosDe(usuario.rol.nombre) });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de cuenta");
     res.status(500).json({ error: "No se pudieron guardar los cambios." });
   }
 });
@@ -335,7 +346,7 @@ cuentaRouter.patch("/:id/contrasena", async (req, res) => {
   }
 
   const { actual, nueva } = resultado.data;
-  const clave = `contrasena:${req.params.id}`;
+  const clave = `contrasena:${req.usuario!.id}`;
 
   const espera = segundosDeEspera(clave);
 
@@ -346,7 +357,7 @@ cuentaRouter.patch("/:id/contrasena", async (req, res) => {
 
   try {
     const usuario = await prisma.usuario.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.usuario!.id },
       select: { id: true, activo: true, passwordHash: true },
     });
 
@@ -356,7 +367,7 @@ cuentaRouter.patch("/:id/contrasena", async (req, res) => {
     }
 
     if (!usuario.activo) {
-      res.status(403).json({ error: "Tu cuenta está desactivada." });
+      res.status(401).json({ error: "Tu cuenta está desactivada." });
       return;
     }
 
@@ -377,7 +388,7 @@ cuentaRouter.patch("/:id/contrasena", async (req, res) => {
 
     res.json({ ok: true });
   } catch (error) {
-    console.error(error);
+    console.error("Error en operación de cuenta");
     res.status(500).json({ error: "No se pudo cambiar la contraseña." });
   }
 });
@@ -485,7 +496,7 @@ authRouter.post("/restablecer-contrasena", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error al restablecer contraseña:", error);
+    console.error("Error al restablecer contraseña");
 
     res.status(500).json({
       error: "No se pudo restablecer la contraseña.",

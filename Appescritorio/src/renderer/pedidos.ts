@@ -4,7 +4,7 @@
 // Los pedidos se crean desde Cotizaciones ("Crear pedido").
 // ========================================
 (() => {
-    const API_URL = "http://localhost:3001";
+    const API_URL = "http://127.0.0.1:3001";
 
     type Estado =
         | "EN_PROCESO"
@@ -134,7 +134,7 @@
         let respuesta: Response;
 
         try {
-            respuesta = await fetch(`${API_URL}${ruta}`, {
+            respuesta = await window.gaonaApiFetch(`${API_URL}${ruta}`, {
                 ...opciones,
                 headers: opciones.body ? { "Content-Type": "application/json" } : undefined,
             });
@@ -403,7 +403,7 @@
         try {
             await api(`/pedidos/${encodeURIComponent(id)}/estado`, {
                 method: "PATCH",
-                body: JSON.stringify({ estado: nuevo, idUsuario: window.gaonaSesion?.actual()?.id }),
+                body: JSON.stringify({ estado: nuevo }),
             });
 
             modalDetalle.classList.add("hidden");

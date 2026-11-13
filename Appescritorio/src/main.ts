@@ -1,10 +1,16 @@
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { fileURLToPath } from "url";
 import path from "path";
+<<<<<<< HEAD
 import fs from "fs";
 // 1. Importa dotenv y el SDK oficial de Gemini
 import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
+=======
+import { crearVisorPdf } from "./visor-pdf.js";
+
+const visorPdf = crearVisorPdf(url => shell.openPath(url));
+>>>>>>> origin/main
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +32,7 @@ function createWindow() {
     },
   });
 
+<<<<<<< HEAD
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     const esPdfCotizacion = /^http:\/\/localhost:3001\/cotizaciones\/[\w-]+\/pdf$/.test(url);
 
@@ -42,12 +49,36 @@ function createWindow() {
   mainWindow.webContents.on("console-message", (_event, _level, message) => {
     console.log("CONSOLA DE GAONA:", message);
   });
+=======
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith("https://wa.me/")) {
+            shell.openExternal(url);
+        }
+        return { action: "deny" };
+    });
+    mainWindow.loadFile(
+        path.join(__dirname, "../src/renderer/index.html")
+    );
+>>>>>>> origin/main
 }
 
 app.whenReady().then(() => {
   createWindow();
 
+<<<<<<< HEAD
   mainWindow.maximize();
+=======
+    ipcMain.handle("abrir-pdf", async (event, datos: unknown) => {
+        if (event.sender !== mainWindow.webContents || event.senderFrame !== mainWindow.webContents.mainFrame) {
+            throw new Error("Origen no permitido");
+        }
+        await visorPdf.abrir(datos);
+    });
+
+    ipcMain.on("maximize-window", () => {
+        mainWindow.maximize();
+    });
+>>>>>>> origin/main
 
   // 3. Canal seguro para que la IA responda a tus vistas del renderer
   ipcMain.handle("gemini:generar", async (_event, promptText: string) => {
@@ -107,7 +138,15 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
+<<<<<<< HEAD
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
+=======
+    if (process.platform !== "darwin") {
+        app.quit();
+    }
+});
+app.on("will-quit", () => visorPdf.limpiar());
+>>>>>>> origin/main

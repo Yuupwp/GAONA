@@ -81,7 +81,7 @@ function responderError(res: import("express").Response, error: unknown, mensaje
     res.status(error.estado).json({ error: error.message });
     return;
   }
-  console.error(error);
+  console.error("Error en operación de escritorio");
   res.status(500).json({ error: mensaje });
 }
 
