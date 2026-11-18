@@ -5,6 +5,8 @@ import { prisma } from "./lib/prisma";
 import { generarCotizacionPdf, type DatosCotizacionPdf } from "./cotizacion-pdf";
 import { correoDisponible, enviarCotizacion, type FabricaTransporte } from "./cotizacion-correo";
 import { correoValido } from "./solicitud-correo-validacion";
+import { fechaTexto as fechaCita, horaTexto, revisarEmpalme, validarHorario } from "./citas";
+import { avisarCliente, type ResultadoAviso } from "./pedido-correo";
 
 export const cotizacionesRouter = Router();
 
@@ -131,6 +133,7 @@ function aRespuesta(c: CotizacionBD) {
     idCliente: cliente.id,
     telefono: cliente.telefono,
     correo: cliente.correo,
+    direccion: cliente.direccion,
     origen: c.solicitud.origen,
     solicitud: c.solicitud.descripcion,
     subtotal: redondear(Number(c.subtotal)),
@@ -462,10 +465,34 @@ cotizacionesRouter.patch("/:id/estado", async (req, res) => {
 // POST /cotizaciones/:id/pedido  ->  convertir una cotización aprobada en pedido
 // ---------------------------------------------------------------------
 
+// La fecha de entrega o instalación queda como cita en la Agenda
+const pedidoSchema = z.object({
+  entrega: z.object({
+    tipo: z.enum(["ENTREGA", "INSTALACION"], { error: "Elige si es entrega o instalación." }),
+    idResponsable: z.string().trim().min(1, "Selecciona al responsable."),
+    fecha: fechaCita,
+    horaInicio: horaTexto,
+    horaFin: horaTexto,
+    direccion: z.string().trim().max(250, "La dirección es demasiado larga.").nullable().optional(),
+    notas: z.string().trim().max(500, "Las notas son demasiado largas.").nullable().optional(),
+  }, { error: "Indica la fecha de entrega." }),
+  avisarCliente: z.boolean().optional(),
+});
+
 cotizacionesRouter.post("/:id/pedido", async (req, res) => {
   const idUsuario = req.usuario!.id;
+  const resultado = pedidoSchema.safeParse(req.body);
+
+  if (!resultado.success) {
+    res.status(400).json({ error: resultado.error.issues[0]?.message ?? "Datos inválidos." });
+    return;
+  }
+
+  const { entrega, avisarCliente: avisar } = resultado.data;
 
   try {
+    const { inicio, fin } = validarHorario(entrega.fecha, entrega.horaInicio, entrega.horaFin);
+
     const pedido = await prisma.$transaction(async (tx) => {
       const cotizacion = await tx.cotizacion.findUnique({
         where: { id: req.params.id },
@@ -474,7 +501,12 @@ cotizacionesRouter.post("/:id/pedido", async (req, res) => {
           estado: true,
           total: true,
           pedido: { select: { id: true } },
-          solicitud: { select: { idCliente: true } },
+          solicitud: {
+            select: {
+              idCliente: true,
+              cliente: { select: { nombre: true, apellido: true, correo: true, direccion: true } },
+            },
+          },
         },
       });
 
@@ -488,7 +520,14 @@ cotizacionesRouter.post("/:id/pedido", async (req, res) => {
 
       const usuario = await usuarioQueRegistra(tx, idUsuario);
 
-      return tx.pedido.create({
+      const responsable = await tx.usuario.findFirst({
+        where: { id: entrega.idResponsable, activo: true },
+        select: { id: true },
+      });
+      if (!responsable) throw new ErrorNegocio(404, "El responsable no existe o está inactivo.");
+      await revisarEmpalme(tx, responsable.id, inicio, fin);
+
+      const creado = await tx.pedido.create({
         data: {
           idCotizacion: cotizacion.id,
           idCliente: cotizacion.solicitud.idCliente,
@@ -500,9 +539,35 @@ cotizacionesRouter.post("/:id/pedido", async (req, res) => {
         },
         select: { id: true },
       });
+
+      const direccion = entrega.direccion || cotizacion.solicitud.cliente.direccion || null;
+      await tx.cita.create({
+        data: {
+          tipo: entrega.tipo,
+          estado: "PROGRAMADA",
+          idUsuario: responsable.id,
+          idPedido: creado.id,
+          inicio,
+          fin,
+          direccion,
+          notas: entrega.notas || null,
+        },
+      });
+
+      return { id: creado.id, cliente: cotizacion.solicitud.cliente, direccion };
     });
 
-    res.status(201).json({ id: pedido.id, folio: folioDe(pedido.id) });
+    // El pedido ya quedó guardado; el correo es solo un aviso
+    let correo: ResultadoAviso = "no_solicitado";
+    if (avisar) {
+      correo = await avisarCliente(pedido.cliente.correo, {
+        folio: folioDe(pedido.id),
+        nombreCliente: `${pedido.cliente.nombre} ${pedido.cliente.apellido}`.trim(),
+        aviso: { tipo: "creado", cita: { tipo: entrega.tipo, inicio, fin, direccion: pedido.direccion } },
+      });
+    }
+
+    res.status(201).json({ id: pedido.id, folio: folioDe(pedido.id), fechaEntrega: entrega.fecha, correo });
   } catch (error) {
     // Dos clics a la vez: el índice único de idCotizacion lo detiene
     if ((error as { code?: string })?.code === "P2002") {

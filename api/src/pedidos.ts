@@ -2,6 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "./lib/prisma";
 import { ErrorNegocio, folioDe, soloFecha, usuarioQueRegistra } from "./cotizaciones";
+import { CITA_ACTIVA, horaDe } from "./citas";
+import { avisarCliente, type ResultadoAviso } from "./pedido-correo";
 
 export const pedidosRouter = Router();
 
@@ -21,7 +23,43 @@ const estadoSchema = z.object({
     ["EN_PROCESO", "LISTO_PARA_INSTALAR", "ENTREGADO", "FACTURADO", "CERRADO", "CANCELADO"],
     { error: "Estado no válido." }
   ),
+  avisarCliente: z.boolean().optional(),
 });
+
+// La próxima entrega o instalación activa del pedido (la que se ve en la Agenda)
+const seleccionEntrega = {
+  where: { estado: CITA_ACTIVA, tipo: { in: ["ENTREGA" as const, "INSTALACION" as const] } },
+  orderBy: { inicio: "asc" as const },
+  take: 1,
+  select: {
+    tipo: true,
+    inicio: true,
+    fin: true,
+    direccion: true,
+    usuario: { select: { nombre: true, apellido: true } },
+  },
+};
+
+type EntregaBD = {
+  tipo: "MEDICION" | "ENTREGA" | "INSTALACION";
+  inicio: Date;
+  fin: Date;
+  direccion: string | null;
+  usuario: { nombre: string; apellido: string };
+};
+
+function aEntrega(citas: EntregaBD[]) {
+  const c = citas[0];
+  if (!c) return null;
+  return {
+    tipo: c.tipo,
+    fecha: soloFecha(c.inicio),
+    horaInicio: horaDe(c.inicio),
+    horaFin: horaDe(c.fin),
+    direccion: c.direccion,
+    responsable: `${c.usuario.nombre} ${c.usuario.apellido}`.trim(),
+  };
+}
 
 // ---------------------------------------------------------------------
 // GET /pedidos  ->  lista completa (la pantalla filtra y pagina)
@@ -39,6 +77,7 @@ pedidosRouter.get("/", async (_req, res) => {
         creadoEn: true,
         cliente: { select: { nombre: true, apellido: true, telefono: true } },
         pagos: { select: { monto: true } },
+        citas: seleccionEntrega,
       },
     });
 
@@ -53,6 +92,7 @@ pedidosRouter.get("/", async (_req, res) => {
         pagado: suma(p.pagos),
         creadoEn: soloFecha(p.creadoEn),
         folioCotizacion: folioDe(p.idCotizacion),
+        entrega: aEntrega(p.citas),
       })),
     });
   } catch (error) {
@@ -75,8 +115,9 @@ pedidosRouter.get("/:id", async (req, res) => {
         estado: true,
         total: true,
         creadoEn: true,
-        cliente: { select: { nombre: true, apellido: true, telefono: true } },
+        cliente: { select: { nombre: true, apellido: true, telefono: true, correo: true } },
         pagos: { select: { monto: true } },
+        citas: seleccionEntrega,
         cotizacion: {
           select: {
             detalles: { select: { descripcion: true, cantidad: true, subtotal: true } },
@@ -104,11 +145,13 @@ pedidosRouter.get("/:id", async (req, res) => {
       folio: folioDe(p.id),
       cliente: `${p.cliente.nombre} ${p.cliente.apellido}`.trim(),
       telefono: p.cliente.telefono,
+      correo: p.cliente.correo,
       estado: p.estado,
       total: redondear(Number(p.total)),
       pagado: suma(p.pagos),
       creadoEn: soloFecha(p.creadoEn),
       folioCotizacion: folioDe(p.idCotizacion),
+      entrega: aEntrega(p.citas),
       conceptos: p.cotizacion.detalles.map((d) => ({
         nombre: d.descripcion,
         cantidad: Number(d.cantidad),
@@ -139,7 +182,7 @@ pedidosRouter.patch("/:id/estado", async (req, res) => {
     return;
   }
 
-  const { estado: nuevo } = resultado.data;
+  const { estado: nuevo, avisarCliente: avisar } = resultado.data;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -176,9 +219,45 @@ pedidosRouter.patch("/:id/estado", async (req, res) => {
           estadoNuevo: nuevo,
         },
       });
+
+      // Un pedido cancelado libera su entrega o instalación en la Agenda
+      if (nuevo === "CANCELADO") {
+        await tx.cita.updateMany({
+          where: { idPedido: req.params.id, estado: CITA_ACTIVA },
+          data: { estado: "CANCELADA" },
+        });
+      }
     });
 
-    res.json({ id: req.params.id, estado: nuevo });
+    let correo: ResultadoAviso = "no_solicitado";
+    if (avisar) {
+      const p = await prisma.pedido.findUnique({
+        where: { id: req.params.id },
+        select: {
+          id: true,
+          cliente: { select: { nombre: true, apellido: true, correo: true } },
+          citas: seleccionEntrega,
+        },
+      });
+      if (p) {
+        const cita = p.citas[0];
+        correo = await avisarCliente(p.cliente.correo, {
+          folio: folioDe(p.id),
+          nombreCliente: `${p.cliente.nombre} ${p.cliente.apellido}`.trim(),
+          aviso: {
+            tipo: "estado",
+            estado: nuevo,
+            // Solo se menciona la fecha si todavía falta la entrega
+            cita:
+              cita && cita.tipo !== "MEDICION" && ["EN_PROCESO", "LISTO_PARA_INSTALAR"].includes(nuevo)
+                ? { tipo: cita.tipo, inicio: cita.inicio, fin: cita.fin, direccion: cita.direccion }
+                : null,
+          },
+        });
+      }
+    }
+
+    res.json({ id: req.params.id, estado: nuevo, correo });
   } catch (error) {
     if (error instanceof ErrorNegocio) {
       res.status(error.estado).json({ error: error.message });

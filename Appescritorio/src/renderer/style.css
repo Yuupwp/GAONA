@@ -2030,3 +2030,93 @@ body {
     color: var(--gray);
     font-size: 12px;
 }
+
+/* Inicio: pestañas Hoy / Esta semana de las citas */
+.home-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.home-tab {
+    padding: 6px 12px;
+    white-space: nowrap;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--gray);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.home-tab.active {
+    background: var(--white);
+    color: var(--orange-dark);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* La semana puede traer muchas citas: la lista se desplaza */
+.home-activity-list.semana {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.home-dia {
+    position: sticky;
+    top: 0;
+    padding: 12px 0 6px;
+    background: var(--white);
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+}
+
+.home-dia.hoy {
+    color: var(--orange-dark);
+}
+
+.home-activity-item.pasada {
+    opacity: 0.55;
+}
+
+/* Botón Actualizar de la barra de arriba */
+.btn-actualizar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    margin-right: 20px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--black);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-actualizar:hover {
+    border-color: var(--orange);
+    color: var(--orange-dark);
+}
+
+.btn-actualizar-icono {
+    display: inline-block;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.btn-actualizar.girando .btn-actualizar-icono {
+    animation: girar-actualizar 0.7s linear;
+}
+
+@keyframes girar-actualizar {
+    to { transform: rotate(360deg); }
+}

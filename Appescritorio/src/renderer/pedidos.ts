@@ -26,9 +26,26 @@
         pagado: number;
         creadoEn: string;
         folioCotizacion: string;
+        entrega: Entrega | null;
     }
 
+    // Próxima entrega o instalación agendada (sale de la Agenda)
+    interface Entrega {
+        tipo: "ENTREGA" | "INSTALACION";
+        fecha: string;
+        horaInicio: string;
+        horaFin: string;
+        direccion: string | null;
+        responsable: string;
+    }
+
+    const TIPO_ENTREGA: Record<Entrega["tipo"], string> = {
+        ENTREGA: "Entrega",
+        INSTALACION: "Instalación",
+    };
+
     interface PedidoDetalle extends Pedido {
+        correo: string | null;
         conceptos: { nombre: string; cantidad: number; subtotal: number }[];
         historial: { estadoAnterior: Estado | null; estadoNuevo: Estado; fecha: string; usuario: string }[];
     }
@@ -109,6 +126,17 @@
             hour: "2-digit",
             minute: "2-digit",
         });
+    }
+
+    // Qué pasó con el aviso por correo al cliente
+    function textoCorreo(resultado: string | undefined): string {
+        switch (resultado) {
+            case "enviado": return " Le avisamos al cliente por correo.";
+            case "sin_correo": return " El cliente no tiene correo registrado; no se le avisó.";
+            case "no_configurado": return " El correo no está configurado; no se avisó al cliente.";
+            case "fallo": return " No se pudo enviar el correo al cliente.";
+            default: return "";
+        }
     }
 
     function iniciales(nombreCompleto: string): string {
@@ -236,7 +264,11 @@
                         <div class="ped-barra"><div class="ped-barra-relleno${liquidado ? " completa" : ""}" style="width:${porcentaje.toFixed(0)}%"></div></div>
                     </div>
 
-                    <span>${fecha(p.creadoEn)}</span>
+                    <div>
+                        ${p.entrega
+                        ? `<span>${fecha(p.entrega.fecha)}</span><span class="ped-sub">${esc(TIPO_ENTREGA[p.entrega.tipo])} · ${esc(p.entrega.horaInicio)}</span>`
+                        : `<span class="ped-sub">Sin fecha</span>`}
+                    </div>
 
                     <div>
                         <button type="button" class="cl-link" data-accion="detalle" data-id="${esc(p.id)}">Ver detalle</button>
@@ -352,6 +384,10 @@
                 <div><span>Estado actual</span><span class="cl-badge ${info.clase}">${esc(info.texto)}</span></div>
                 <div><span>Cotización de origen</span><strong>#${esc(p.folioCotizacion)}</strong></div>
                 <div><span>Fecha del pedido</span><strong>${fecha(p.creadoEn)}</strong></div>
+                <div><span>${p.entrega ? esc(TIPO_ENTREGA[p.entrega.tipo]) : "Entrega"}</span><strong>${p.entrega
+                    ? `${fecha(p.entrega.fecha)}, ${esc(p.entrega.horaInicio)} a ${esc(p.entrega.horaFin)}`
+                    : "Sin fecha (agéndala en la Agenda)"}</strong></div>
+                ${p.entrega ? `<div><span>Responsable</span><strong>${esc(p.entrega.responsable)}</strong></div>` : ""}
             </div>
 
             ${conceptos ? `<h4 class="cot-detalle-titulo">Conceptos (antes de IVA)</h4><div class="cot-conceptos">${conceptos}</div>` : ""}
@@ -363,7 +399,13 @@
                 : `<div class="cl-field">
                         <label for="ped-f-estado">Cambiar estado</label>
                         <select id="ped-f-estado">${opciones}</select>
-                    </div>`
+                    </div>
+                    <label class="cl-check${p.correo ? "" : " desactivada"}">
+                        <input id="ped-f-avisar" type="checkbox"${p.correo ? " checked" : " disabled"}>
+                        <span>${p.correo
+                        ? `Avisar al cliente del cambio por correo (${esc(p.correo)})`
+                        : "Avisar al cliente por correo (no tiene correo registrado)"}</span>
+                    </label>`
             }
 
             <div class="cl-modal-actions">
@@ -383,6 +425,7 @@
         if (!p || !selector || ocupado) return;
 
         const nuevo = selector.value as Estado;
+        const avisarAlCliente = (document.getElementById("ped-f-avisar") as HTMLInputElement | null);
 
         if (nuevo === p.estado) {
             avisar("El pedido ya está en ese estado.", true);
@@ -401,13 +444,19 @@
         ocupado = true;
 
         try {
-            await api(`/pedidos/${encodeURIComponent(id)}/estado`, {
+            const respuesta = await api<{ correo?: string }>(`/pedidos/${encodeURIComponent(id)}/estado`, {
                 method: "PATCH",
-                body: JSON.stringify({ estado: nuevo }),
+                body: JSON.stringify({
+                    estado: nuevo,
+                    avisarCliente: Boolean(avisarAlCliente?.checked && !avisarAlCliente.disabled),
+                }),
             });
 
             modalDetalle.classList.add("hidden");
-            avisar(`Pedido #${p.folio} actualizado a "${ESTADOS[nuevo].texto}".`);
+            avisar(
+                `Pedido #${p.folio} actualizado a "${ESTADOS[nuevo].texto}".` + textoCorreo(respuesta.correo),
+                respuesta.correo === "fallo"
+            );
         } catch (error) {
             avisar(mensajeDe(error), true);
         } finally {

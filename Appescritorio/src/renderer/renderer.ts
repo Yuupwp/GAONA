@@ -195,3 +195,39 @@ menuItems.forEach((item) => {
     });
 
 });
+
+// ========================================
+// Botón Actualizar (y F5): vuelve a leer los datos de la pantalla abierta.
+// Cada módulo puede atender "gaona:actualizar" para recargar sin cambiar de vista;
+// si ninguno lo atiende, se repite el clic del menú, que ya recarga la sección.
+// ========================================
+const botonActualizar = document.getElementById("btn-actualizar") as HTMLButtonElement | null;
+
+function actualizarPantalla(): void {
+    const activo = document.querySelector<HTMLButtonElement>(".menu-item.active[data-section]");
+    if (!activo) return;
+
+    const evento = new CustomEvent("gaona:actualizar", {
+        detail: { seccion: activo.dataset.section },
+        cancelable: true,
+    });
+
+    if (window.dispatchEvent(evento)) activo.click();
+
+    if (botonActualizar) {
+        botonActualizar.classList.remove("girando");
+        void botonActualizar.offsetWidth; // reinicia la animación
+        botonActualizar.classList.add("girando");
+    }
+}
+
+botonActualizar?.addEventListener("click", actualizarPantalla);
+
+// F5 recargaba toda la ventana (y la sesión); ahora solo actualiza los datos
+document.addEventListener("keydown", (evento) => {
+    const enPantallaPrincipal = !document.getElementById("main-screen")?.classList.contains("hidden");
+    if (evento.key === "F5" && enPantallaPrincipal) {
+        evento.preventDefault();
+        actualizarPantalla();
+    }
+});

@@ -885,3 +885,10 @@ document.addEventListener("gaona:sesion", () => {
     empleados = [];
     if (window.gaonaSesion.puede("empleados")) void cargarEmpleados();
 });
+
+// Botón Actualizar de la barra de arriba
+window.addEventListener("gaona:actualizar", (evento) => {
+    if ((evento as CustomEvent<{ seccion: string }>).detail.seccion !== "empleados") return;
+    evento.preventDefault();
+    if (window.gaonaSesion.puede("empleados")) void cargarEmpleados();
+});

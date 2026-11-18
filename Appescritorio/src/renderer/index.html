@@ -191,6 +191,11 @@
 
                 </div>
 
+                <!-- Vuelve a leer los datos de la pantalla abierta (también con F5) -->
+                <button type="button" class="btn-actualizar" id="btn-actualizar" title="Actualizar (F5)">
+                    <span class="btn-actualizar-icono" aria-hidden="true">⟳</span>
+                    Actualizar
+                </button>
 
                 <div class="user-info">
 
@@ -300,13 +305,19 @@
 
                         </div>
 
-                        <!-- Citas de hoy -->
+                        <!-- Citas de hoy / de esta semana -->
                         <div class="home-panel home-activity-panel">
 
                             <div class="home-panel-heading">
                                 <div>
-                                    <h3>Citas de hoy</h3>
-                                    <p>Mediciones, entregas e instalaciones.</p>
+                                    <h3 id="inicio-citas-titulo">Citas de hoy</h3>
+                                    <p id="inicio-citas-sub">Mediciones, entregas e instalaciones.</p>
+                                </div>
+                                <div class="home-tabs" role="tablist" aria-label="Periodo de las citas">
+                                    <button type="button" class="home-tab active" role="tab" aria-selected="true"
+                                        data-periodo="hoy">Hoy</button>
+                                    <button type="button" class="home-tab" role="tab" aria-selected="false"
+                                        data-periodo="semana">Esta semana</button>
                                 </div>
                             </div>
 
@@ -680,6 +691,117 @@
                     </div>
 
 
+                    <!-- MODAL: CREAR PEDIDO CON FECHA DE ENTREGA -->
+
+                    <div id="cot-pedido" class="cl-overlay hidden">
+                        <div class="cl-modal cot-pedido-modal" role="dialog" aria-modal="true" aria-labelledby="cot-p-titulo">
+
+                            <div class="cl-modal-head">
+                                <div>
+                                    <h3 id="cot-p-titulo">Crear pedido</h3>
+                                    <span class="cot-subtitulo" id="cot-p-subtitulo"></span>
+                                </div>
+                                <button id="cot-p-cerrar" class="cl-close" type="button"
+                                    aria-label="Cerrar">×</button>
+                            </div>
+
+                            <form id="cot-p-form" novalidate>
+                                <p class="cot-subtitulo">La fecha de entrega queda agendada en la Agenda.</p>
+
+                                <div class="cl-form-grid">
+                                    <div class="cl-field">
+                                        <label for="cot-p-tipo">¿Qué se hará?*</label>
+                                        <select id="cot-p-tipo">
+                                            <option value="INSTALACION">Instalación</option>
+                                            <option value="ENTREGA">Entrega</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="cl-field">
+                                        <label for="cot-p-responsable">Responsable*</label>
+                                        <select id="cot-p-responsable"></select>
+                                        <span class="cl-error" id="cot-p-e-responsable"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Disponibilidad de la semana: carga por día y horas ocupadas -->
+                                <div class="disp">
+                                    <div class="disp-head">
+                                        <button type="button" class="disp-nav" id="disp-anterior"
+                                            aria-label="Semana anterior">‹</button>
+                                        <strong id="disp-rango">Semana</strong>
+                                        <button type="button" class="disp-nav" id="disp-siguiente"
+                                            aria-label="Semana siguiente">›</button>
+                                    </div>
+                                    <div class="disp-dias" id="disp-dias"></div>
+                                    <div class="disp-leyenda">
+                                        <span><i class="disp-punto libre"></i>Libre</span>
+                                        <span><i class="disp-punto media"></i>Carga media</span>
+                                        <span><i class="disp-punto llena"></i>Día lleno</span>
+                                    </div>
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="cot-p-fecha">Fecha de entrega*</label>
+                                    <input id="cot-p-fecha" type="date">
+                                    <span class="cl-error" id="cot-p-e-fecha"></span>
+                                </div>
+
+                                <div class="cl-form-grid">
+                                    <div class="cl-field">
+                                        <label for="cot-p-inicio">Hora de inicio*</label>
+                                        <input id="cot-p-inicio" type="time" step="900" value="10:00">
+                                    </div>
+                                    <div class="cl-field">
+                                        <label for="cot-p-fin">Hora de fin*</label>
+                                        <input id="cot-p-fin" type="time" step="900" value="12:00">
+                                    </div>
+                                </div>
+                                <span class="cl-error" id="cot-p-e-hora"></span>
+
+                                <!-- Horas del día elegido (8:00 a 19:00) -->
+                                <div class="disp-dia hidden" id="disp-dia">
+                                    <div class="disp-dia-head">
+                                        <strong id="disp-dia-titulo"></strong>
+                                        <button type="button" class="cl-link" id="disp-libre">Siguiente horario
+                                            libre</button>
+                                    </div>
+                                    <div class="disp-franja" id="disp-franja"></div>
+                                    <div class="disp-horas" id="disp-horas"></div>
+                                    <div class="disp-lista" id="disp-lista"></div>
+                                </div>
+                                <div class="disp-aviso hidden" id="disp-aviso" role="alert"></div>
+
+                                <div class="cl-field">
+                                    <label for="cot-p-direccion">Dirección</label>
+                                    <input id="cot-p-direccion" type="text" maxlength="250" autocomplete="off"
+                                        placeholder="Dirección del cliente">
+                                </div>
+
+                                <div class="cl-field">
+                                    <label for="cot-p-notas">Notas</label>
+                                    <textarea id="cot-p-notas" rows="2" maxlength="500"
+                                        placeholder="Indicaciones para el equipo"></textarea>
+                                </div>
+
+                                <label class="cl-check">
+                                    <input id="cot-p-avisar" type="checkbox" checked>
+                                    <span id="cot-p-avisar-texto">Avisar al cliente por correo</span>
+                                </label>
+
+                                <div class="cl-form-error hidden" id="cot-p-error"></div>
+
+                                <div class="cl-modal-actions">
+                                    <button id="cot-p-cancelar" class="cl-btn cl-btn-outline"
+                                        type="button">Cancelar</button>
+                                    <button id="cot-p-guardar" class="cl-btn cl-btn-primary" type="submit">Crear
+                                        pedido</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+
                     <!-- AVISOS -->
 
                     <div id="cot-toast" class="cl-toast hidden" role="status"></div>
@@ -929,7 +1051,7 @@
                             <span>Estado</span>
                             <span>Total</span>
                             <span>Pagado</span>
-                            <span>Fecha</span>
+                            <span>Entrega</span>
                             <span>Acciones</span>
                         </div>
 
@@ -1098,6 +1220,12 @@
                                     <textarea id="ag-f-notas" rows="2" maxlength="500"
                                         placeholder="Ej. llevar muestras, tocar en la puerta trasera"></textarea>
                                 </div>
+
+                                <!-- Solo al reprogramar una entrega o instalación -->
+                                <label class="cl-check hidden" id="ag-f-avisar-campo">
+                                    <input id="ag-f-avisar" type="checkbox" checked>
+                                    <span>Avisar al cliente de la nueva fecha por correo</span>
+                                </label>
 
                                 <div class="cl-form-error hidden" id="ag-form-error"></div>
 
@@ -1911,8 +2039,6 @@
     <script src="../../dist/renderer/clientes.js"></script>
     <script src="../../dist/renderer/calendario.js"></script>
     <script type="module" src="../../dist/renderer/producto.js"></script>
-    <script src="../../dist/renderer/cotizaciones.js"></script>
-    <script src="../../dist/renderer/pedidos.js"></script>
     <script src="../../dist/renderer/finanzas.js"></script>
     <script src="../../dist/renderer/cotizaciones.js"></script>
     <script src="../../dist/renderer/pedidos.js"></script>
