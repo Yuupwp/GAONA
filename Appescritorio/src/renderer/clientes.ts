@@ -657,7 +657,7 @@
         const sinAtender = window.dispatchEvent(evento);
 
         if (sinAtender) {
-            avisar("El módulo de cotizaciones todavía no está conectado.");
+            avisar("No tienes acceso al módulo de Cotizaciones.");
         }
     }
 
@@ -833,6 +833,15 @@
                 void cargarLista();
             }
         });
+
+    // Botón Actualizar: si hay una ficha abierta, se vuelve a leer sin regresar a la lista
+    window.addEventListener("gaona:actualizar", (evento) => {
+        if ((evento as CustomEvent<{ seccion: string }>).detail.seccion !== "clientes") return;
+        evento.preventDefault();
+
+        if (estado.detalleId) void abrirDetalle(estado.detalleId, estado.pestana);
+        else void cargarLista();
+    });
 
     el("cl-nuevo").addEventListener("click", () => abrirFormulario());
 

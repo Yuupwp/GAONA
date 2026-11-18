@@ -1196,4 +1196,12 @@ document.addEventListener("gaona:sesion", () => {
     }
 });
 
-
+// Botón Actualizar de la barra de arriba
+window.addEventListener("gaona:actualizar", (evento) => {
+    if ((evento as CustomEvent<{ seccion: string }>).detail.seccion !== "inventario") return;
+    evento.preventDefault();
+    if (!window.gaonaSesion.puede("inventario")) return;
+    void cargarCatalogo();
+    void cargarInventario();
+    void cargarMovimientos();
+});

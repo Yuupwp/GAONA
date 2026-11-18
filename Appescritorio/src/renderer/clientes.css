@@ -847,3 +847,25 @@
         display: none;
     }
 }
+/* Casilla con texto (por ejemplo, "Avisar al cliente por correo") */
+.cl-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0 14px;
+
+    font-size: 13px;
+    color: var(--black);
+    cursor: pointer;
+}
+
+.cl-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--orange);
+}
+
+.cl-check.desactivada {
+    color: var(--gray);
+    cursor: default;
+}

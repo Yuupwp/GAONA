@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./lib/prisma";
 import { ErrorNegocio, folioDe, soloFecha } from "./cotizaciones";
+import { avisarCliente, type ResultadoAviso } from "./pedido-correo";
 
 export const citasRouter = Router();
 
@@ -14,12 +15,12 @@ export const citasRouter = Router();
 // ---------------------------------------------------------------------
 
 // Una cita "activa" ocupa la agenda del responsable
-const CITA_ACTIVA = { in: ["PROGRAMADA" as const, "REPROGRAMADA" as const] };
+export const CITA_ACTIVA = { in: ["PROGRAMADA" as const, "REPROGRAMADA" as const] };
 const SOLICITUD_ABIERTA = { in: ["NUEVA" as const, "EN_REVISION" as const, "VISITA_PROGRAMADA" as const] };
 const PEDIDO_ACTIVO = { in: ["EN_PROCESO" as const, "LISTO_PARA_INSTALAR" as const, "ENTREGADO" as const] };
 
-const fechaTexto = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha no es válida.");
-const horaTexto = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "La hora no es válida.");
+export const fechaTexto = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha no es válida.");
+export const horaTexto = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "La hora no es válida.");
 
 function inicioDeHoy(): Date {
   const ahora = new Date();
@@ -31,7 +32,7 @@ function aFecha(fecha: string, hora: string): Date {
   return new Date(`${fecha}T${hora}:00`);
 }
 
-function horaDe(valor: Date): string {
+export function horaDe(valor: Date): string {
   return `${String(valor.getHours()).padStart(2, "0")}:${String(valor.getMinutes()).padStart(2, "0")}`;
 }
 
@@ -49,7 +50,7 @@ const seleccionCita = {
     select: { id: true, cliente: { select: { nombre: true, apellido: true, telefono: true } } },
   },
   pedido: {
-    select: { id: true, cliente: { select: { nombre: true, apellido: true, telefono: true } } },
+    select: { id: true, cliente: { select: { nombre: true, apellido: true, telefono: true, correo: true } } },
   },
 } satisfies Prisma.CitaSelect;
 
@@ -86,7 +87,7 @@ function responderError(res: import("express").Response, error: unknown, mensaje
 }
 
 // Revisa que el responsable esté libre en ese horario
-async function revisarEmpalme(
+export async function revisarEmpalme(
   tx: Prisma.TransactionClient,
   idUsuario: string,
   inicio: Date,
@@ -112,7 +113,7 @@ async function revisarEmpalme(
   }
 }
 
-function validarHorario(fecha: string, horaInicio: string, horaFin: string): { inicio: Date; fin: Date } {
+export function validarHorario(fecha: string, horaInicio: string, horaFin: string): { inicio: Date; fin: Date } {
   const inicio = aFecha(fecha, horaInicio);
   const fin = aFecha(fecha, horaFin);
 
@@ -309,6 +310,8 @@ const cambioSchema = z.discriminatedUnion("accion", [
     horaInicio: horaTexto,
     horaFin: horaTexto,
     idResponsable: z.string().trim().min(1).optional(),
+    // Solo aplica a entregas e instalaciones: se manda la nueva fecha al cliente
+    avisarCliente: z.boolean().optional(),
   }),
 ]);
 
@@ -376,7 +379,18 @@ citasRouter.patch("/:id", async (req, res) => {
       return tx.cita.findUniqueOrThrow({ where: { id: actual.id }, select: seleccionCita });
     });
 
-    res.json(aRespuesta(cita));
+    // Si cambió la fecha de una entrega o instalación, se avisa al cliente
+    let correo: ResultadoAviso = "no_solicitado";
+    if (datos.accion === "reprogramar" && datos.avisarCliente && cita.pedido && cita.tipo !== "MEDICION") {
+      const cliente = cita.pedido.cliente;
+      correo = await avisarCliente(cliente.correo, {
+        folio: folioDe(cita.pedido.id),
+        nombreCliente: `${cliente.nombre} ${cliente.apellido}`.trim(),
+        aviso: { tipo: "fecha", cita: { tipo: cita.tipo, inicio: cita.inicio, fin: cita.fin, direccion: cita.direccion } },
+      });
+    }
+
+    res.json({ ...aRespuesta(cita), correo });
   } catch (error) {
     responderError(res, error, "No se pudo actualizar la cita.");
   }

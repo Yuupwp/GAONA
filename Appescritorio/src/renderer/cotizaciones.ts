@@ -22,6 +22,7 @@
         cliente: string;
         telefono: string;
         correo: string | null;
+        direccion: string | null;
         estado: Estado;
         origen: "WEB" | "ESCRITORIO";
         subtotal: number;
@@ -126,6 +127,320 @@
         anticipo: el<HTMLSpanElement>("cot-e-anticipo"),
         lineas: el<HTMLSpanElement>("cot-e-lineas"),
     };
+
+    // Crear pedido: la fecha de entrega queda como cita en la Agenda
+    const modalPedido = el<HTMLDivElement>("cot-pedido");
+    const formPedido = el<HTMLFormElement>("cot-p-form");
+    const errorPedido = el<HTMLDivElement>("cot-p-error");
+    const botonPedido = el<HTMLButtonElement>("cot-p-guardar");
+    const camposPedido = {
+        tipo: el<HTMLSelectElement>("cot-p-tipo"),
+        responsable: el<HTMLSelectElement>("cot-p-responsable"),
+        fecha: el<HTMLInputElement>("cot-p-fecha"),
+        inicio: el<HTMLInputElement>("cot-p-inicio"),
+        fin: el<HTMLInputElement>("cot-p-fin"),
+        direccion: el<HTMLInputElement>("cot-p-direccion"),
+        notas: el<HTMLTextAreaElement>("cot-p-notas"),
+        avisar: el<HTMLInputElement>("cot-p-avisar"),
+    };
+    const erroresPedido = {
+        responsable: el<HTMLSpanElement>("cot-p-e-responsable"),
+        fecha: el<HTMLSpanElement>("cot-p-e-fecha"),
+        hora: el<HTMLSpanElement>("cot-p-e-hora"),
+    };
+    let cotizacionAPedido: Cotizacion | null = null;
+
+    // ---------- Disponibilidad de la semana (Crear pedido) ----------
+    // Horario de trabajo y criterios de carga acordados con el equipo
+    const JORNADA_INICIO = 8 * 60;  // 8:00
+    const JORNADA_FIN = 19 * 60;    // 19:00
+    const DIA_LLENO_CITAS = 4;      // citas en total
+    const DIA_LLENO_MINUTOS = 6 * 60; // horas ocupadas del responsable
+    const DIA_MEDIO_CITAS = 2;
+
+    type TipoCitaAg = "MEDICION" | "ENTREGA" | "INSTALACION";
+    interface CitaAg {
+        id: string;
+        tipo: TipoCitaAg;
+        estado: string;
+        fecha: string;
+        horaInicio: string;
+        horaFin: string;
+        idResponsable: string;
+        responsable: string;
+        cliente: string;
+    }
+    const TIPO_CITA: Record<TipoCitaAg, string> = {
+        MEDICION: "visita para medir",
+        ENTREGA: "entrega",
+        INSTALACION: "instalación",
+    };
+
+    const disp = {
+        dias: el<HTMLDivElement>("disp-dias"),
+        rango: el<HTMLElement>("disp-rango"),
+        anterior: el<HTMLButtonElement>("disp-anterior"),
+        siguiente: el<HTMLButtonElement>("disp-siguiente"),
+        dia: el<HTMLDivElement>("disp-dia"),
+        diaTitulo: el<HTMLElement>("disp-dia-titulo"),
+        franja: el<HTMLDivElement>("disp-franja"),
+        horas: el<HTMLDivElement>("disp-horas"),
+        lista: el<HTMLDivElement>("disp-lista"),
+        aviso: el<HTMLDivElement>("disp-aviso"),
+        libre: el<HTMLButtonElement>("disp-libre"),
+    };
+
+    let semanaLunes = lunesDe(hoy());
+    const citasPorSemana = new Map<string, CitaAg[]>(); // clave: lunes "AAAA-MM-DD"
+    let hayEmpalme = false;
+
+    function claveDe(d: Date): string {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function aDia(valor: string): Date {
+        return new Date(`${valor}T00:00:00`);
+    }
+
+    function sumarDias(valor: string, dias: number): string {
+        const d = aDia(valor);
+        d.setDate(d.getDate() + dias);
+        return claveDe(d);
+    }
+
+    // La semana va de lunes a domingo
+    function lunesDe(valor: string): string {
+        const d = aDia(valor);
+        return sumarDias(valor, -((d.getDay() + 6) % 7));
+    }
+
+    function minutos(hora: string): number {
+        const [h, m] = hora.split(":").map(Number);
+        return h * 60 + m;
+    }
+
+    function horaTexto(total: number): string {
+        return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+    }
+
+    async function citasDeSemana(lunes: string): Promise<CitaAg[]> {
+        const guardadas = citasPorSemana.get(lunes);
+        if (guardadas) return guardadas;
+
+        const datos = await api<{ items: CitaAg[] }>(
+            `/citas?desde=${lunes}&hasta=${sumarDias(lunes, 6)}`
+        );
+        // Solo las activas ocupan la agenda
+        const activas = datos.items.filter((c) => c.estado === "PROGRAMADA" || c.estado === "REPROGRAMADA");
+        citasPorSemana.set(lunes, activas);
+        return activas;
+    }
+
+    function citasDelDia(dia: string): CitaAg[] {
+        return (citasPorSemana.get(lunesDe(dia)) ?? [])
+            .filter((c) => c.fecha === dia)
+            .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+    }
+
+    function cargaDelDia(dia: string): "libre" | "media" | "llena" {
+        const citas = citasDelDia(dia);
+        const ocupado = citas
+            .filter((c) => c.idResponsable === camposPedido.responsable.value)
+            .reduce((total, c) => total + minutos(c.horaFin) - minutos(c.horaInicio), 0);
+
+        if (citas.length >= DIA_LLENO_CITAS || ocupado >= DIA_LLENO_MINUTOS) return "llena";
+        if (citas.length >= DIA_MEDIO_CITAS) return "media";
+        return "libre";
+    }
+
+    function diaLargo(dia: string): string {
+        const texto = aDia(dia).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    async function irASemana(lunes: string): Promise<void> {
+        semanaLunes = lunes;
+        disp.dias.innerHTML = '<span class="cot-subtitulo">Cargando agenda…</span>';
+        try {
+            await citasDeSemana(lunes);
+        } catch (error) {
+            disp.dias.innerHTML = `<span class="cot-subtitulo">${esc(mensajeDe(error))}</span>`;
+            return;
+        }
+        // Si mientras tanto se cambió de semana, se pinta la última
+        if (semanaLunes === lunes) pintarDisponibilidad();
+    }
+
+    function pintarDisponibilidad(): void {
+        const hoyTexto = hoy();
+        const elegido = camposPedido.fecha.value;
+        const domingo = sumarDias(semanaLunes, 6);
+
+        disp.rango.textContent = `${fecha(semanaLunes)} al ${fecha(domingo)}`;
+        disp.anterior.disabled = semanaLunes <= lunesDe(hoyTexto);
+
+        disp.dias.innerHTML = Array.from({ length: 7 }, (_, i) => {
+            const dia = sumarDias(semanaLunes, i);
+            const pasado = dia < hoyTexto;
+            const total = citasDelDia(dia).length;
+            const nombre = aDia(dia).toLocaleDateString("es-MX", { weekday: "short" }).replace(".", "");
+            return `
+                <button type="button" class="disp-d ${pasado ? "" : cargaDelDia(dia)}${dia === elegido ? " elegido" : ""}"
+                    data-dia="${dia}" ${pasado ? "disabled" : ""}
+                    title="${esc(diaLargo(dia))}: ${total} cita${total === 1 ? "" : "s"}">
+                    <span>${esc(nombre)}</span>
+                    <strong>${aDia(dia).getDate()}</strong>
+                    <small>${pasado ? "—" : `${total} cita${total === 1 ? "" : "s"}`}</small>
+                </button>`;
+        }).join("");
+
+        pintarDiaElegido();
+    }
+
+    // Franja de 8:00 a 19:00 con lo ocupado y el horario que se está eligiendo
+    function pintarDiaElegido(): void {
+        const dia = camposPedido.fecha.value;
+        if (!dia || !citasPorSemana.has(lunesDe(dia))) {
+            disp.dia.classList.add("hidden");
+            revisarDisponibilidad();
+            return;
+        }
+
+        const citas = citasDelDia(dia);
+        const responsable = camposPedido.responsable.value;
+        const posicion = (inicio: number, fin: number) => {
+            const a = Math.max(inicio, JORNADA_INICIO);
+            const b = Math.min(fin, JORNADA_FIN);
+            const largo = JORNADA_FIN - JORNADA_INICIO;
+            return `left:${((a - JORNADA_INICIO) / largo) * 100}%;width:${Math.max(0, ((b - a) / largo) * 100)}%`;
+        };
+
+        disp.diaTitulo.textContent = `${diaLargo(dia)} · ${citas.length} cita${citas.length === 1 ? "" : "s"}`;
+
+        const bloques = citas.map((c) => {
+            const suyo = c.idResponsable === responsable;
+            return `<div class="disp-bloque ${suyo ? "suyo" : "otro"}" style="${posicion(minutos(c.horaInicio), minutos(c.horaFin))}"
+                title="${esc(`${c.horaInicio}–${c.horaFin} · ${TIPO_CITA[c.tipo]} · ${c.cliente} · ${c.responsable}`)}"></div>`;
+        });
+
+        const { inicio, fin } = camposPedido;
+        if (inicio.value && fin.value && fin.value > inicio.value) {
+            bloques.push(`<div class="disp-bloque elegido" id="disp-elegido" style="${posicion(minutos(inicio.value), minutos(fin.value))}"></div>`);
+        }
+        disp.franja.innerHTML = bloques.join("");
+
+        disp.horas.innerHTML = Array.from({ length: 12 }, (_, i) => `<span>${8 + i}</span>`).join("");
+
+        disp.lista.innerHTML = citas.length === 0
+            ? '<div class="vacia">No hay citas este día.</div>'
+            : citas
+                .map((c) => `<div class="${c.idResponsable === responsable ? "suyo" : ""}">${esc(c.horaInicio)}–${esc(c.horaFin)} · ${esc(TIPO_CITA[c.tipo])} · ${esc(c.cliente)} · ${esc(c.responsable)}</div>`)
+                .join("");
+
+        disp.dia.classList.remove("hidden");
+        revisarDisponibilidad();
+    }
+
+    // Empalme con el mismo responsable: se bloquea. Día cargado o fuera de horario: solo se avisa.
+    function revisarDisponibilidad(): void {
+        const { fecha: campoFecha, inicio, fin, responsable } = camposPedido;
+        hayEmpalme = false;
+        disp.aviso.className = "disp-aviso hidden";
+
+        const dia = campoFecha.value;
+        if (!dia || !inicio.value || !fin.value || fin.value <= inicio.value) {
+            botonPedido.disabled = ocupado;
+            return;
+        }
+
+        const desde = minutos(inicio.value);
+        const hasta = minutos(fin.value);
+        const choque = responsable.value
+            ? citasDelDia(dia).find(
+                (c) => c.idResponsable === responsable.value && minutos(c.horaInicio) < hasta && minutos(c.horaFin) > desde
+            )
+            : undefined;
+
+        let mensaje = "";
+        let clase = "";
+
+        if (choque) {
+            hayEmpalme = true;
+            clase = "error";
+            mensaje = `Empalma con la ${TIPO_CITA[choque.tipo]} de ${choque.cliente} de ${choque.horaInicio} a ${choque.horaFin} (${choque.responsable}). Elige otra fecha u hora, u otro responsable.`;
+        } else if (citasPorSemana.has(lunesDe(dia)) && cargaDelDia(dia) === "llena") {
+            clase = "advertencia";
+            mensaje = "Ese día ya tiene mucha carga. Puedes agendarlo, pero conviene revisar otro día.";
+        } else if (desde < JORNADA_INICIO || hasta > JORNADA_FIN) {
+            clase = "advertencia";
+            mensaje = "El horario queda fuera de la jornada de trabajo (8:00 a 19:00).";
+        }
+
+        document.getElementById("disp-elegido")?.classList.toggle("choca", hayEmpalme);
+
+        if (mensaje) {
+            disp.aviso.textContent = mensaje;
+            disp.aviso.className = `disp-aviso ${clase}`;
+        }
+        botonPedido.disabled = ocupado || hayEmpalme;
+    }
+
+    // Busca el primer hueco del responsable con la misma duración, desde el día y la hora elegidos.
+    // Se salta los días llenos para repartir la carga.
+    async function siguienteHorarioLibre(): Promise<void> {
+        const { fecha: campoFecha, inicio, fin, responsable } = camposPedido;
+        if (!responsable.value) {
+            erroresPedido.responsable.textContent = "Selecciona al responsable.";
+            return;
+        }
+
+        const duracion = inicio.value && fin.value && fin.value > inicio.value
+            ? minutos(fin.value) - minutos(inicio.value)
+            : 120;
+        const ahora = new Date();
+        const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
+        const hoyTexto = hoy();
+        let dia = campoFecha.value && campoFecha.value >= hoyTexto ? campoFecha.value : hoyTexto;
+        let desde = campoFecha.value === dia && inicio.value ? minutos(inicio.value) : JORNADA_INICIO;
+
+        disp.libre.disabled = true;
+        try {
+            for (let intento = 0; intento < 60; intento++) {
+                await citasDeSemana(lunesDe(dia));
+                if (cargaDelDia(dia) === "llena") {
+                    dia = sumarDias(dia, 1);
+                    desde = JORNADA_INICIO;
+                    continue;
+                }
+                const ocupadas = citasDelDia(dia).filter((c) => c.idResponsable === responsable.value);
+
+                // Hoy no se ofrecen horas que ya pasaron (se redondea al cuarto de hora siguiente)
+                let t = Math.max(desde, JORNADA_INICIO, dia === hoyTexto ? Math.ceil((ahoraMinutos + 1) / 15) * 15 : 0);
+                for (; t + duracion <= JORNADA_FIN; t += 15) {
+                    const choca = ocupadas.some((c) => minutos(c.horaInicio) < t + duracion && minutos(c.horaFin) > t);
+                    if (!choca) {
+                        campoFecha.value = dia;
+                        inicio.value = horaTexto(t);
+                        fin.value = horaTexto(t + duracion);
+                        erroresPedido.fecha.textContent = "";
+                        erroresPedido.hora.textContent = "";
+                        await irASemana(lunesDe(dia));
+                        return;
+                    }
+                }
+
+                dia = sumarDias(dia, 1);
+                desde = JORNADA_INICIO;
+            }
+            disp.aviso.textContent = "No encontré un horario libre en los próximos 60 días para ese responsable.";
+            disp.aviso.className = "disp-aviso advertencia";
+        } catch (error) {
+            disp.aviso.textContent = mensajeDe(error);
+            disp.aviso.className = "disp-aviso error";
+        } finally {
+            disp.libre.disabled = false;
+        }
+    }
 
     const modalDetalle = el<HTMLDivElement>("cot-detalle");
     const detalleContenido = el<HTMLDivElement>("cot-detalle-contenido");
@@ -611,31 +926,135 @@
         await recargar();
     }
 
+    // Qué pasó con el aviso por correo al cliente
+    function textoCorreo(resultado: string | undefined): string {
+        switch (resultado) {
+            case "enviado": return " Le avisamos al cliente por correo.";
+            case "sin_correo": return " El cliente no tiene correo registrado; no se le avisó.";
+            case "no_configurado": return " El correo no está configurado; no se avisó al cliente.";
+            case "fallo": return " No se pudo enviar el correo al cliente.";
+            default: return "";
+        }
+    }
+
     async function convertirEnPedido(id: string): Promise<void> {
         const c = COTIZACIONES.find((x) => x.id === id);
         if (!c || ocupado) return;
 
-        if (!window.confirm(`¿Crear el pedido de la cotización #${c.folio} por ${dinero(c.total)}?`)) {
-            return;
-        }
+        cotizacionAPedido = c;
+        formPedido.reset();
+        errorPedido.classList.add("hidden");
+        Object.values(erroresPedido).forEach((e) => (e.textContent = ""));
 
-        ocupado = true;
+        el("cot-p-subtitulo").textContent = `Cotización #${c.folio} · ${c.cliente} · ${dinero(c.total)}`;
+        camposPedido.fecha.min = hoy();
+        camposPedido.fecha.value = "";
+        camposPedido.direccion.value = c.direccion ?? "";
+
+        // Sin correo no hay a quién avisar
+        camposPedido.avisar.checked = Boolean(c.correo);
+        camposPedido.avisar.disabled = !c.correo;
+        camposPedido.avisar.closest("label")?.classList.toggle("desactivada", !c.correo);
+        el("cot-p-avisar-texto").textContent = c.correo
+            ? `Avisar al cliente por correo (${c.correo})`
+            : "Avisar al cliente por correo (no tiene correo registrado)";
+
+        camposPedido.responsable.innerHTML = '<option value="">Cargando…</option>';
+        modalDetalle.classList.add("hidden");
+        modalPedido.classList.remove("hidden");
 
         try {
-            const pedido = await api<{ folio: string }>(
-                `/cotizaciones/${encodeURIComponent(id)}/pedido`,
-                { method: "POST", body: JSON.stringify({}) }
-            );
-
-            modalDetalle.classList.add("hidden");
-            avisar(`Se creó el pedido #${pedido.folio}. Ya aparece en Pedidos y en Finanzas.`);
+            const opciones = await api<{ responsables: { id: string; nombre: string }[] }>("/citas/opciones");
+            camposPedido.responsable.innerHTML =
+                '<option value="">Selecciona…</option>' +
+                opciones.responsables.map((r) => `<option value="${esc(r.id)}">${esc(r.nombre)}</option>`).join("");
+            camposPedido.responsable.value = window.gaonaSesion?.actual()?.id ?? "";
         } catch (error) {
-            avisar(mensajeDe(error), true);
-        } finally {
-            ocupado = false;
+            camposPedido.responsable.innerHTML = '<option value="">Selecciona…</option>';
+            errorPedido.textContent = mensajeDe(error);
+            errorPedido.classList.remove("hidden");
         }
 
-        await recargar();
+        // La agenda se vuelve a leer cada vez que se abre, por si alguien agendó algo
+        citasPorSemana.clear();
+        await irASemana(lunesDe(hoy()));
+    }
+
+    function cerrarPedido(): void {
+        modalPedido.classList.add("hidden");
+        cotizacionAPedido = null;
+    }
+
+    async function guardarPedido(): Promise<void> {
+        const c = cotizacionAPedido;
+        if (!c || ocupado) return;
+
+        Object.values(erroresPedido).forEach((e) => (e.textContent = ""));
+        errorPedido.classList.add("hidden");
+        let ok = true;
+
+        if (!camposPedido.responsable.value) {
+            erroresPedido.responsable.textContent = "Selecciona al responsable.";
+            ok = false;
+        }
+        if (!camposPedido.fecha.value) {
+            erroresPedido.fecha.textContent = "Selecciona la fecha de entrega.";
+            ok = false;
+        } else if (camposPedido.fecha.value < hoy()) {
+            erroresPedido.fecha.textContent = "La fecha no puede ser pasada.";
+            ok = false;
+        }
+        if (!camposPedido.inicio.value || !camposPedido.fin.value || camposPedido.fin.value <= camposPedido.inicio.value) {
+            erroresPedido.hora.textContent = "La hora de fin debe ser después de la de inicio.";
+            ok = false;
+        }
+        if (hayEmpalme) {
+            erroresPedido.hora.textContent = "Ese horario empalma con otra cita del responsable. Elige otro.";
+            ok = false;
+        }
+        if (!ok) return;
+
+        ocupado = true;
+        botonPedido.disabled = true;
+
+        try {
+            const pedido = await api<{ folio: string; correo?: string }>(
+                `/cotizaciones/${encodeURIComponent(c.id)}/pedido`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        entrega: {
+                            tipo: camposPedido.tipo.value,
+                            idResponsable: camposPedido.responsable.value,
+                            fecha: camposPedido.fecha.value,
+                            horaInicio: camposPedido.inicio.value,
+                            horaFin: camposPedido.fin.value,
+                            direccion: camposPedido.direccion.value.trim() || null,
+                            notas: camposPedido.notas.value.trim() || null,
+                        },
+                        avisarCliente: camposPedido.avisar.checked && !camposPedido.avisar.disabled,
+                    }),
+                }
+            );
+
+            const entrega = fecha(camposPedido.fecha.value);
+            cerrarPedido();
+            avisar(
+                `Se creó el pedido #${pedido.folio} con entrega el ${entrega}. Ya aparece en Pedidos, Finanzas y la Agenda.` +
+                textoCorreo(pedido.correo),
+                pedido.correo === "fallo"
+            );
+            await recargar();
+        } catch (error) {
+            errorPedido.textContent = mensajeDe(error);
+            errorPedido.classList.remove("hidden");
+            // Si la API encontró un empalme que la pantalla no tenía, se relee la agenda
+            citasPorSemana.clear();
+            void irASemana(semanaLunes);
+        } finally {
+            ocupado = false;
+            botonPedido.disabled = hayEmpalme;
+        }
     }
 
     // Formulario: nueva cotización
@@ -747,8 +1166,9 @@
         actualizarTotales();
     }
 
-    // "preseleccion" llega desde el botón Cotizar de una solicitud
-    async function abrirFormulario(preseleccion?: { idCliente: string; idSolicitud: string }): Promise<void> {
+    // "preseleccion" llega desde el botón Cotizar de una solicitud o desde Clientes.
+    // Sin idSolicitud se propone la solicitud abierta más reciente del cliente.
+    async function abrirFormulario(preseleccion?: { idCliente: string; idSolicitud?: string }): Promise<void> {
         form.reset();
         limpiarErrores();
 
@@ -779,8 +1199,20 @@
         if (preseleccion && CLIENTES.some((c) => c.id === preseleccion.idCliente)) {
             campos.cliente.value = preseleccion.idCliente;
             pintarSolicitudes();
-            campos.solicitud.value = preseleccion.idSolicitud;
-            llenarDesdeSolicitud();
+
+            if (preseleccion.idSolicitud) {
+                const abierta = clienteElegido()?.solicitudes.some((s) => s.id === preseleccion.idSolicitud);
+
+                if (abierta) {
+                    campos.solicitud.value = preseleccion.idSolicitud;
+                    llenarDesdeSolicitud();
+                } else {
+                    // Ya cotizada: no sale en la lista, así que se avisa en vez de cambiarla en silencio
+                    formError.textContent =
+                        "Esa solicitud ya fue cotizada. Elige otra solicitud o haz una cotización directa.";
+                    formError.classList.remove("hidden");
+                }
+            }
 
             // Lo primero que suele ajustarse es el precio
             contLineas.querySelector<HTMLInputElement>(".cot-l-precio")?.focus();
@@ -865,6 +1297,19 @@
 
     el("cot-nueva").addEventListener("click", () => void abrirFormulario());
 
+    // "Nueva cotización" y "Cotizar" desde la ficha de un cliente (clientes.ts)
+    window.addEventListener("gaona:cotizar", (evento) => {
+        const menu = document.querySelector<HTMLButtonElement>('.menu-item[data-section="cotizaciones"]');
+        // Sin permiso para Cotizaciones el menú está oculto: Clientes avisa
+        if (!menu || menu.classList.contains("hidden")) return;
+
+        const { idCliente, idSolicitud } = (evento as CustomEvent<{ idCliente: string; idSolicitud?: string }>).detail;
+        evento.preventDefault();
+
+        menu.click();
+        void abrirFormulario({ idCliente, idSolicitud });
+    });
+
     el("cot-sol-toggle").addEventListener("click", () => {
         verTodasLasSolicitudes = !verTodasLasSolicitudes;
         pintarSolicitudesNuevas();
@@ -941,6 +1386,51 @@
         if (boton.dataset.accion === "enviar") void enviarPorCorreo(id, boton);
     });
 
+    // Crear pedido
+    formPedido.addEventListener("submit", (evento) => {
+        evento.preventDefault();
+        void guardarPedido();
+    });
+    el("cot-p-cerrar").addEventListener("click", cerrarPedido);
+    el("cot-p-cancelar").addEventListener("click", cerrarPedido);
+    modalPedido.addEventListener("click", (evento) => {
+        if (evento.target === modalPedido) cerrarPedido();
+    });
+
+    // Al cambiar la hora de inicio, la de fin se recorre dos horas si quedó antes
+    camposPedido.inicio.addEventListener("change", () => {
+        if (camposPedido.inicio.value && (!camposPedido.fin.value || camposPedido.fin.value <= camposPedido.inicio.value)) {
+            const [h, m] = camposPedido.inicio.value.split(":").map(Number);
+            camposPedido.fin.value = `${String(Math.min(h + 2, 23)).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        }
+        pintarDiaElegido();
+    });
+    camposPedido.fin.addEventListener("input", pintarDiaElegido);
+    camposPedido.inicio.addEventListener("input", pintarDiaElegido);
+
+    // El responsable cambia qué cuenta como empalme y la carga de cada día
+    camposPedido.responsable.addEventListener("change", pintarDisponibilidad);
+
+    // Escribir la fecha a mano también mueve el calendario a esa semana
+    camposPedido.fecha.addEventListener("change", () => {
+        const dia = camposPedido.fecha.value;
+        if (!dia) { pintarDisponibilidad(); return; }
+        if (lunesDe(dia) !== semanaLunes) void irASemana(lunesDe(dia));
+        else pintarDisponibilidad();
+    });
+
+    disp.dias.addEventListener("click", (evento) => {
+        const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>("[data-dia]");
+        if (!boton || boton.disabled) return;
+        camposPedido.fecha.value = boton.dataset.dia ?? "";
+        erroresPedido.fecha.textContent = "";
+        pintarDisponibilidad();
+    });
+
+    disp.anterior.addEventListener("click", () => void irASemana(sumarDias(semanaLunes, -7)));
+    disp.siguiente.addEventListener("click", () => void irASemana(sumarDias(semanaLunes, 7)));
+    disp.libre.addEventListener("click", () => void siguienteHorarioLibre());
+
     // Formulario
     campos.cliente.addEventListener("change", pintarSolicitudes);
     campos.solicitud.addEventListener("change", llenarDesdeSolicitud);
@@ -975,6 +1465,7 @@
         if (evento.key !== "Escape") return;
 
         if (!modal.classList.contains("hidden")) cerrarFormulario();
+        else if (!modalPedido.classList.contains("hidden")) cerrarPedido();
         else if (!modalDetalle.classList.contains("hidden")) {
             modalDetalle.classList.add("hidden");
         }

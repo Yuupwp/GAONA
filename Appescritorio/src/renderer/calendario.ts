@@ -59,6 +59,17 @@
         return document.getElementById(id) as T;
     }
 
+    // Qué pasó con el aviso por correo al cliente
+    function textoCorreo(resultado: string | undefined): string {
+        switch (resultado) {
+            case "enviado": return " Le avisamos al cliente por correo.";
+            case "sin_correo": return " El cliente no tiene correo registrado; no se le avisó.";
+            case "no_configurado": return " El correo no está configurado; no se avisó al cliente.";
+            case "fallo": return " No se pudo enviar el correo al cliente.";
+            default: return "";
+        }
+    }
+
     const dias = el<HTMLDivElement>("agenda-dias");
     const titulo = el<HTMLElement>("agenda-mes-titulo");
     const fechaTitulo = el<HTMLElement>("agenda-fecha-seleccionada");
@@ -344,6 +355,10 @@
         botonGuardar.textContent = cita ? "Guardar cambios" : "Agendar cita";
         mostrarCamposDeNueva(!cita);
 
+        // Al reprogramar una entrega o instalación se puede avisar al cliente
+        el("ag-f-avisar-campo").classList.toggle("hidden", !cita || cita.tipo === "MEDICION");
+        el<HTMLInputElement>("ag-f-avisar").checked = true;
+
         campos.responsable.innerHTML = '<option value="">Cargando…</option>';
         modal.classList.remove("hidden");
 
@@ -406,10 +421,11 @@
 
         ocupado = true;
         botonGuardar.disabled = true;
+        let resultadoCorreo: string | undefined;
 
         try {
             if (reprogramando) {
-                await api(`/citas/${encodeURIComponent(reprogramando.id)}`, {
+                const respuesta = await api<{ correo?: string }>(`/citas/${encodeURIComponent(reprogramando.id)}`, {
                     method: "PATCH",
                     body: JSON.stringify({
                         accion: "reprogramar",
@@ -417,8 +433,10 @@
                         horaInicio: campos.inicio.value,
                         horaFin: campos.fin.value,
                         idResponsable: campos.responsable.value,
+                        avisarCliente: reprogramando.tipo !== "MEDICION" && el<HTMLInputElement>("ag-f-avisar").checked,
                     }),
                 });
+                resultadoCorreo = respuesta.correo;
             } else {
                 const esMedicion = campos.tipo.value === "MEDICION";
                 await api("/citas", {
@@ -438,13 +456,14 @@
             }
 
             const eraReprogramacion = reprogramando !== null;
+            const correo = textoCorreo(resultadoCorreo);
             cerrarFormulario();
 
             // El calendario salta al día de la cita
             const [a, m, d] = campos.fecha.value.split("-").map(Number);
             seleccionada = new Date(a, m - 1, d);
             mes = new Date(a, m - 1, 1);
-            avisar(eraReprogramacion ? "Cita reprogramada." : "Cita agendada.");
+            avisar((eraReprogramacion ? "Cita reprogramada." : "Cita agendada.") + correo, resultadoCorreo === "fallo");
             await cargarMes();
         } catch (error) {
             formError.textContent = mensajeDe(error);

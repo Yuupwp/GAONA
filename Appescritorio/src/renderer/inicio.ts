@@ -19,16 +19,23 @@
             fecha: string | null;
             estado: EstadoPedido;
         }[];
-        citas: {
-            id: string;
-            tipo: TipoCita;
-            horaInicio: string;
-            horaFin: string;
-            direccion: string | null;
-            cliente: string;
-            responsable: string;
-        }[];
+        citas: Cita[];
+        semana: { desde: string | null; hasta: string | null };
+        citasSemana: Cita[];
     }
+
+    interface Cita {
+        id: string;
+        tipo: TipoCita;
+        fecha: string | null;
+        horaInicio: string;
+        horaFin: string;
+        direccion: string | null;
+        cliente: string;
+        responsable: string;
+    }
+
+    type Periodo = "hoy" | "semana";
 
     const ESTADOS: Record<EstadoPedido, { texto: string; clase: string }> = {
         EN_PROCESO: { texto: "En proceso", clase: "processing" },
@@ -49,6 +56,12 @@
     const listaCitas = document.getElementById("inicio-citas-lista");
     const botonVerPedidos = document.getElementById("inicio-ver-pedidos");
     const pantallaPrincipal = document.getElementById("main-screen");
+    const tituloCitas = document.getElementById("inicio-citas-titulo");
+    const subCitas = document.getElementById("inicio-citas-sub");
+    const pestanas = document.querySelectorAll<HTMLButtonElement>(".home-tab[data-periodo]");
+
+    let periodo: Periodo = "hoy";
+    let ultimo: ResumenInicio | null = null;
 
     // Si falta alguno de estos elementos, no hay nada que pintar
     if (!statSolicitudes || !statCitas || !statPedidos || !statCobrado || !listaPedidos || !listaCitas) {
@@ -95,26 +108,77 @@
             .join("");
     }
 
-    function pintarCitas(citas: ResumenInicio["citas"]): void {
-        if (citas.length === 0) {
-            listaCitas!.innerHTML = '<p class="home-empty">No hay citas programadas para hoy.</p>';
+    function citaHtml(c: Cita, pasada = false): string {
+        const tipo = CITAS[c.tipo];
+        const lugar = c.direccion ? ` · ${esc(c.direccion)}` : "";
+        return `
+            <div class="home-activity-item${pasada ? " pasada" : ""}">
+                <div class="activity-indicator ${tipo.indicador}"></div>
+                <div class="home-activity-info">
+                    <strong>${tipo.texto} · ${esc(c.cliente)}</strong>
+                    <p>${c.horaInicio} – ${c.horaFin}${lugar}</p>
+                    <span>Responsable: ${esc(c.responsable)}</span>
+                </div>
+            </div>`;
+    }
+
+    function hoyTexto(): string {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    // "2026-11-23" -> "Lunes 23 de noviembre"
+    function diaLargo(valor: string): string {
+        const texto = new Date(`${valor}T00:00:00`).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function pintarCitas(): void {
+        const resumen = ultimo;
+        if (!resumen) return;
+
+        const enSemana = periodo === "semana";
+        listaCitas!.classList.toggle("semana", enSemana);
+        pestanas.forEach((p) => {
+            const activa = p.dataset.periodo === periodo;
+            p.classList.toggle("active", activa);
+            p.setAttribute("aria-selected", String(activa));
+        });
+
+        if (!enSemana) {
+            if (tituloCitas) tituloCitas.textContent = "Citas de hoy";
+            if (subCitas) subCitas.textContent = "Mediciones, entregas e instalaciones.";
+            listaCitas!.innerHTML = resumen.citas.length === 0
+                ? '<p class="home-empty">No hay citas programadas para hoy.</p>'
+                : resumen.citas.map((c) => citaHtml(c)).join("");
             return;
         }
 
-        listaCitas!.innerHTML = citas
-            .map((c) => {
-                const tipo = CITAS[c.tipo];
-                const lugar = c.direccion ? ` · ${esc(c.direccion)}` : "";
-                return `
-                    <div class="home-activity-item">
-                        <div class="activity-indicator ${tipo.indicador}"></div>
-                        <div class="home-activity-info">
-                            <strong>${tipo.texto} · ${esc(c.cliente)}</strong>
-                            <p>${c.horaInicio} – ${c.horaFin}${lugar}</p>
-                            <span>Responsable: ${esc(c.responsable)}</span>
-                        </div>
-                    </div>`;
-            })
+        const citas = resumen.citasSemana ?? [];
+        if (tituloCitas) tituloCitas.textContent = "Citas de esta semana";
+        if (subCitas) {
+            subCitas.textContent = resumen.semana?.desde && resumen.semana.hasta
+                ? `Del ${fechaCorta(resumen.semana.desde)} al ${fechaCorta(resumen.semana.hasta)} · ${citas.length} cita${citas.length === 1 ? "" : "s"}`
+                : "De lunes a domingo.";
+        }
+
+        if (citas.length === 0) {
+            listaCitas!.innerHTML = '<p class="home-empty">No hay citas programadas esta semana.</p>';
+            return;
+        }
+
+        // Agrupadas por día; los días que ya pasaron se ven más tenues
+        const hoy = hoyTexto();
+        const porDia = new Map<string, Cita[]>();
+        for (const c of citas) {
+            const dia = c.fecha ?? "";
+            porDia.set(dia, [...(porDia.get(dia) ?? []), c]);
+        }
+
+        listaCitas!.innerHTML = [...porDia.entries()]
+            .map(([dia, lista]) => `
+                <div class="home-dia${dia === hoy ? " hoy" : ""}">${dia === hoy ? "Hoy · " : ""}${esc(diaLargo(dia))} · ${lista.length}</div>
+                ${lista.map((c) => citaHtml(c, dia < hoy)).join("")}`)
             .join("");
     }
 
@@ -122,6 +186,7 @@
         for (const elemento of [statSolicitudes, statCitas, statPedidos, statCobrado]) elemento!.textContent = "—";
         listaPedidos!.replaceChildren();
         listaCitas!.replaceChildren();
+        ultimo = null;
     }
 
     async function recargar(): Promise<void> {
@@ -142,13 +207,21 @@
             statCobrado!.textContent = dinero.format(resumen.cobradoMes);
 
             pintarPedidos(resumen.pedidos);
-            pintarCitas(resumen.citas);
+            ultimo = resumen;
+            pintarCitas();
         } catch {
             listaPedidos!.innerHTML =
                 '<p class="home-empty">No se pudo conectar con la API. Revisa que esté encendida.</p>';
             listaCitas!.innerHTML = '<p class="home-empty">No se pudo conectar con la API.</p>';
         }
     }
+
+    pestanas.forEach((p) =>
+        p.addEventListener("click", () => {
+            periodo = p.dataset.periodo === "semana" ? "semana" : "hoy";
+            pintarCitas();
+        })
+    );
 
     // "Ver todos" lleva al módulo de Pedidos
     botonVerPedidos?.addEventListener("click", () => {

@@ -1040,3 +1040,197 @@
     color: var(--orange);
     font-weight: 700;
 }
+
+/* =========================================
+   CREAR PEDIDO: disponibilidad de la semana
+========================================= */
+
+.cot-pedido-modal {
+    max-width: 640px;
+}
+
+.disp {
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #faf9f7;
+}
+
+.disp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.disp-nav {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--white);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.disp-nav:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.disp-dias {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.disp-d {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 2px 6px;
+    border: 1px solid var(--border);
+    border-bottom-width: 4px;
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--black);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.disp-d strong {
+    font-size: 16px;
+}
+
+.disp-d small {
+    color: var(--gray);
+    font-size: 10px;
+}
+
+.disp-d.libre { border-bottom-color: #29945d; }
+.disp-d.media { border-bottom-color: #d99a35; }
+.disp-d.llena { border-bottom-color: #b33a3a; background: #fbf1f1; }
+
+.disp-d.elegido {
+    outline: 2px solid var(--orange);
+    outline-offset: 1px;
+}
+
+.disp-d:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.disp-leyenda {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+    color: var(--gray);
+    font-size: 11px;
+}
+
+.disp-leyenda span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.disp-punto {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.disp-punto.libre { background: #29945d; }
+.disp-punto.media { background: #d99a35; }
+.disp-punto.llena { background: #b33a3a; }
+
+/* Franja de 8:00 a 19:00 del día elegido */
+.disp-dia {
+    margin: 4px 0 12px;
+}
+
+.disp-dia-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.disp-franja {
+    position: relative;
+    height: 26px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: repeating-linear-gradient(90deg, #fff 0, #fff calc(100% / 11 - 1px), var(--border) calc(100% / 11 - 1px), var(--border) calc(100% / 11));
+    overflow: hidden;
+}
+
+.disp-bloque {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    border-radius: 4px;
+}
+
+.disp-bloque.otro { background: #d9d6d0; }
+.disp-bloque.suyo { background: var(--orange-light); }
+
+.disp-bloque.elegido {
+    top: 0;
+    bottom: 0;
+    background: rgba(41, 148, 93, 0.18);
+    border: 2px solid #29945d;
+}
+
+.disp-bloque.elegido.choca {
+    background: rgba(179, 58, 58, 0.18);
+    border-color: #b33a3a;
+}
+
+.disp-horas {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    color: var(--gray);
+    font-size: 10px;
+}
+
+.disp-lista {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--black);
+}
+
+.disp-lista div {
+    padding: 3px 0;
+}
+
+.disp-lista .suyo {
+    font-weight: 600;
+}
+
+.disp-lista .vacia {
+    color: var(--gray);
+}
+
+.disp-aviso {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.disp-aviso.error {
+    background: rgba(179, 58, 58, 0.1);
+    color: #b33a3a;
+}
+
+.disp-aviso.advertencia {
+    background: rgba(217, 154, 53, 0.14);
+    color: #8a5a0c;
+}
